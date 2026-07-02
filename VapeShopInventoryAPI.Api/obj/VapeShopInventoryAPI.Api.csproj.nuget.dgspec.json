@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "d:\\Owned Files\\Dreck\\Work\\2026\\C#\\VapeShopInventoryAPI\\VapeShopInventoryAPI.Api\\VapeShopInventoryAPI.Api.csproj": {}
+    "D:\\Owned Files\\Dreck\\Work\\2026\\C#\\VapeShopInventoryAPI\\VapeShopInventoryAPI.Api\\VapeShopInventoryAPI.Api.csproj": {}
   },
   "projects": {
-    "d:\\Owned Files\\Dreck\\Work\\2026\\C#\\VapeShopInventoryAPI\\VapeShopInventoryAPI.Api\\VapeShopInventoryAPI.Api.csproj": {
+    "D:\\Owned Files\\Dreck\\Work\\2026\\C#\\VapeShopInventoryAPI\\VapeShopInventoryAPI.Api\\VapeShopInventoryAPI.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\Owned Files\\Dreck\\Work\\2026\\C#\\VapeShopInventoryAPI\\VapeShopInventoryAPI.Api\\VapeShopInventoryAPI.Api.csproj",
+        "projectUniqueName": "D:\\Owned Files\\Dreck\\Work\\2026\\C#\\VapeShopInventoryAPI\\VapeShopInventoryAPI.Api\\VapeShopInventoryAPI.Api.csproj",
         "projectName": "VapeShopInventoryAPI.Api",
-        "projectPath": "d:\\Owned Files\\Dreck\\Work\\2026\\C#\\VapeShopInventoryAPI\\VapeShopInventoryAPI.Api\\VapeShopInventoryAPI.Api.csproj",
+        "projectPath": "D:\\Owned Files\\Dreck\\Work\\2026\\C#\\VapeShopInventoryAPI\\VapeShopInventoryAPI.Api\\VapeShopInventoryAPI.Api.csproj",
         "packagesPath": "C:\\Users\\dreckiee\\.nuget\\packages\\",
-        "outputPath": "d:\\Owned Files\\Dreck\\Work\\2026\\C#\\VapeShopInventoryAPI\\VapeShopInventoryAPI.Api\\obj\\",
+        "outputPath": "D:\\Owned Files\\Dreck\\Work\\2026\\C#\\VapeShopInventoryAPI\\VapeShopInventoryAPI.Api\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\dreckiee\\AppData\\Roaming\\NuGet\\NuGet.Config"

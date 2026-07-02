@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VapeShopInventoryAPI.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b4ab290d45de2125c32d75e43ae7aec41d397497")]
 [assembly: System.Reflection.AssemblyProductAttribute("VapeShopInventoryAPI.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VapeShopInventoryAPI.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
