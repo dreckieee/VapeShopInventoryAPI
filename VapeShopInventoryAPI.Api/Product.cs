@@ -9,31 +9,46 @@ public class Product
     public DateTime CreatedAt {get; private set;}
     public Product (string name, string sku, decimal price, int stockQuantity, string category)
     {
-        if (string.IsNullOrWhiteSpace(name) )
-        {
-            throw new ArgumentException ("Invalid Name.", nameof(name) );
-        }
-        if (string.IsNullOrWhiteSpace(sku))
-        {
-            throw new ArgumentException ("Invalid Sku.", nameof(sku));
-        }
-        if (price < 0)
-        {
-            throw new ArgumentException ("Price cannot be negative.", nameof(price));
-        }
-        if (stockQuantity < 0)
-        {
-            throw new ArgumentException ("Stock cannot be negative.", nameof(stockQuantity));
-        }
-        if (string.IsNullOrWhiteSpace(category))
-        {
-            throw new ArgumentException ("Invalid Category.", nameof(category));
-        }
+        GuardProduct(name, sku, price, stockQuantity, category);
         CreatedAt = DateTime.UtcNow;
         Name = name;
         Sku = sku;
         Price = price;
         StockQuantity = stockQuantity;
         Category = category;
+    }
+
+    public void Edit(Product newProduct)
+    {
+        GuardProduct(newProduct.Name, newProduct.Sku, newProduct.Price, newProduct.StockQuantity, newProduct.Category);
+
+        Name = newProduct.Name;
+        Sku = newProduct.Sku;
+        Price = newProduct.Price;
+        StockQuantity = newProduct.StockQuantity;
+        Category = newProduct.Category;
+    }
+    private static void GuardProduct(string productName, string productSku, decimal productPrice, int productStockQuantity, string productCategory)
+    {
+        if (string.IsNullOrWhiteSpace(productName))
+        {
+            throw new ArgumentException("Invalid Name.", nameof(productName));
+        }
+        if (string.IsNullOrWhiteSpace(productSku))
+        {
+            throw new ArgumentException("Invalid Sku.", nameof(productSku));
+        }
+        if (productPrice < 0)
+        {
+            throw new ArgumentException("Price cannot be negative.", nameof(productPrice));
+        }
+        if (productStockQuantity < 0)
+        {
+            throw new ArgumentException("Stock cannot be negative.", nameof(productStockQuantity));
+        }
+        if (string.IsNullOrWhiteSpace(productCategory))
+        {
+            throw new ArgumentException("Invalid Category.", nameof(productCategory));
+        }
     }
 }
