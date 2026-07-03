@@ -3,7 +3,7 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: In Progress
-Currently building Product CRUD (Phase 1 of 3). Not yet deployed.
+Build 1 (Product CRUD) complete and tested end-to-end. Starting Build 2 (Expense CRUD) next.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
