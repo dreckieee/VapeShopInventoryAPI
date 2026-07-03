@@ -1,4 +1,4 @@
-# Vape Shop InventoryAPI
+# Vape Shop Inventory API
 
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
@@ -13,7 +13,7 @@ Currently building Product CRUD (Phase 1 of 3). Not yet deployed.
 ## Roadmap
 - [x] Product domain model
 - [x] DbContext setup
-- [ ] Product CRUD endpoints (GET/POST/PUT/DELETE)
+- [x] Product CRUD endpoints (GET/POST/PUT/DELETE)
 - [ ] Expense CRUD
 - [ ] Sale + SaleItem (1-to-many relationships, transactional logic)
 
