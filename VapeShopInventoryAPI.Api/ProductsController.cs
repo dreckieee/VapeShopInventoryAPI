@@ -1,15 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 
 [ApiController]
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
     private readonly VapeShopInventoryDbContext _context;
-
-    public ProductsController(VapeShopInventoryDbContext context)
+    private readonly ILogger<ProductsController> _logger;
+    public ProductsController(VapeShopInventoryDbContext context, ILogger<ProductsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -29,9 +31,26 @@ public class ProductsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Product>> CreateProduct(Product product)
     {
-        _context.Products.Add(product);
-        await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+        try
+        {
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+        }
+        catch (DbUpdateException ex)
+        {
+            if (ex.InnerException is SqliteException sqliteEx)
+            {
+                var tableName = _context.Model.FindEntityType(typeof(Product))?.GetTableName();
+                if (sqliteEx.Message.Contains($"{tableName}.{nameof(product.Sku)}"))
+                {
+                    _logger.LogWarning(ex, "Duplicate SKU attempted: {Sku}", product.Sku);
+                    return Conflict(new {message = "A product with this SKU already exists."});
+                }
+            }
+                _logger.LogError(ex, "Unexpected Error creating product: {Name}", product.Name);
+                return Conflict(new {message = "Unable to create product due to a data conflict."});
+        }
     }
 
     [HttpPut("{id}")]
