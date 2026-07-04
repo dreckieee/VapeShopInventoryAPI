@@ -16,7 +16,7 @@ Build 1 (Product CRUD) complete and tested end-to-end, including unique SKU cons
 - [x] Product CRUD endpoints (GET/POST/PUT/DELETE)
 - [x] Unique SKU constraint (Fluent API index)
 - [x] Structured exception handling (409 Conflict on duplicate SKU, ILogger integration)
-- [ ] Swagger/OpenAPI UI
+- [x] Swagger/OpenAPI UI
 - [ ] Expense CRUD
 - [ ] Sale + SaleItem (1-to-many relationships, transactional logic)
 
@@ -27,3 +27,9 @@ Build 1 (Product CRUD) complete and tested end-to-end, including unique SKU cons
 ## About
 Part of my transition into remote software engineering (QA Automation → SDET → Full-Stack).
 Daily build-in-public log and full C# learning history: [github.com/dreckieee/csharp](https://github.com/dreckieee/csharp)
+
+## How to Run Locally
+run `dotnet run`
+Then open `http://localhost:{port}/swagger` in your browser to explore the API.
+
+Note: swap {port} to your local port — check your terminal output for the exact URL after running `dotnet run`.
