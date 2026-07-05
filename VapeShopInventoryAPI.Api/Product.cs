@@ -18,37 +18,53 @@ public class Product
         Category = category;
     }
 
-    public void Edit(Product newProduct)
+    public void Edit(string newProductName, string newProductSku, decimal newProductPrice, int newProductStockQuantity, string newProductCategory)
     {
-        GuardProduct(newProduct.Name, newProduct.Sku, newProduct.Price, newProduct.StockQuantity, newProduct.Category);
+        GuardProduct(newProductName, newProductSku, newProductPrice, newProductStockQuantity, newProductCategory);
 
-        Name = newProduct.Name;
-        Sku = newProduct.Sku;
-        Price = newProduct.Price;
-        StockQuantity = newProduct.StockQuantity;
-        Category = newProduct.Category;
+        Name = newProductName;
+        Sku = newProductSku;
+        Price = newProductPrice;
+        StockQuantity = newProductStockQuantity;
+        Category = newProductCategory;
     }
     private static void GuardProduct(string productName, string productSku, decimal productPrice, int productStockQuantity, string productCategory)
     {
+        if (productName == null)
+        {
+            throw new ArgumentNullException(nameof(productName), "Name cannot be null.");
+        }
         if (string.IsNullOrWhiteSpace(productName))
         {
-            throw new ArgumentException("Invalid Name.", nameof(productName));
+            throw new ArgumentException("Name cannot be empty", nameof(productName));
+        }
+
+        if (productSku == null)
+        {
+            throw new ArgumentNullException(nameof(productSku), "Sku cannot be null.");
         }
         if (string.IsNullOrWhiteSpace(productSku))
         {
-            throw new ArgumentException("Invalid Sku.", nameof(productSku));
+            throw new ArgumentException("Sku cannot be empty", nameof(productSku));
         }
-        if (productPrice < 0)
+
+        if (productPrice <= 0)
         {
-            throw new ArgumentException("Price cannot be negative.", nameof(productPrice));
+            throw new ArgumentException("Price cannot be 0 or below.", nameof(productPrice));
         }
+
         if (productStockQuantity < 0)
         {
             throw new ArgumentException("Stock cannot be negative.", nameof(productStockQuantity));
         }
+
+        if (productCategory == null)
+        {
+            throw new ArgumentNullException(nameof(productCategory), "Category cannot be null.");
+        }
         if (string.IsNullOrWhiteSpace(productCategory))
         {
-            throw new ArgumentException("Invalid Category.", nameof(productCategory));
+            throw new ArgumentException("Category cannot be empty", nameof(productCategory));
         }
     }
 }

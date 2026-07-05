@@ -14,26 +14,36 @@ public class Expense
         Category = category;
     }
 
-    public void Edit(Expense newExpense)
+    public void Edit(string newExpenseDescription, decimal newExpenseAmount, string newExpenseCategory)
     {
-        GuardExpense(newExpense.Description, newExpense.Amount, newExpense.Category);
-        Description = newExpense.Description;
-        Amount = newExpense.Amount;
-        Category = newExpense.Category;
+        GuardExpense(newExpenseDescription, newExpenseAmount, newExpenseCategory);
+        Description = newExpenseDescription;
+        Amount = newExpenseAmount;
+        Category = newExpenseCategory;
     }
     private static void GuardExpense(string expenseDescription, decimal expenseAmount, string expenseCategory)
     {
+        if (expenseDescription == null)
+        {
+            throw new ArgumentNullException(nameof(expenseDescription), "Description cannot be null.");
+        }
         if (string.IsNullOrWhiteSpace(expenseDescription))
         {
-            throw new ArgumentException("Invalid Description.", nameof(expenseDescription));
+            throw new ArgumentException("Description cannot be empty", nameof(expenseDescription));
         }
-        if (expenseAmount < 0)
+
+        if (expenseAmount <= 0)
         {
-            throw new ArgumentException("Expense amount cannot be negative.", nameof(expenseAmount));
+            throw new ArgumentException("Expense amount cannot be 0 or below.", nameof(expenseAmount));
+        }
+
+        if (expenseCategory == null)
+        {
+            throw new ArgumentNullException(nameof(expenseCategory), "Category cannot be null.");
         }
         if (string.IsNullOrWhiteSpace(expenseCategory))
         {
-            throw new ArgumentException("Invalid Category.", nameof(expenseCategory));
+            throw new ArgumentException("Category cannot be empty", nameof(expenseCategory));
         }
     }
 }
