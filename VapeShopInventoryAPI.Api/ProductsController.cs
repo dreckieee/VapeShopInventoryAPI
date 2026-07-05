@@ -53,6 +53,7 @@ public class ProductsController : ControllerBase
         }
     }
 
+        
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProduct(int id, Product newProduct)
     {
