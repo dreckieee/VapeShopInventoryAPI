@@ -3,26 +3,46 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: In Progress
-Build 1 (Product CRUD) complete and tested end-to-end, including unique SKU constraint and structured exception handling. Starting Build 2 (Expense CRUD) next.
+Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Starting Build 3 (Sale + SaleItem) next.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
 - Entity Framework Core
 - SQLite
 
-## Roadmap
-- [x] Product domain model
-- [x] DbContext setup
-- [x] Product CRUD endpoints (GET/POST/PUT/DELETE)
-- [x] Unique SKU constraint (Fluent API index)
-- [x] Structured exception handling (409 Conflict on duplicate SKU, ILogger integration)
-- [x] Swagger/OpenAPI UI
-- [ ] Expense CRUD
-- [ ] Sale + SaleItem (1-to-many relationships, transactional logic)
+## Roadmap Checklist
+
+- [x] Build 1 — Product CRUD (GET/POST/PUT/DELETE)
+  - [x] Routing, Controllers, DI, EF Core basics, SQLite
+  - [x] Unique SKU constraint + structured exception handling
+  - [x] Swagger/OpenAPI UI
+- [x] Build 2 — Expense CRUD (GET/POST/PUT/DELETE)
+  - [x] Domain validation (Description, Amount, Category, Date)
+  - [x] EF Core migration for Expenses table
+  - [x] UpdateExpenseRequest DTO for PUT binding
+  - [x] Tested end-to-end via curl.exe
+- [ ] Build 3 — Sale + SaleItem (1-to-many)
+  - [ ] EF Core relationships, transactional logic
 
 ## Tech notes
 - SQLite maps `decimal` → `TEXT` (exact precision, avoids float rounding vs REAL)
 - No magic strings: table/column names resolved dynamically via `_context.Model`
+
+## Endpoints
+
+### Products
+- `GET /api/Products` — list all products
+- `GET /api/Products/{id}` — get product by id
+- `POST /api/Products` — create product
+- `PUT /api/Products/{id}` — update product
+- `DELETE /api/Products/{id}` — delete product
+
+### Expenses
+- `GET /api/Expenses` — list all expenses
+- `GET /api/Expenses/{id}` — get expense by id
+- `POST /api/Expenses` — create expense
+- `PUT /api/Expenses/{id}` — update expense
+- `DELETE /api/Expenses/{id}` — delete expense
 
 ## About
 Part of my transition into remote software engineering (QA Automation → SDET → Full-Stack).
