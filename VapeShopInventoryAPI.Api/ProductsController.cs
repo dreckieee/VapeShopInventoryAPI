@@ -48,24 +48,42 @@ public class ProductsController : ControllerBase
                     return Conflict(new {message = "A product with this SKU already exists."});
                 }
             }
-                _logger.LogError(ex, "Unexpected Error creating product: {Name}", product.Name);
-                return Conflict(new {message = "Unable to create product due to a data conflict."});
+
+            _logger.LogError(ex, "Unexpected Error creating product: {Name}", product.Name);
+            return Conflict(new {message = "Unable to create product due to a data conflict."});
         }
     }
 
         
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProduct(int id, string newProductName, string newProductSku, decimal newProductPrice, int newProductStockQuantity, string newProductCategory)
+    public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductRequest request)
     {
-        var product = await _context.Products.FindAsync(id);
-        if (product == null)
+        try
         {
-            return NotFound();
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+            product.Edit(request.Name, request.Sku, request.Price, request.StockQuantity, request.Category);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
-    
-        product.Edit(newProductName, newProductSku, newProductPrice, newProductStockQuantity, newProductCategory);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        catch (DbUpdateException ex)
+        {
+            if (ex.InnerException is SqliteException sqliteEx)
+            {
+                var tableName = _context.Model.FindEntityType(typeof(Product))?.GetTableName();
+                if (sqliteEx.Message.Contains($"{tableName}.{nameof(request.Sku)}"))
+                {
+                    _logger.LogWarning(ex, "Duplicate SKU attempted: {Sku}", request.Sku);
+                    return Conflict(new {message = "A product with this SKU already exists."});
+                }
+            }
+            
+            _logger.LogError(ex, "Unexpected Error updating product: {Name}", request.Name);
+            return Conflict(new {message = "Unable to update product due to a data conflict."});
+        }
     }
 
     [HttpDelete("{id}")]
