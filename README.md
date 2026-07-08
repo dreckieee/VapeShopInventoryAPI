@@ -3,7 +3,7 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: In Progress
-Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Starting Build 3 (Sale + SaleItem) next.
+Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) domain layer and EF Core relationships complete — controllers next.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
@@ -22,11 +22,16 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
   - [x] UpdateExpenseRequest DTO for PUT binding
   - [x] Tested end-to-end via curl.exe
 - [ ] Build 3 — Sale + SaleItem (1-to-many)
-  - [ ] EF Core relationships, transactional logic
+  - [x] `Sale` domain class — closed-sale guard, minimum-one-item close rule, item collection encapsulation
+  - [x] `SaleItem` domain class — snapshot-at-creation `UnitPriceAtSale`, aggregate-root pattern (no self-`Edit()`)
+  - [x] EF Core relationships — `Sale`↔`SaleItem` (restrict-on-delete) and `Product`↔`SaleItem` (restrict-on-delete), both migrated
+  - [x] Blind recreation drill — domain logic reconstructed from memory, verified correct
+  - [ ] `SalesController` / `SaleItemsController` — CRUD + `CloseSale` endpoint
 
 ## Tech notes
 - SQLite maps `decimal` → `TEXT` (exact precision, avoids float rounding vs REAL)
 - No magic strings: table/column names resolved dynamically via `_context.Model`
+- `Sale.SaleItems` navigation uses `UsePropertyAccessMode(PropertyAccessMode.Field)` since it's exposed as a computed `IReadOnlyList<SaleItem>`, not a settable property
 
 ## Endpoints
 
@@ -43,6 +48,9 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 - `POST /api/Expenses` — create expense
 - `PUT /api/Expenses/{id}` — update expense
 - `DELETE /api/Expenses/{id}` — delete expense
+
+### Sales (in progress)
+- Endpoints not yet implemented — domain layer and EF Core relationships complete, controllers next session
 
 ## About
 Part of my transition into remote software engineering (QA Automation → SDET → Full-Stack).
