@@ -10,7 +10,7 @@ public class Product
     public Product (string name, string sku, decimal price, int stockQuantity, string category)
     {
         GuardProduct(name, sku, price, stockQuantity, category);
-        CreatedAt = DateTime.UtcNow;
+        CreatedAt = DateTime.Now;
         Name = name;
         Sku = sku;
         Price = price;

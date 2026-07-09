@@ -1,3 +1,5 @@
+using System.Security.Cryptography.Xml;
+
 public class Sale
 {
     public int Id {get; private set;}
@@ -6,12 +8,16 @@ public class Sale
     private readonly List<SaleItem> _saleItems = new();
     public IReadOnlyList<SaleItem> SaleItems => _saleItems;
     public bool IsClosed {get; private set;} = false;
+    public int TransactionCount {get; private set;} = 0;
+    public int ReductionFrequency {get; private set;} = 0;
+    public int TotalQuantityReduction {get; private set;} = 0;
     public Sale (DateTime saleDate)
     {
         GuardSale(saleDate);
         SaleDate = saleDate;
         CreatedAt = DateTime.Now;
     }
+
     public void AddSaleItem (SaleItem saleItem)
     {
         GuardClosedSale();
@@ -19,8 +25,19 @@ public class Sale
         {
             throw new ArgumentNullException(nameof(saleItem), "You must provide the item to be added to the sale.");
         }
-        _saleItems.Add(saleItem);  
+        var foundSimilarItem = _saleItems.Find(si => si.ProductId == saleItem.ProductId && si.UnitPriceAtSale == saleItem.UnitPriceAtSale);
+        if (foundSimilarItem != null)
+        {
+            foundSimilarItem.CombineQuantity(saleItem.Quantity);
+        }
+        else
+        {
+            TransactionCount ++;
+            saleItem.AssignTransactionNumber(TransactionCount);
+            _saleItems.Add(saleItem);
+        }
     }
+    
     public void RemoveSaleItem (SaleItem saleItem)
     {
         GuardClosedSale();
@@ -35,11 +52,31 @@ public class Sale
         }
         _saleItems.Remove(saleItemToRemove);
     }
-    public void Edit(DateTime newSaleDate)
+    public void EditSaleDate(DateTime newSaleDate)
     {
         GuardClosedSale();
         GuardSale(newSaleDate);
         SaleDate = newSaleDate;
+    }
+    public void ReduceSaleItemQuantity(SaleItem saleItem, int amount)
+    {
+        GuardClosedSale();
+        if (saleItem == null)
+        {
+            throw new ArgumentNullException(nameof(saleItem), "You must provide the item which to reduce the quantity from the sale.");
+        }
+        var saleItemToReduceQuantity = _saleItems.Find(i => i.Id == saleItem.Id);
+        if (saleItemToReduceQuantity == null)
+        {
+            throw new KeyNotFoundException("No match found for the provided Id of item which to reduce quantity from.");
+        }
+        saleItemToReduceQuantity.ReduceQuantity(amount);
+        ReductionFrequency ++;
+        TotalQuantityReduction += amount;
+        if (saleItemToReduceQuantity.Quantity == 0)
+        {
+            _saleItems.Remove(saleItemToReduceQuantity);
+        }
     }
     public void CloseSale ()
     {
