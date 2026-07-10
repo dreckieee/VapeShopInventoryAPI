@@ -33,23 +33,23 @@ public class ExpensesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Expense>> CreateExpense(Expense expense)
     {
-            _context.Expenses.Add(expense);
-            await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, expense);
+        _context.Expenses.Add(expense);
+        await _context.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, expense);
     }
 
         
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateExpense(int id, [FromBody] UpdateExpenseRequest request)
     {
-            var expense = await _context.Expenses.FindAsync(id);
-            if (expense == null)
-            {
-                return NotFound();
-            }
-            expense.Edit(request.Date, request.Description, request.Amount, request.Category);
-            await _context.SaveChangesAsync();
-            return NoContent();
+        var expense = await _context.Expenses.FindAsync(id);
+        if (expense == null)
+        {
+            return NotFound();
+        }
+        expense.Edit(request.Date, request.Description, request.Amount, request.Category);
+        await _context.SaveChangesAsync();
+        return NoContent();
     }
 
     [HttpDelete("{id}")]
