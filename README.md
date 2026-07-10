@@ -3,7 +3,7 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: In Progress
-Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) domain layer complete, including combine-on-add logic, per-sale transaction numbering, quantity reduction with auto-remove, and audit counters. EF Core migrations and DTO layer complete — controllers next.
+Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem): domain layer, EF Core migrations, and DTOs complete. `SalesController` (Create, Get, EditSaleDate) and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) implemented and functional. `CloseSale` (with stock deduction) is the only remaining piece.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
@@ -32,8 +32,10 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
   - [x] `ReduceQuantity` — partial quantity reduction with guard against over-reduction; auto-removes item at zero quantity
   - [x] Audit counters — `TransactionCount` (per-sale item numbering), `ReductionFrequency`, `TotalQuantityReduction` for manager-facing anomaly review
   - [x] `AddSaleAuditFields` migration — added `TransactionNumber`/`TransactionCount`/`ReductionFrequency`/`TotalQuantityReduction` columns, DB wiped and re-migrated clean
-  - [x] Request/response DTOs — `CreateSaleRequest`, `AddSaleItemRequest`, `ReduceSaleItemQuantityRequest`, `SaleItemResponse`, `SaleResponse`
-  - [ ] `SalesController` / `SaleItemsController` — CRUD + `CloseSale` endpoint
+  - [x] Request/response DTOs — `CreateSaleRequest`, `AddSaleItemRequest`, `ReduceSaleItemQuantityRequest`, `EditSaleDateRequest`, `SaleItemResponse`, `SaleResponse`
+  - [x] `SalesController` — `CreateSale`, `GetSale`, `EditSaleDate`
+  - [x] `SaleItemsController` — `AddSaleItem` (with stock-availability check), `ReduceSaleItemQuantity`
+  - [ ] `CloseSale` endpoint — finalizes a sale and deducts stock (next session)
 
 ## Tech notes
 - SQLite maps `decimal` → `TEXT` (exact precision, avoids float rounding vs REAL)
@@ -42,6 +44,15 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 - `SaleItem.TransactionNumber` is per-`Sale`, monotonically increasing (never reused, never decremented) — gaps from removed items are expected and preserved for audit purposes, not treated as errors
 - Response DTOs (`SaleResponse`, `SaleItemResponse`) never expose raw domain entities — avoids circular reference (`Sale` ↔ `SaleItem` navigation) and keeps internal fields out of the API contract
 - Deferred: gapless `DisplayPosition` field on `SaleItemResponse` for clean receipt-style numbering (computed per-response, not stored)
+- Controllers use `.Include()` to eager-load `SaleItems` when fetching a `Sale` — `FindAsync`/`FirstOrDefaultAsync` alone only loads the root entity, never related collections, unless explicitly told to
+- `ReduceSaleItemQuantityRequest` deliberately omits a `SaleItemId` field — the item id is already carried in the route (`{itemId}`), so duplicating it in the body would create two sources of truth for the same value
+
+### Design decision: stock deduction timing
+Stock is deducted from `Product.StockQuantity` at `CloseSale` time, not at `AddSaleItem` time. `AddSaleItem` does check current stock and rejects the request (`409 Conflict`) if insufficient, but does not deduct — it only prevents adding more than what's available at that moment.
+
+**Why:** this API is built for a single-register, in-person retail context — a sale is built and closed within minutes by one cashier, not held open across many concurrent shoppers like an e-commerce cart. Deducting stock only on close avoids needing to "reserve" stock for open/abandoned sales, which would otherwise require restore-on-remove/restore-on-abandon logic.
+
+**Known limitation (explicit scope boundary):** this API assumes single-register, low-concurrency, in-person retail. It is **not** designed for shops running multiple simultaneous registers/cashiers against the same stock pool. Two registers could both add the last unit of a low-stock item to two different open sales before either closes — a race condition this API does not guard against. Accepted tradeoff for the target use case (single physical shop, one register).
 
 ## Endpoints
 
@@ -59,8 +70,15 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 - `PUT /api/Expenses/{id}` — update expense
 - `DELETE /api/Expenses/{id}` — delete expense
 
-### Sales (in progress)
-- Endpoints not yet implemented — domain layer, EF Core migrations, and DTOs complete, controllers next session
+### Sales
+- `POST /api/Sales` — create a new sale
+- `GET /api/Sales/{id}` — get a sale with its items
+- `PATCH /api/Sales/{id}/date` — edit the sale date (blocked if sale is closed; rejects default/future dates)
+- `CloseSale` — not yet implemented (next session)
+
+### Sale Items
+- `POST /api/Sales/{saleId}/items` — add an item to a sale (combines quantity if same product + unit price already exists on the sale; rejects if requested quantity exceeds current product stock)
+- `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity (auto-removes the item if reduced to zero; updates audit counters on the sale)
 
 ## About
 Part of my transition into remote software engineering (QA Automation → SDET → Full-Stack).
