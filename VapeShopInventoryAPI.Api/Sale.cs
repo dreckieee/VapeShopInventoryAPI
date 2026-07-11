@@ -85,6 +85,24 @@ public class Sale
         {
             throw new InvalidOperationException("You cannot close an empty sale. Add items to the sale first.");
         }
+        
+        var shortages = new List<StockShortage>();
+        foreach (SaleItem si in _saleItems)
+        {
+            if(si.Quantity > si.Product.StockQuantity)
+            {
+                var shortage = new StockShortage(si.Product.Id, si.Product.Name, si.Quantity, si.Product.StockQuantity);
+                shortages.Add(shortage);
+            }
+        }
+        if (shortages.Count > 0)
+        {
+            throw new InsufficientStockException(shortages);
+        }
+        foreach(SaleItem si in _saleItems)
+        {
+            si.Product.ReduceStock(si.Quantity);
+        }
         IsClosed = true;
     }
     private void GuardSale(DateTime saleDate)
