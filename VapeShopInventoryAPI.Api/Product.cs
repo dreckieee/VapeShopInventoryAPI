@@ -28,6 +28,19 @@ public class Product
         StockQuantity = newProductStockQuantity;
         Category = newProductCategory;
     }
+
+    public void ReduceStock(int amount)
+    {
+        if (amount <= 0)
+        {
+            throw new ArgumentException("Cannot reduce stock by zero (0) or below.", nameof(amount));
+        }
+        if (amount > StockQuantity)
+        {
+            throw new InvalidOperationException("Cannot reduce stock by more than the current quantity of stock");
+        }
+        StockQuantity -= amount;
+    }
     private static void GuardProduct(string productName, string productSku, decimal productPrice, int productStockQuantity, string productCategory)
     {
         if (productName == null)
