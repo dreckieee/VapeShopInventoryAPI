@@ -64,6 +64,64 @@ public class SalesController : ControllerBase
         return CreatedAtAction(nameof(GetSale), new { id = sale.Id }, saleResponse);
     }
 
+    [HttpPost("{id}/close")]
+    public async Task<ActionResult<SaleResponse>> CloseSale(int id)
+    {
+        var sale = await _context.Sales.Include(s => s.SaleItems).ThenInclude(si => si.Product).FirstOrDefaultAsync(s => s.Id == id);
+        if (sale == null)
+        {
+            return NotFound();
+        }
+        try
+        {
+            sale.CloseSale();
+            await _context.SaveChangesAsync();
+
+            var saleItems = sale.SaleItems.Select(item => new SaleItemResponse
+            {
+                Id = item.Id,
+                ProductId = item.ProductId,
+                Quantity = item.Quantity,
+                UnitPriceAtSale = item.UnitPriceAtSale,
+                TransactionNumber = item.TransactionNumber
+            }).ToList();
+
+            var saleResponse = new SaleResponse {Id = sale.Id, 
+            SaleDate = sale.SaleDate, 
+            CreatedAt = sale.CreatedAt, 
+            IsClosed = sale.IsClosed, 
+            TransactionCount = sale.TransactionCount, 
+            ReductionFrequency = sale.ReductionFrequency, 
+            TotalQuantityReduction = sale.TotalQuantityReduction,
+            SaleItems = saleItems
+            };
+
+            return Ok(saleResponse);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (InsufficientStockException ex)
+        {
+            var shortages = ex.Shortages.Select(shortage => new StockShortageResponse{
+                ProductId = shortage.ProductId,
+                ProductName = shortage.ProductName,
+                RequestedQuantity = shortage.RequestedQuantity,
+                AvailableQuantity = shortage.AvailableQuantity 
+            }).ToList();
+
+            return Conflict(shortages);
+        }
+    }
+
+
+
+
     [HttpPatch("{id}/date")]
     public async Task<ActionResult<SaleResponse>> EditSaleDate(int id, [FromBody] EditSaleDateRequest request)
     {
