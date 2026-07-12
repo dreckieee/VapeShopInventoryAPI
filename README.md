@@ -99,6 +99,13 @@ If one or more sale items fail the stock recheck at close time, `CloseSale` coll
 - `POST /api/Sales/{saleId}/items` — add an item to a sale (combines quantity if same product + unit price already exists on the sale; rejects if requested quantity exceeds current product stock)
 - `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity (auto-removes the item if reduced to zero; updates audit counters on the sale)
 
+## Day 80 — Scoping (in progress)
+Build 3 complete. Options for next session:
+- Deploy the Web API (roadmap's Step 2 target)
+- Fix cancel-empty-sale gap (self-identified Day 79)
+- Deferred stretch items (DisplayPosition, audit log)
+- Begin Blazor Server UI phase
+
 ## About
 Part of my transition into remote software engineering (QA Automation → SDET → Full-Stack).
 Daily build-in-public log and full C# learning history: [github.com/dreckieee/csharp](https://github.com/dreckieee/csharp)
