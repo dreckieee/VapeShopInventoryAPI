@@ -166,4 +166,29 @@ public class SalesController : ControllerBase
         };
         return Ok(saleResponse);  
     }
+
+    [HttpPut("{id}/cancel")]
+    public async Task<IActionResult> CancelSale (int id)
+    {
+        var sale = await _context.Sales.FindAsync(id);
+        if (sale == null)
+        {
+            return NotFound();
+        }
+        try
+        {
+            sale.Cancel();
+
+            var saleItems = await _context.SaleItems.Where(si => si.SaleId == id).ToListAsync();
+            _context.SaleItems.RemoveRange(saleItems);
+            _context.Sales.Remove(sale);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
 }
