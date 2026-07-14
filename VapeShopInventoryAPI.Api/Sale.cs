@@ -1,5 +1,3 @@
-using System.Security.Cryptography.Xml;
-
 public class Sale
 {
     public int Id {get; private set;}
@@ -77,6 +75,10 @@ public class Sale
         {
             _saleItems.Remove(saleItemToReduceQuantity);
         }
+    }
+    public void Cancel()
+    {
+        GuardClosedSale();
     }
     public void CloseSale ()
     {
