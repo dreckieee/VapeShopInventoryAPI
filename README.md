@@ -3,7 +3,7 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: In Progress
-Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is now functionally complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested.
+Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. Deployment (roadmap Step 2 target) is the only remaining item before this build is done.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
@@ -33,9 +33,10 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
   - [x] Audit counters — `TransactionCount` (per-sale item numbering), `ReductionFrequency`, `TotalQuantityReduction` for manager-facing anomaly review
   - [x] `AddSaleAuditFields` migration — added `TransactionNumber`/`TransactionCount`/`ReductionFrequency`/`TotalQuantityReduction` columns, DB wiped and re-migrated clean
   - [x] Request/response DTOs — `CreateSaleRequest`, `AddSaleItemRequest`, `ReduceSaleItemQuantityRequest`, `EditSaleDateRequest`, `SaleItemResponse`, `SaleResponse`, `StockShortageResponse`
-  - [x] `SalesController` — `CreateSale`, `GetSale`, `EditSaleDate`, `CloseSale`
+  - [x] `SalesController` — `CreateSale`, `GetSale`, `EditSaleDate`, `CloseSale`, `CancelSale`
   - [x] `SaleItemsController` — `AddSaleItem` (with stock-availability check), `ReduceSaleItemQuantity`
   - [x] `CloseSale` endpoint — finalizes a sale, rechecks stock, and deducts on success
+  - [x] `CancelSale` endpoint — permanently deletes an open sale (and any items on it), regardless of item count (Day 82, closes the Day 79 self-identified gap)
 
 ## Tech notes
 - SQLite maps `decimal` → `TEXT` (exact precision, avoids float rounding vs REAL)
@@ -48,6 +49,7 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 - `ReduceSaleItemQuantityRequest` deliberately omits a `SaleItemId` field — the item id is already carried in the route (`{itemId}`), so duplicating it in the body would create two sources of truth for the same value
 - `Product.ReduceStock()` guards independently against over-reduction (`InvalidOperationException` if the amount requested exceeds current stock) — it does not trust callers to have already checked, so the guard holds even if future code calls it from a new call site
 - `CloseSale()` collects **all** stock shortages across a sale's items before throwing, rather than failing on the first one found — a cashier fixing a multi-item sale sees every problem at once instead of one at a time across repeated close attempts
+- `Sale`↔`SaleItem` uses `DeleteBehavior.Restrict` at the EF Core level (deliberately kept, not switched to cascade), so `CancelSale` explicitly deletes a sale's `SaleItem` rows before deleting the `Sale` itself — this keeps entity deletion an explicit, visible decision at every call site rather than a schema-wide default that could silently cascade in a future feature
 
 ### Design decision: stock deduction timing
 Stock is deducted from `Product.StockQuantity` at `CloseSale` time, not at `AddSaleItem` time. `AddSaleItem` does check current stock and rejects the request (`409 Conflict`) if insufficient, but does not deduct — it only prevents adding more than what's available at that moment. `CloseSale` rechecks stock for every item immediately before committing, since stock can change between `AddSaleItem` and `CloseSale`.
@@ -58,6 +60,11 @@ Stock is deducted from `Product.StockQuantity` at `CloseSale` time, not at `AddS
 
 ### Design decision: `CloseSale` failure handling
 If one or more sale items fail the stock recheck at close time, `CloseSale` collects every failing item (not just the first) and throws a single exception carrying the full list — no partial state is ever saved (nothing is written to the database until the entire recheck passes and every item is confirmed decrementable). The sale remains open and untouched, and the cashier can address every reported shortage before retrying the close.
+
+### Design decision: `CancelSale` scope and limitation
+`CancelSale` permanently deletes an open (not yet closed) sale and any `SaleItem` rows attached to it, regardless of how many items it has. This is deliberately uniform — an empty sale and a 15-item sale are cancelled the same way — because nothing affects `Product.StockQuantity` until `CloseSale` runs, so an unclosed sale of any size has no business/inventory impact to preserve.
+
+**Known limitation:** no audit trail or record is kept of a cancelled sale — the row and its items are gone with no trace. Acceptable for this use case: an unclosed sale was never a completed transaction, so there is nothing the shop owner would need to reference later. If that assumption changes (e.g. a future need to track abandoned carts for pattern analysis), this would need a soft-cancel/status-flag redesign rather than a hard delete.
 
 ## Endpoints
 
@@ -94,17 +101,20 @@ If one or more sale items fail the stock recheck at close time, `CloseSale` coll
 ```
     No stock is deducted and the sale stays open if any shortage is found.
   - `200 OK` with the updated `SaleResponse` on success — stock is decremented for every item and the sale is marked closed
+- `PUT /api/Sales/{id}/cancel` — permanently cancel an open sale (`CancelSale`):
+  - `404 NotFound` if the sale doesn't exist
+  - `400 BadRequest` if the sale is already closed
+  - `204 NoContent` on success — the sale and any attached `SaleItem` rows are deleted; no stock is affected since cancel only applies to sales that haven't been closed
 
 ### Sale Items
 - `POST /api/Sales/{saleId}/items` — add an item to a sale (combines quantity if same product + unit price already exists on the sale; rejects if requested quantity exceeds current product stock)
 - `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity (auto-removes the item if reduced to zero; updates audit counters on the sale)
 
-## Day 80 — Scoping (in progress)
-Build 3 complete. Options for next session:
-- Deploy the Web API (roadmap's Step 2 target)
-- Fix cancel-empty-sale gap (self-identified Day 79)
-- Deferred stretch items (DisplayPosition, audit log)
-- Begin Blazor Server UI phase
+## Day 82 — Status
+Build 3 fully complete, including the cancel-empty-sale gap fix. Remaining before Step 2 is done:
+- Deploy the Web API (roadmap's Step 2 target) — hosting decision in progress (Oracle Cloud Always Free pending; VM-based paid alternatives under evaluation)
+- Deferred stretch items (DisplayPosition, full audit log)
+- Blazor Server UI phase queued behind deployment completion
 
 ## About
 Part of my transition into remote software engineering (QA Automation → SDET → Full-Stack).
