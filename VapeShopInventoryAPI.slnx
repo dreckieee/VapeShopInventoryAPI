@@ -1,2 +1,3 @@
 <Solution>
+  <Project Path="VapeShopInventoryAPI.Tests/VapeShopInventoryAPI.Tests.csproj" />
 </Solution>
