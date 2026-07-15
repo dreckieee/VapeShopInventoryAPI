@@ -3,12 +3,17 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: In Progress
-Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. Deployment (roadmap Step 2 target) is the only remaining item before this build is done.
+Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. A Playwright + NUnit test project has been scaffolded (Day 83) as groundwork for the QA automation phase. Deployment (roadmap Step 2 target) is the only remaining item before this build is done.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
 - Entity Framework Core
 - SQLite
+
+## Testing
+- `VapeShopInventoryAPI.Tests` — dedicated NUnit test project (Day 83), using `Microsoft.Playwright.NUnit` for browser-based test automation
+- First smoke test passing: navigates to a live page and asserts on page title, confirming the full pipeline (build → browser install → test execution) works end-to-end
+- Purpose: groundwork for Step 3 of the roadmap (Playwright + NUnit portfolio item) — future tests will target this API's own endpoints/UI once deployed
 
 ## Roadmap Checklist
 
@@ -110,9 +115,9 @@ If one or more sale items fail the stock recheck at close time, `CloseSale` coll
 - `POST /api/Sales/{saleId}/items` — add an item to a sale (combines quantity if same product + unit price already exists on the sale; rejects if requested quantity exceeds current product stock)
 - `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity (auto-removes the item if reduced to zero; updates audit counters on the sale)
 
-## Day 82 — Status
-Build 3 fully complete, including the cancel-empty-sale gap fix. Remaining before Step 2 is done:
-- Deploy the Web API (roadmap's Step 2 target) — hosting decision in progress (Oracle Cloud Always Free pending; VM-based paid alternatives under evaluation)
+## Day 83 — Status
+Build 3 remains fully complete. New this session: scaffolded a `VapeShopInventoryAPI.Tests` project using Playwright + NUnit, with a first passing smoke test — groundwork for the roadmap's Step 3 (Playwright automation portfolio item). Remaining before Step 2 is done:
+- Deploy the Web API (roadmap's Step 2 target) — Oracle Cloud Always Free signup unresolved after support ticket; Azure B1s (Southeast Asia) selected as the fallback path, pending account setup
 - Deferred stretch items (DisplayPosition, full audit log)
 - Blazor Server UI phase queued behind deployment completion
 
