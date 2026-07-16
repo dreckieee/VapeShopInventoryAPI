@@ -3,7 +3,7 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: In Progress
-Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. A Playwright + NUnit test project has been scaffolded (Day 83) as groundwork for the QA automation phase. Deployment (roadmap Step 2 target) is the only remaining item before this build is done.
+Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. A Playwright + NUnit test project has been scaffolded (Day 83), and now includes a passing API-mode test against this API's own `GET /api/Products` endpoint (Day 84). Deployment (roadmap Step 2 target) is the only remaining item before this build is done.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
@@ -11,9 +11,10 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 - SQLite
 
 ## Testing
-- `VapeShopInventoryAPI.Tests` — dedicated NUnit test project (Day 83), using `Microsoft.Playwright.NUnit` for browser-based test automation
-- First smoke test passing: navigates to a live page and asserts on page title, confirming the full pipeline (build → browser install → test execution) works end-to-end
-- Purpose: groundwork for Step 3 of the roadmap (Playwright + NUnit portfolio item) — future tests will target this API's own endpoints/UI once deployed
+- `VapeShopInventoryAPI.Tests` — dedicated NUnit test project (Day 83), using `Microsoft.Playwright.NUnit` for both browser-based and API-mode test automation
+- First smoke test (Day 83): navigates to a live page and asserts on page title, confirming the full pipeline (build → browser install → test execution) works end-to-end
+- First API-mode test (Day 84): `ProductsApiTests.GetProducts_ReturnsSuccessAndNonEmptyList` — uses `PlaywrightTest` + `IAPIRequestContext` to send a real `GET /api/Products` request against the API running locally, asserting both a successful response and non-empty deserialized product data
+- Purpose: groundwork for Step 3 of the roadmap (Playwright + NUnit portfolio item) — future tests will target this API's own endpoints once deployed, in addition to local runs
 
 ## Roadmap Checklist
 
@@ -55,6 +56,7 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 - `Product.ReduceStock()` guards independently against over-reduction (`InvalidOperationException` if the amount requested exceeds current stock) — it does not trust callers to have already checked, so the guard holds even if future code calls it from a new call site
 - `CloseSale()` collects **all** stock shortages across a sale's items before throwing, rather than failing on the first one found — a cashier fixing a multi-item sale sees every problem at once instead of one at a time across repeated close attempts
 - `Sale`↔`SaleItem` uses `DeleteBehavior.Restrict` at the EF Core level (deliberately kept, not switched to cascade), so `CancelSale` explicitly deletes a sale's `SaleItem` rows before deleting the `Sale` itself — this keeps entity deletion an explicit, visible decision at every call site rather than a schema-wide default that could silently cascade in a future feature
+- API responses serialize with camelCase JSON property names (ASP.NET Core default); any test or client deserializing directly into domain classes (e.g. `Product`, whose constructor parameters are lowercase but match PascalCase properties) must set `PropertyNameCaseInsensitive = true` on `JsonSerializerOptions` to avoid null-argument failures on the parameterized constructor
 
 ### Design decision: stock deduction timing
 Stock is deducted from `Product.StockQuantity` at `CloseSale` time, not at `AddSaleItem` time. `AddSaleItem` does check current stock and rejects the request (`409 Conflict`) if insufficient, but does not deduct — it only prevents adding more than what's available at that moment. `CloseSale` rechecks stock for every item immediately before committing, since stock can change between `AddSaleItem` and `CloseSale`.
@@ -115,9 +117,9 @@ If one or more sale items fail the stock recheck at close time, `CloseSale` coll
 - `POST /api/Sales/{saleId}/items` — add an item to a sale (combines quantity if same product + unit price already exists on the sale; rejects if requested quantity exceeds current product stock)
 - `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity (auto-removes the item if reduced to zero; updates audit counters on the sale)
 
-## Day 83 — Status
-Build 3 remains fully complete. New this session: scaffolded a `VapeShopInventoryAPI.Tests` project using Playwright + NUnit, with a first passing smoke test — groundwork for the roadmap's Step 3 (Playwright automation portfolio item). Remaining before Step 2 is done:
-- Deploy the Web API (roadmap's Step 2 target) — Oracle Cloud Always Free signup unresolved after support ticket; Azure B1s (Southeast Asia) selected as the fallback path, pending account setup
+## Day 84 — Status
+Build 3 remains fully complete. Deployment is on hold pending a family conversation, since both Azure and Hetzner signup require a card for identity verification. With deployment blocked, work pivoted to Step 3 (Playwright): added the project's first API-mode test (`ProductsApiTests`), which sends a real request to the locally running API and validates both response status and body content. Along the way, found and fixed a genuine JSON casing bug (camelCase API output vs PascalCase domain constructor) and resolved a high-severity NuGet vulnerability (`SQLitePCLRaw.lib.e_sqlite3` 2.1.11 → 3.50.3) via a direct package override plus an EF Core Sqlite patch bump. Remaining before Step 2 is done:
+- Deploy the Web API (roadmap's Step 2 target) — on hold pending card/identity verification decision (Azure B1s Southeast Asia selected as primary path; Hetzner CX22 as fallback)
 - Deferred stretch items (DisplayPosition, full audit log)
 - Blazor Server UI phase queued behind deployment completion
 
