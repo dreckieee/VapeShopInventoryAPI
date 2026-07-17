@@ -117,9 +117,10 @@ If one or more sale items fail the stock recheck at close time, `CloseSale` coll
 - `POST /api/Sales/{saleId}/items` — add an item to a sale (combines quantity if same product + unit price already exists on the sale; rejects if requested quantity exceeds current product stock)
 - `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity (auto-removes the item if reduced to zero; updates audit counters on the sale)
 
-## Day 84 — Status
-Build 3 remains fully complete. Deployment is on hold pending a family conversation, since both Azure and Hetzner signup require a card for identity verification. With deployment blocked, work pivoted to Step 3 (Playwright): added the project's first API-mode test (`ProductsApiTests`), which sends a real request to the locally running API and validates both response status and body content. Along the way, found and fixed a genuine JSON casing bug (camelCase API output vs PascalCase domain constructor) and resolved a high-severity NuGet vulnerability (`SQLitePCLRaw.lib.e_sqlite3` 2.1.11 → 3.50.3) via a direct package override plus an EF Core Sqlite patch bump. Remaining before Step 2 is done:
+## Day 85 — Status
+Build 3 remains fully complete. Deployment is still on hold: still discussing with family whether to use a card for Azure or Hetzner signup identity verification. No infra changes made — planning stage only. Remaining before Step 2 is done:
 - Deploy the Web API (roadmap's Step 2 target) — on hold pending card/identity verification decision (Azure B1s Southeast Asia selected as primary path; Hetzner CX22 as fallback)
+- Next planned test once test-writing resumes: GET not-found case (e.g. `GET /api/Products/{id}` with a bad/nonexistent id)
 - Deferred stretch items (DisplayPosition, full audit log)
 - Blazor Server UI phase queued behind deployment completion
 
