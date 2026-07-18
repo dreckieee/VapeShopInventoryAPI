@@ -3,7 +3,7 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: In Progress
-Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. A Playwright + NUnit test project has been scaffolded (Day 83), and now includes a passing API-mode test against this API's own `GET /api/Products` endpoint (Day 84). Deployment (roadmap Step 2 target) is the only remaining item before this build is done.
+Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. A Playwright + NUnit test project has been scaffolded (Day 83), and now includes passing API-mode tests against this API's own `GET /api/Products` endpoints — a happy-path test (Day 84) and a not-found test (Day 86). Deployment (roadmap Step 2 target) is the only remaining item before this build is done.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
@@ -14,6 +14,7 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 - `VapeShopInventoryAPI.Tests` — dedicated NUnit test project (Day 83), using `Microsoft.Playwright.NUnit` for both browser-based and API-mode test automation
 - First smoke test (Day 83): navigates to a live page and asserts on page title, confirming the full pipeline (build → browser install → test execution) works end-to-end
 - First API-mode test (Day 84): `ProductsApiTests.GetProducts_ReturnsSuccessAndNonEmptyList` — uses `PlaywrightTest` + `IAPIRequestContext` to send a real `GET /api/Products` request against the API running locally, asserting both a successful response and non-empty deserialized product data
+- Not-found test (Day 86): `ProductsApiTests.GetProduct_NonExistentId_ReturnsNotFound` — sends `GET /api/Products/-1` (a structurally guaranteed non-existent id, since ids are non-negative) and asserts the response status equals `404 NotFound`
 - Purpose: groundwork for Step 3 of the roadmap (Playwright + NUnit portfolio item) — future tests will target this API's own endpoints once deployed, in addition to local runs
 
 ## Roadmap Checklist
@@ -57,6 +58,7 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 - `CloseSale()` collects **all** stock shortages across a sale's items before throwing, rather than failing on the first one found — a cashier fixing a multi-item sale sees every problem at once instead of one at a time across repeated close attempts
 - `Sale`↔`SaleItem` uses `DeleteBehavior.Restrict` at the EF Core level (deliberately kept, not switched to cascade), so `CancelSale` explicitly deletes a sale's `SaleItem` rows before deleting the `Sale` itself — this keeps entity deletion an explicit, visible decision at every call site rather than a schema-wide default that could silently cascade in a future feature
 - API responses serialize with camelCase JSON property names (ASP.NET Core default); any test or client deserializing directly into domain classes (e.g. `Product`, whose constructor parameters are lowercase but match PascalCase properties) must set `PropertyNameCaseInsensitive = true` on `JsonSerializerOptions` to avoid null-argument failures on the parameterized constructor
+- Negative ids (e.g. `-1`) are a reliable choice for "guaranteed non-existent" test data: auto-increment ids never go negative, so this doesn't rely on assumptions about the current seed/reset state of the database, unlike picking `0` or an arbitrarily large number
 
 ### Design decision: stock deduction timing
 Stock is deducted from `Product.StockQuantity` at `CloseSale` time, not at `AddSaleItem` time. `AddSaleItem` does check current stock and rejects the request (`409 Conflict`) if insufficient, but does not deduct — it only prevents adding more than what's available at that moment. `CloseSale` rechecks stock for every item immediately before committing, since stock can change between `AddSaleItem` and `CloseSale`.
@@ -117,10 +119,10 @@ If one or more sale items fail the stock recheck at close time, `CloseSale` coll
 - `POST /api/Sales/{saleId}/items` — add an item to a sale (combines quantity if same product + unit price already exists on the sale; rejects if requested quantity exceeds current product stock)
 - `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity (auto-removes the item if reduced to zero; updates audit counters on the sale)
 
-## Day 85 — Status
-Build 3 remains fully complete. Deployment is still on hold: still discussing with family whether to use a card for Azure or Hetzner signup identity verification. No infra changes made — planning stage only. Remaining before Step 2 is done:
-- Deploy the Web API (roadmap's Step 2 target) — on hold pending card/identity verification decision (Azure B1s Southeast Asia selected as primary path; Hetzner CX22 as fallback)
-- Next planned test once test-writing resumes: GET not-found case (e.g. `GET /api/Products/{id}` with a bad/nonexistent id)
+## Day 86 — Status
+Build 3 remains fully complete. Added a second API-mode Playwright test: `GetProduct_NonExistentId_ReturnsNotFound`, covering `GET /api/Products/{id}` with a guaranteed non-existent id (`-1`), asserting a `404 NotFound` status. Deployment is still on hold: card conversation with family for Azure/Hetzner signup identity verification is scheduled for tonight (Day 86). Remaining before Step 2 is done:
+- Deploy the Web API (roadmap's Step 2 target) — pending tonight's card conversation; Azure B1s Southeast Asia selected as primary path, Hetzner CX22 as fallback
+- Next planned test once test-writing resumes: a POST test, or introducing `[SetUp]`/`[TearDown]`/shared base class once boilerplate duplication across tests makes the need concrete
 - Deferred stretch items (DisplayPosition, full audit log)
 - Blazor Server UI phase queued behind deployment completion
 
