@@ -74,15 +74,8 @@ public class ProductsApiTests : PlaywrightTest
 
     }
 
-    /*
-        Documents current behavior only — CreateProduct has no handling 
-        for guard-clause exceptions thrown during model binding, so invalid 
-        input currently surfaces as 500, not 400. Known gap (see Day 88 log), 
-        fix deferred — will need either global exception middleware or a 
-        Products DTO layer.
-    */
     [Test]
-    public async Task CreateProduct_InvalidProduct_ReturnsInternalServerError()
+    public async Task CreateProduct_InvalidProduct_ReturnsBadRequest()
     {
         var invalidProductPayLoad = new
         {
@@ -96,7 +89,7 @@ public class ProductsApiTests : PlaywrightTest
         {
             DataObject = invalidProductPayLoad
         });
-        Assert.That(response.Status, Is.EqualTo((int)HttpStatusCode.InternalServerError), $"Expected 500 InternalServerError() status, but received {response.Status}");
+        Assert.That(response.Status, Is.EqualTo((int)HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.Status}");
     }
 
     [TearDown]
