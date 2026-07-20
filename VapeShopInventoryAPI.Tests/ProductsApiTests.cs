@@ -9,15 +9,22 @@ public class ProductsApiTests : PlaywrightTest
 {
     private int? _createdProductId;
     private const string BaseUrl = "http://localhost:5208";
+    private IAPIRequestContext _apiContext = null!;
+
+    [SetUp]
+    public async Task SetupApi()
+    {
+        _apiContext = await Playwright.APIRequest.NewContextAsync(new ()
+        {
+            BaseURL = BaseUrl
+        }); 
+    }
+
+
     [Test]
     public async Task GetProducts_ReturnsSuccessAndNonEmptyList()
     {
-        await using IAPIRequestContext apiContext = await Playwright.APIRequest.NewContextAsync(new ()
-        {
-            BaseURL = BaseUrl
-        });   
-
-        var response = await apiContext.GetAsync("/api/Products");
+        var response = await _apiContext.GetAsync("/api/Products");
         Assert.That(response.Ok, Is.True, $"Expected 200 Ok() status, but received {response.Status}");
 
         var responseBody = await response.TextAsync();
@@ -31,23 +38,13 @@ public class ProductsApiTests : PlaywrightTest
     public async Task GetProduct_NonExistentId_ReturnsNotFound()
     {
         int testId = -1;
-        await using IAPIRequestContext apiContext = await Playwright.APIRequest.NewContextAsync(new ()
-        {
-            BaseURL = BaseUrl
-        });   
-
-        var response = await apiContext.GetAsync($"/api/Products/{testId}");
+        var response = await _apiContext.GetAsync($"/api/Products/{testId}");
         Assert.That(response.Status, Is.EqualTo((int)HttpStatusCode.NotFound), $"Expected 404 NotFound() status, but received {response.Status}");
     }
 
     [Test]
     public async Task CreateProduct_ValidProduct_ReturnsCreated()
     {
-        await using IAPIRequestContext apiContext = await Playwright.APIRequest.NewContextAsync(new ()
-        {
-            BaseURL = BaseUrl
-        });   
-
         var newProductPayLoad = new
         {
             name = "TestProduct",
@@ -56,7 +53,7 @@ public class ProductsApiTests : PlaywrightTest
             stockQuantity = 99,
             category = "Test"
         };
-        var response = await apiContext.PostAsync("/api/Products", new APIRequestContextOptions
+        var response = await _apiContext.PostAsync("/api/Products", new APIRequestContextOptions
         {
             DataObject = newProductPayLoad
         });
@@ -84,15 +81,12 @@ public class ProductsApiTests : PlaywrightTest
         {
             try
             {
-                await using IAPIRequestContext apiContext = await Playwright.APIRequest.NewContextAsync(new ()
-                {
-                    BaseURL = BaseUrl
-                });
-                var response = await apiContext.DeleteAsync($"/api/Products/{_createdProductId}");
+                var response = await _apiContext.DeleteAsync($"/api/Products/{_createdProductId}");
                 if(response.Status != (int)HttpStatusCode.NoContent)
                 {
                     throw new Exception($"Expected 204 NoContent() status, but received {response.Status}");
                 }
+                
             }
             catch (Exception ex)
             {
@@ -103,5 +97,6 @@ public class ProductsApiTests : PlaywrightTest
                 _createdProductId = null;
             }
         }
+            await _apiContext.DisposeAsync();
     }
 }
