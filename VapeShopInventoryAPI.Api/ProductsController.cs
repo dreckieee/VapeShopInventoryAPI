@@ -29,13 +29,22 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Product>> CreateProduct(Product product)
+    public async Task<ActionResult<ProductResponse>> CreateProduct([FromBody] CreateProductRequest request)
     {
+        Product product = null!;
         try
-        {
+        {    
+            product = new Product(request.Name, request.Sku, request.Price, request.StockQuantity, request.Category);
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
+        }
+        catch (ArgumentNullException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
         catch (DbUpdateException ex)
         {
@@ -52,6 +61,19 @@ public class ProductsController : ControllerBase
             _logger.LogError(ex, "Unexpected Error creating product: {Name}", product.Name);
             return Conflict(new {message = "Unable to create product due to a data conflict."});
         }
+
+        var productResponse = new ProductResponse {
+            Id = product.Id, 
+            Name = product.Name,
+            Sku = product.Sku,
+            Price = product.Price,
+            StockQuantity = product.StockQuantity,
+            Category = product.Category,
+            CreatedAt = product.CreatedAt
+            }; 
+            
+
+        return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, productResponse);
     }
 
         
