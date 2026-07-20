@@ -74,6 +74,31 @@ public class ProductsApiTests : PlaywrightTest
 
     }
 
+    /*
+        Documents current behavior only — CreateProduct has no handling 
+        for guard-clause exceptions thrown during model binding, so invalid 
+        input currently surfaces as 500, not 400. Known gap (see Day 88 log), 
+        fix deferred — will need either global exception middleware or a 
+        Products DTO layer.
+    */
+    [Test]
+    public async Task CreateProduct_InvalidProduct_ReturnsInternalServerError()
+    {
+        var invalidProductPayLoad = new
+        {
+            name = "TestInvalidProduct",
+            sku = "test002",
+            price = 99.99m,
+            stockQuantity = -1,
+            category = "Test"
+        };
+        var response = await _apiContext.PostAsync("/api/Products", new APIRequestContextOptions
+        {
+            DataObject = invalidProductPayLoad
+        });
+        Assert.That(response.Status, Is.EqualTo((int)HttpStatusCode.InternalServerError), $"Expected 500 InternalServerError() status, but received {response.Status}");
+    }
+
     [TearDown]
     public async Task DeleteTestProduct()
     {
@@ -97,6 +122,6 @@ public class ProductsApiTests : PlaywrightTest
                 _createdProductId = null;
             }
         }
-            await _apiContext.DisposeAsync();
+        await _apiContext.DisposeAsync();
     }
 }
