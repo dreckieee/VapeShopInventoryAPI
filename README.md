@@ -3,7 +3,7 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: In Progress
-Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. A Playwright + NUnit test project has been scaffolded (Day 83), and now includes 5 passing API-mode tests against this API's own `GET`/`POST` `/api/Products` endpoints — a happy-path GET (Day 84), a not-found GET (Day 86), a POST/create test with automatic teardown cleanup (Day 87), and a POST/invalid-payload test (Day 88). A dedicated Products DTO layer (`CreateProductRequest`/`ProductResponse`) was introduced Day 88, fixing a real bug where invalid input to `POST /api/Products` returned an unhandled `500` instead of a clean `400`. Oracle Cloud account creation succeeded Day 88 after being blocked since Day 80 — VM provisioning and the actual deployment are the only remaining items before this build is done.
+Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. A Playwright + NUnit test project has been scaffolded (Day 83), and now includes 5 passing API-mode tests against this API's own `GET`/`POST` `/api/Products` endpoints. A dedicated Products DTO layer (`CreateProductRequest`/`ProductResponse`) was introduced Day 88, fixing a real bug where invalid input to `POST /api/Products` returned an unhandled `500` instead of a clean `400`. Deployment remains the only item blocking Step 2 completion — see Day 89 log for current hosting-provider status.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
@@ -13,81 +13,39 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 ## Testing
 - `VapeShopInventoryAPI.Tests` — dedicated NUnit test project (Day 83), using `Microsoft.Playwright.NUnit` for both browser-based and API-mode test automation
 - First smoke test (Day 83): navigates to a live page and asserts on page title, confirming the full pipeline (build → browser install → test execution) works end-to-end
-- First API-mode test (Day 84): `ProductsApiTests.GetProducts_ReturnsSuccessAndNonEmptyList` — uses `PlaywrightTest` + `IAPIRequestContext` to send a real `GET /api/Products` request against the API running locally, asserting both a successful response and non-empty deserialized product data
-- Not-found test (Day 86): `ProductsApiTests.GetProduct_NonExistentId_ReturnsNotFound` — sends `GET /api/Products/-1` (a structurally guaranteed non-existent id, since ids are non-negative) and asserts the response status equals `404 NotFound`
-- Create test with cleanup (Day 87): `ProductsApiTests.CreateProduct_ValidProduct_ReturnsCreated` — sends `POST /api/Products` with a valid payload, asserts `201 Created` and that every returned field matches what was sent. Paired with a `[TearDown]` method (`DeleteTestProduct`) that deletes the created product after every test run, so the suite doesn't leak data into the database between runs
-- Invalid-payload test (Day 88): `ProductsApiTests.CreateProduct_InvalidProduct_ReturnsBadRequest` — sends `POST /api/Products` with a negative `stockQuantity`, asserts `400 BadRequest`. Originally written and committed asserting `500 InternalServerError` (the actual behavior at the time, from a real bug — see Tech notes), then updated to assert `400` once the underlying bug was fixed the same session
-- `[SetUp]`/`[TearDown]` refactor (Day 88): `_apiContext` (the `IAPIRequestContext` shared by every test) is now created fresh per test in `[SetUp]` and disposed unconditionally in `[TearDown]`, removing request-context boilerplate that had been duplicated across all four Products tests
+- First API-mode test (Day 84): `ProductsApiTests.GetProducts_ReturnsSuccessAndNonEmptyList`
+- Not-found test (Day 86): `ProductsApiTests.GetProduct_NonExistentId_ReturnsNotFound`
+- Create test with cleanup (Day 87): `ProductsApiTests.CreateProduct_ValidProduct_ReturnsCreated`
+- Invalid-payload test (Day 88): `ProductsApiTests.CreateProduct_InvalidProduct_ReturnsBadRequest`
+- `[SetUp]`/`[TearDown]` refactor (Day 88): shared `IAPIRequestContext` creation/disposal across all Products tests
 - Purpose: groundwork for Step 3 of the roadmap (Playwright + NUnit portfolio item) — future tests will target this API's own endpoints once deployed, in addition to local runs
 
 ## Roadmap Checklist
 
 - [x] Build 1 — Product CRUD (GET/POST/PUT/DELETE)
-  - [x] Routing, Controllers, DI, EF Core basics, SQLite
-  - [x] Unique SKU constraint + structured exception handling
-  - [x] Swagger/OpenAPI UI
-  - [x] `CreateProductRequest`/`ProductResponse` DTO layer for `CreateProduct` (Day 88)
-
 - [x] Build 2 — Expense CRUD (GET/POST/PUT/DELETE)
-  - [x] Domain validation (Description, Amount, Category, Date)
-  - [x] EF Core migration for Expenses table
-  - [x] UpdateExpenseRequest DTO for PUT binding
-  - [x] Tested end-to-end via curl.exe
-  
 - [x] Build 3 — Sale + SaleItem (1-to-many)
-  - [x] `Sale` domain class — closed-sale guard, minimum-one-item close rule, item collection encapsulation
-  - [x] `SaleItem` domain class — snapshot-at-creation `UnitPriceAtSale`, aggregate-root pattern (no self-`Edit()`)
-  - [x] EF Core relationships — `Sale`↔`SaleItem` (restrict-on-delete) and `Product`↔`SaleItem` (restrict-on-delete), both migrated
-  - [x] Blind recreation drill — domain logic reconstructed from memory, verified correct
-  - [x] Combine-on-add — duplicate product+price additions merge into existing item's quantity instead of creating a new row
-  - [x] `ReduceQuantity` — partial quantity reduction with guard against over-reduction; auto-removes item at zero quantity
-  - [x] Audit counters — `TransactionCount` (per-sale item numbering), `ReductionFrequency`, `TotalQuantityReduction` for manager-facing anomaly review
-  - [x] `AddSaleAuditFields` migration — added `TransactionNumber`/`TransactionCount`/`ReductionFrequency`/`TotalQuantityReduction` columns, DB wiped and re-migrated clean
-  - [x] Request/response DTOs — `CreateSaleRequest`, `AddSaleItemRequest`, `ReduceSaleItemQuantityRequest`, `EditSaleDateRequest`, `SaleItemResponse`, `SaleResponse`, `StockShortageResponse`
-  - [x] `SalesController` — `CreateSale`, `GetSale`, `EditSaleDate`, `CloseSale`, `CancelSale`
-  - [x] `SaleItemsController` — `AddSaleItem` (with stock-availability check), `ReduceSaleItemQuantity`
-  - [x] `CloseSale` endpoint — finalizes a sale, rechecks stock, and deducts on success
-  - [x] `CancelSale` endpoint — permanently deletes an open sale (and any items on it), regardless of item count (Day 82, closes the Day 79 self-identified gap)
+- [ ] Deployment (in progress — see Day 89 log)
 
 ## Tech notes
 - SQLite maps `decimal` → `TEXT` (exact precision, avoids float rounding vs REAL)
 - No magic strings: table/column names resolved dynamically via `_context.Model`
-- `Sale.SaleItems` navigation uses `UsePropertyAccessMode(PropertyAccessMode.Field)` since it's exposed as a computed `IReadOnlyList<SaleItem>`, not a settable property
-- `SaleItem.TransactionNumber` is per-`Sale`, monotonically increasing (never reused, never decremented) — gaps from removed items are expected and preserved for audit purposes, not treated as errors
-- Response DTOs (`SaleResponse`, `SaleItemResponse`, `StockShortageResponse`, and now `ProductResponse`) never expose raw domain entities — avoids circular reference (`Sale` ↔ `SaleItem` navigation) and keeps internal fields out of the API contract
-- Deferred: gapless `DisplayPosition` field on `SaleItemResponse` for clean receipt-style numbering (computed per-response, not stored)
-- Controllers use `.Include()` (and `.ThenInclude()` where a nested navigation property like `SaleItem.Product` is needed) to eager-load related data when fetching a `Sale` — `FindAsync`/`FirstOrDefaultAsync` alone only loads the root entity, never related collections, unless explicitly told to
-- `ReduceSaleItemQuantityRequest` deliberately omits a `SaleItemId` field — the item id is already carried in the route (`{itemId}`), so duplicating it in the body would create two sources of truth for the same value
-- `Product.ReduceStock()` guards independently against over-reduction (`InvalidOperationException` if the amount requested exceeds current stock) — it does not trust callers to have already checked, so the guard holds even if future code calls it from a new call site
-- `CloseSale()` collects **all** stock shortages across a sale's items before throwing, rather than failing on the first one found — a cashier fixing a multi-item sale sees every problem at once instead of one at a time across repeated close attempts
-- `Sale`↔`SaleItem` uses `DeleteBehavior.Restrict` at the EF Core level (deliberately kept, not switched to cascade), so `CancelSale` explicitly deletes a sale's `SaleItem` rows before deleting the `Sale` itself — this keeps entity deletion an explicit, visible decision at every call site rather than a schema-wide default that could silently cascade in a future feature
-- API responses serialize with camelCase JSON property names (ASP.NET Core default); any test or client deserializing directly into domain classes (e.g. `Product`, whose constructor parameters are lowercase but match PascalCase properties) must set `PropertyNameCaseInsensitive = true` on `JsonSerializerOptions` to avoid null-argument failures on the parameterized constructor
-- Negative ids (e.g. `-1`) are a reliable choice for "guaranteed non-existent" test data: auto-increment ids never go negative, so this doesn't rely on assumptions about the current seed/reset state of the database, unlike picking `0` or an arbitrarily large number
-- **(Day 88 update)** `Product.Id` has a private setter and is not a constructor parameter, so `System.Text.Json` cannot populate it by default when deserializing. `[JsonInclude]` on `Id` is still present and still load-bearing — but only for `GetProducts`/`GetProduct`, which still return the raw `Product` entity directly. `CreateProduct` no longer needs it: it now returns a dedicated `ProductResponse` DTO that includes `Id` explicitly. `[JsonInclude]` will be removable once the DTO pattern is extended to the two read endpoints (tracked as a self-identified gap, not yet scheduled)
-- **(Day 88)** ASP.NET Core binds request bodies directly into the controller action's parameter type *before* the action method body runs. When that parameter was the raw `Product` domain class, constructor guard-clause exceptions (`ArgumentException`/`ArgumentNullException`) fired during model binding — outside any try/catch in the controller — and surfaced as an unhandled `500`. Fixed by introducing a `CreateProductRequest` DTO (no guard clauses of its own beyond `required` + non-nullable strings, which `[ApiController]`'s automatic model-state validation already turns into a `400`) and moving the actual `Product` construction *inside* the controller's `try` block, where its exceptions are now caught explicitly and returned as `400 BadRequest`
-- **(Day 88)** Hit "use of unassigned local variable" when declaring `Product product;` before a `try` block and assigning it inside — the compiler can't prove every code path (including catch clauses referencing `product`) definitely assigned it. Resolved with the null-forgiving initializer (`Product product = null!;`), the same pattern used for `_apiContext` in the test project's `[SetUp]`/`[TearDown]` refactor
+- Response DTOs never expose raw domain entities — avoids circular reference and keeps internal fields out of the API contract
+- API responses serialize with camelCase JSON property names; deserializing directly into domain classes requires `PropertyNameCaseInsensitive = true`
+- Negative ids (e.g. `-1`) are a reliable choice for "guaranteed non-existent" test data
 
 ### Design decision: stock deduction timing
-Stock is deducted from `Product.StockQuantity` at `CloseSale` time, not at `AddSaleItem` time. `AddSaleItem` does check current stock and rejects the request (`409 Conflict`) if insufficient, but does not deduct — it only prevents adding more than what's available at that moment. `CloseSale` rechecks stock for every item immediately before committing, since stock can change between `AddSaleItem` and `CloseSale`.
-
-**Why:** this API is built for a single-register, in-person retail context — a sale is built and closed within minutes by one cashier, not held open across many concurrent shoppers like an e-commerce cart. Deducting stock only on close avoids needing to "reserve" stock for open/abandoned sales, which would otherwise require restore-on-remove/restore-on-abandon logic.
-
-**Known limitation (explicit scope boundary):** this API assumes single-register, low-concurrency, in-person retail. It is **not** designed for shops running multiple simultaneous registers/cashiers against the same stock pool. Two registers could both add the last unit of a low-stock item to two different open sales before either closes — a race condition this API does not fully prevent. `CloseSale`'s stock recheck mitigates the worst outcome (no incorrect deduction ever happens — the close is rejected with a `409 Conflict` instead), but it does not eliminate the underlying race. Accepted tradeoff for the target use case (single physical shop, one register).
-
-### Design decision: `CloseSale` failure handling
-If one or more sale items fail the stock recheck at close time, `CloseSale` collects every failing item (not just the first) and throws a single exception carrying the full list — no partial state is ever saved (nothing is written to the database until the entire recheck passes and every item is confirmed decrementable). The sale remains open and untouched, and the cashier can address every reported shortage before retrying the close.
+Stock is deducted from `Product.StockQuantity` at `CloseSale` time, not at `AddSaleItem` time. Built for a single-register, in-person retail context — not designed for multiple simultaneous registers against the same stock pool (accepted, documented tradeoff).
 
 ### Design decision: `CancelSale` scope and limitation
-`CancelSale` permanently deletes an open (not yet closed) sale and any `SaleItem` rows attached to it, regardless of how many items it has. This is deliberately uniform — an empty sale and a 15-item sale are cancelled the same way — because nothing affects `Product.StockQuantity` until `CloseSale` runs, so an unclosed sale of any size has no business/inventory impact to preserve.
-
-**Known limitation:** no audit trail or record is kept of a cancelled sale — the row and its items are gone with no trace. Acceptable for this use case: an unclosed sale was never a completed transaction, so there is nothing the shop owner would need to reference later. If that assumption changes (e.g. a future need to track abandoned carts for pattern analysis), this would need a soft-cancel/status-flag redesign rather than a hard delete.
+`CancelSale` permanently deletes an open sale and any attached `SaleItem` rows, uniformly regardless of item count, since nothing affects stock until `CloseSale` runs. No audit trail is kept for cancelled sales — acceptable since an unclosed sale was never a completed transaction.
 
 ## Endpoints
 
 ### Products
 - `GET /api/Products` — list all products
 - `GET /api/Products/{id}` — get product by id
-- `POST /api/Products` — create product (Day 88: accepts `CreateProductRequest`, returns `ProductResponse`; invalid input returns `400 BadRequest`)
+- `POST /api/Products` — create product (returns `400 BadRequest` on invalid input)
 - `PUT /api/Products/{id}` — update product
 - `DELETE /api/Products/{id}` — delete product
 
@@ -101,37 +59,23 @@ If one or more sale items fail the stock recheck at close time, `CloseSale` coll
 ### Sales
 - `POST /api/Sales` — create a new sale
 - `GET /api/Sales/{id}` — get a sale with its items
-- `PATCH /api/Sales/{id}/date` — edit the sale date (blocked if sale is closed; rejects default/future dates)
-- `POST /api/Sales/{id}/close` — finalize a sale (`CloseSale`):
-  - `400 BadRequest` if the sale is already closed, or has zero items
-  - `409 Conflict` if one or more items now have insufficient stock — returns a list of every affected item:
-```json
-    [
-      {
-        "productId": 1,
-        "productName": "RELX Mango Juice",
-        "requestedQuantity": 3,
-        "availableQuantity": 1
-      }
-    ]
-```
-    No stock is deducted and the sale stays open if any shortage is found.
-  - `200 OK` with the updated `SaleResponse` on success — stock is decremented for every item and the sale is marked closed
-- `PUT /api/Sales/{id}/cancel` — permanently cancel an open sale (`CancelSale`):
-  - `404 NotFound` if the sale doesn't exist
-  - `400 BadRequest` if the sale is already closed
-  - `204 NoContent` on success — the sale and any attached `SaleItem` rows are deleted; no stock is affected since cancel only applies to sales that haven't been closed
+- `PATCH /api/Sales/{id}/date` — edit the sale date
+- `POST /api/Sales/{id}/close` — finalize a sale, decrementing stock
+- `PUT /api/Sales/{id}/cancel` — permanently cancel an open sale
 
 ### Sale Items
-- `POST /api/Sales/{saleId}/items` — add an item to a sale (combines quantity if same product + unit price already exists on the sale; rejects if requested quantity exceeds current product stock)
-- `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity (auto-removes the item if reduced to zero; updates audit counters on the sale)
+- `POST /api/Sales/{saleId}/items` — add an item to a sale
+- `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity
 
-## Day 88 — Status
-Build 3 remains fully complete. Refactored `ProductsApiTests.cs` to use `[SetUp]`/`[TearDown]` for shared `IAPIRequestContext` creation/disposal, removing boilerplate duplicated across all four existing tests. Added a fourth test targeting `POST /api/Products` with an invalid payload (negative `stockQuantity`) — this surfaced a real bug: invalid input was returning an unhandled `500` instead of a clean `400`, because the controller bound directly into the domain `Product`, and guard-clause exceptions fired during model binding, outside the controller's existing try/catch. Fixed by introducing a `CreateProductRequest`/`ProductResponse` DTO layer (mirroring the existing Sales pattern) and moving `Product` construction inside the controller's try block, where its exceptions are now caught and returned as `400`. Test suite: 5/5 passing. Oracle Cloud account creation succeeded today after being blocked since Day 80 — tenancy `dreckrjpascual`, home region Singapore West, matching the original plan. Remaining before Step 2 is done:
-- Provision the Oracle VM instance and complete deployment (Day 89, dedicated full session as a milestone)
-- Extend the `ProductResponse` DTO pattern to `GetProducts`/`GetProduct`, removing reliance on `[JsonInclude]` for those endpoints (self-identified gap, Day 88)
-- Deferred stretch items (DisplayPosition, full audit log)
-- Blazor Server UI phase queued behind deployment completion
+## Day 89 — Deployment troubleshooting: two providers blocked on capacity
+
+**Oracle Cloud (originally selected, account went live Day 88):** Attempted VM creation using the planned Always-Free-eligible `VM.Standard.A1.Flex` shape (2 OCPU/12GB, then retried at 1 OCPU/6GB) in Singapore West (AD-1). Both attempts failed with `Out of capacity for shape VM.Standard.A1.Flex in availability domain AD-1`. Confirmed as a known, widely-reported Always Free tier issue (Ampere capacity is shared and frequently exhausted), not an account or configuration problem. Checked "Specialty and previous generation" shapes for a smaller free x86 fallback (`VM.Standard.E2.1.Micro`) — not offered on this tenancy, confirming newer Oracle accounts only receive Ampere-based Always Free resources.
+
+**Azure (fallback attempt):** Created a new Pay-As-You-Go Azure account same-day (selected over Free Trial specifically because Free Trial subscriptions cannot request quota increases). Verified B-series VM pricing/allowances (B1s: free for 12 months under 750 hrs/month, ~$7.59/month after) before committing. Hit an equivalent blocker: attempting to select `Standard_B1s` in Southeast Asia surfaced a `Request quota` requirement; using Azure's own quota-recommendation tool confirmed **B-series is unavailable in Southeast Asia entirely** (not just quota-limited) — a regional capacity constraint, not something a support ticket resolves. Alternative regions offered by Azure's recommender (East Asia) did not include compatible small-instance SKUs. Cancelled the Azure subscription same-day (confirmed stopped billing immediately; full resource deletion scheduled by Microsoft for on/before Oct 20, 2026) rather than pursue a region that breaks the original Southeast Asia + AZ-900 synergy plan.
+
+**Decision:** pivot to DigitalOcean (paid, no free-tier capacity lottery) for Day 90 — chosen over Hetzner due to Hetzner's newly-confirmed biometric ID verification requirement (passport-tier document + live selfie), which poses real rejection risk given available ID documents on hand.
+
+**No structural regret on Oracle/Azure attempts** — both were reasonable, well-reasoned choices at the time; the blockers were genuine provider-side capacity constraints affecting many users, not planning errors.
 
 ## About
 Part of my transition into remote software engineering (QA Automation → SDET → Full-Stack).
