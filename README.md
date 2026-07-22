@@ -3,7 +3,7 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: In Progress
-Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. A Playwright + NUnit test project has been scaffolded (Day 83), and now includes 5 passing API-mode tests against this API's own `GET`/`POST` `/api/Products` endpoints. A dedicated Products DTO layer (`CreateProductRequest`/`ProductResponse`) was introduced Day 88, fixing a real bug where invalid input to `POST /api/Products` returned an unhandled `500` instead of a clean `400`. Deployment remains the only item blocking Step 2 completion — see Day 89 log for current hosting-provider status.
+Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end, including unique SKU constraint, structured exception handling, and DTO-based update binding. Build 3 (Sale + SaleItem) is fully complete end-to-end: domain layer, EF Core migrations, DTOs, `SalesController` (Create, Get, EditSaleDate, CloseSale, CancelSale), and `SaleItemsController` (AddSaleItem, ReduceSaleItemQuantity) are all implemented and tested. The self-identified cancel-empty-sale gap (Day 79) is now closed. A Playwright + NUnit test project has been scaffolded (Day 83), and now includes 5 passing API-mode tests against this API's own `GET`/`POST` `/api/Products` endpoints. A dedicated Products DTO layer (`CreateProductRequest`/`ProductResponse`) was introduced Day 88, fixing a real bug where invalid input to `POST /api/Products` returned an unhandled `500` instead of a clean `400`. On Day 90, `ProductResponse` construction was locked down (private constructor + factory method) so the DTO can only be built via a controlled mapping path — see Day 90 log below. Deployment remains the only item blocking Step 2 completion — see Day 89 log for current hosting-provider status.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
@@ -11,13 +11,14 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 - SQLite
 
 ## Testing
-- `VapeShopInventoryAPI.Tests` — dedicated NUnit test project (Day 83), using `Microsoft.Playwright.NUnit` for both browser-based and API-mode test automation
-- First smoke test (Day 83): navigates to a live page and asserts on page title, confirming the full pipeline (build → browser install → test execution) works end-to-end
+- `VapeShopInventoryAPI.Tests` — dedicated NUnit test project (Day 83), using `Microsoft.Playwright.NUnit` for API-mode test automation
 - First API-mode test (Day 84): `ProductsApiTests.GetProducts_ReturnsSuccessAndNonEmptyList`
 - Not-found test (Day 86): `ProductsApiTests.GetProduct_NonExistentId_ReturnsNotFound`
 - Create test with cleanup (Day 87): `ProductsApiTests.CreateProduct_ValidProduct_ReturnsCreated`
 - Invalid-payload test (Day 88): `ProductsApiTests.CreateProduct_InvalidProduct_ReturnsBadRequest`
 - `[SetUp]`/`[TearDown]` refactor (Day 88): shared `IAPIRequestContext` creation/disposal across all Products tests
+- Day 90: tests updated to deserialize responses into `ProductResponse` (not the raw `Product` entity), matching the tightened DTO construction rules — see Day 90 log below
+- Day 90: removed leftover default Playwright scaffold test (`Tests.cs`) that was causing a false failure on every run
 - Purpose: groundwork for Step 3 of the roadmap (Playwright + NUnit portfolio item) — future tests will target this API's own endpoints once deployed, in addition to local runs
 
 ## Roadmap Checklist
@@ -33,6 +34,7 @@ Build 1 (Product CRUD) and Build 2 (Expense CRUD) complete and tested end-to-end
 - Response DTOs never expose raw domain entities — avoids circular reference and keeps internal fields out of the API contract
 - API responses serialize with camelCase JSON property names; deserializing directly into domain classes requires `PropertyNameCaseInsensitive = true`
 - Negative ids (e.g. `-1`) are a reliable choice for "guaranteed non-existent" test data
+- Response DTOs with a single legitimate construction path (mapped from a real entity) use a private constructor + static factory method (e.g. `ProductResponse.FromProduct`), rather than public setters — prevents constructing a DTO with arbitrary, unvalidated data anywhere else in the codebase
 
 ### Design decision: stock deduction timing
 Stock is deducted from `Product.StockQuantity` at `CloseSale` time, not at `AddSaleItem` time. Built for a single-register, in-person retail context — not designed for multiple simultaneous registers against the same stock pool (accepted, documented tradeoff).
@@ -66,6 +68,27 @@ Stock is deducted from `Product.StockQuantity` at `CloseSale` time, not at `AddS
 ### Sale Items
 - `POST /api/Sales/{saleId}/items` — add an item to a sale
 - `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity
+
+## Day 90 — ProductResponse construction locked down; deployment on hold (card unavailable)
+
+**DTO refactor:** `ProductResponse` previously used public setters, allowing it to be constructed with arbitrary values from anywhere in the codebase — inconsistent with its role as a controlled mapping of a real `Product`. Refactored to:
+- All properties changed to `private set`
+- Added a `private` constructor taking all mapped values
+- Added a static `FromProduct(Product product)` factory method as the only way to construct a `ProductResponse`
+- Removed the now-redundant `required` modifiers (previously needed to catch missing fields at external call sites — no longer relevant once external construction is impossible)
+- Wired `FromProduct` into all three read/write endpoints in `ProductsController` (`GetProduct`, `GetProducts`, `CreateProduct`), replacing duplicated inline object-initializer blocks
+- Removed `[JsonInclude]` from `Product.Id`, since raw `Product` entities are no longer serialized directly in any response
+
+**Test suite fix:** the above change broke deserialization in `ProductsApiTests`, which had been deserializing API responses into `Product` (the entity) rather than `ProductResponse`. Since `Product.Id` no longer has `[JsonInclude]`, deserializing into `Product` silently left `Id` at `0`. Fixed by:
+- Updating both affected tests to deserialize into `ProductResponse` instead of `Product`
+- Adding `[JsonConstructor]` to `ProductResponse`'s private constructor, so `System.Text.Json` can construct valid instances directly from JSON (matching constructor parameter names to JSON fields) without needing public setters
+- Verified via `dotnet test`: all 4 `ProductsApiTests` pass, confirming no regression
+
+**Housekeeping:** removed `Tests.cs`, a leftover default Playwright scaffold test (`Test1`, navigating to playwright.dev) that was causing a false failure on every test run unrelated to this project's actual test suite.
+
+**Deployment status:** DigitalOcean account creation deferred — card temporarily unavailable (held by a family member). Planned Droplet spec decided ahead of time: 2GB RAM / 1 vCPU Basic Droplet (~$12/month), Ubuntu 24.04 LTS, Singapore region — chosen over the cheaper 1GB tier for headroom (on-box `dotnet publish`, future Blazor UI phase) given cost is not the deciding factor for this project. Deployment steps (account creation, Droplet creation, SSH/systemd/firewall setup) resume next session.
+
+**Queued for next session:** apply the same DTO-locking pattern (private constructor + factory method) to `SaleResponse` and `SaleItemResponse`, including nested mapping of `SaleItemResponse` within `SaleResponse.FromSale`, then replace the 6 duplicated inline construction sites across `SalesController` and `SaleItemsController`.
 
 ## Day 89 — Deployment troubleshooting: two providers blocked on capacity
 
