@@ -1,7 +1,6 @@
-using System.Text.Json.Serialization;
+
 public class Product
 {
-    [JsonInclude]
     public int Id {get; private set;}
     public string Name {get; private set;}
     public string Sku {get; private set;}
