@@ -29,7 +29,7 @@ public class ProductsApiTests : PlaywrightTest
 
         var responseBody = await response.TextAsync();
         var options = new JsonSerializerOptions {PropertyNameCaseInsensitive = true};
-        var products = JsonSerializer.Deserialize<List<Product>>(responseBody, options);
+        var products = JsonSerializer.Deserialize<List<ProductResponse>>(responseBody, options);
         Assert.That(products, Is.Not.Null);
         Assert.That(products.Count, Is.GreaterThan(0));
     }
@@ -61,7 +61,7 @@ public class ProductsApiTests : PlaywrightTest
 
         var responseBody = await response.TextAsync();
         var options = new JsonSerializerOptions {PropertyNameCaseInsensitive = true};
-        var product = JsonSerializer.Deserialize<Product>(responseBody, options);
+        var product = JsonSerializer.Deserialize<ProductResponse>(responseBody, options);
         
         Assert.That(product, Is.Not.Null);
         _createdProductId = product.Id;
