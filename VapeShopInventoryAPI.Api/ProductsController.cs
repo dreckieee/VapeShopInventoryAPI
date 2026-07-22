@@ -15,19 +15,25 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+    public async Task<ActionResult<IEnumerable<ProductResponse>>> GetProducts()
     {
         var products = await _context.Products.ToListAsync();
-        return Ok(products);
+        var productResponses = products.Select(product => ProductResponse.FromProduct(product)).ToList();
+        
+        return Ok(productResponses);
     }
-
     [HttpGet("{id}")]
-    public async Task<ActionResult<Product>> GetProduct(int id)
+    public async Task<ActionResult<ProductResponse>> GetProduct(int id)
     {
         var product = await _context.Products.FindAsync(id);
-        return product == null ? NotFound() : Ok(product);
-    }
+        if (product == null)
+        {
+            return NotFound();
+        }
+        var productResponse = ProductResponse.FromProduct(product);
 
+        return Ok(productResponse);
+    }
     [HttpPost]
     public async Task<ActionResult<ProductResponse>> CreateProduct([FromBody] CreateProductRequest request)
     {
@@ -62,15 +68,7 @@ public class ProductsController : ControllerBase
             return Conflict(new {message = "Unable to create product due to a data conflict."});
         }
 
-        var productResponse = new ProductResponse {
-            Id = product.Id, 
-            Name = product.Name,
-            Sku = product.Sku,
-            Price = product.Price,
-            StockQuantity = product.StockQuantity,
-            Category = product.Category,
-            CreatedAt = product.CreatedAt
-            }; 
+        var productResponse = ProductResponse.FromProduct(product);
             
 
         return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, productResponse);
