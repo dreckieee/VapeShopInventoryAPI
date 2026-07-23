@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,25 +23,7 @@ public class SalesController : ControllerBase
             return NotFound();
         }
 
-        var saleItems = sale.SaleItems.Select(item => new SaleItemResponse
-        {
-            Id = item.Id,
-            ProductId = item.ProductId,
-            Quantity = item.Quantity,
-            UnitPriceAtSale = item.UnitPriceAtSale,
-            TransactionNumber = item.TransactionNumber
-        }).ToList();
-
-        var saleResponse = new SaleResponse {Id = sale.Id, 
-        SaleDate = sale.SaleDate, 
-        CreatedAt = sale.CreatedAt, 
-        IsClosed = sale.IsClosed, 
-        TransactionCount = sale.TransactionCount, 
-        ReductionFrequency = sale.ReductionFrequency, 
-        TotalQuantityReduction = sale.TotalQuantityReduction,
-        SaleItems = saleItems
-        };
-
+        var saleResponse = SaleResponse.FromSale(sale);
         return Ok(saleResponse);
     }
 
@@ -51,16 +34,7 @@ public class SalesController : ControllerBase
         _context.Sales.Add(sale);
         await _context.SaveChangesAsync();
 
-        var saleResponse = new SaleResponse {Id = sale.Id, 
-        SaleDate = sale.SaleDate, 
-        CreatedAt = sale.CreatedAt, 
-        IsClosed = sale.IsClosed, 
-        TransactionCount = sale.TransactionCount, 
-        ReductionFrequency = sale.ReductionFrequency, 
-        TotalQuantityReduction = sale.TotalQuantityReduction,
-        SaleItems = new()
-        }; 
-
+        var saleResponse = SaleResponse.FromSale(sale);
         return CreatedAtAction(nameof(GetSale), new { id = sale.Id }, saleResponse);
     }
 
@@ -77,25 +51,7 @@ public class SalesController : ControllerBase
             sale.CloseSale();
             await _context.SaveChangesAsync();
 
-            var saleItems = sale.SaleItems.Select(item => new SaleItemResponse
-            {
-                Id = item.Id,
-                ProductId = item.ProductId,
-                Quantity = item.Quantity,
-                UnitPriceAtSale = item.UnitPriceAtSale,
-                TransactionNumber = item.TransactionNumber
-            }).ToList();
-
-            var saleResponse = new SaleResponse {Id = sale.Id, 
-            SaleDate = sale.SaleDate, 
-            CreatedAt = sale.CreatedAt, 
-            IsClosed = sale.IsClosed, 
-            TransactionCount = sale.TransactionCount, 
-            ReductionFrequency = sale.ReductionFrequency, 
-            TotalQuantityReduction = sale.TotalQuantityReduction,
-            SaleItems = saleItems
-            };
-
+            var saleResponse = SaleResponse.FromSale(sale);
             return Ok(saleResponse);
         }
         catch (InvalidOperationException ex)
@@ -144,26 +100,7 @@ public class SalesController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
 
-        var saleItems = sale.SaleItems.Select(item => new SaleItemResponse
-        {
-            Id = item.Id,
-            ProductId = item.ProductId,
-            Quantity = item.Quantity,
-            UnitPriceAtSale = item.UnitPriceAtSale,
-            TransactionNumber = item.TransactionNumber
-        }).ToList();
-
-        var saleResponse = new SaleResponse
-        {
-            Id = sale.Id,
-            SaleDate = sale.SaleDate, 
-            CreatedAt = sale.CreatedAt, 
-            IsClosed = sale.IsClosed, 
-            TransactionCount = sale.TransactionCount, 
-            ReductionFrequency = sale.ReductionFrequency, 
-            TotalQuantityReduction = sale.TotalQuantityReduction,
-            SaleItems = saleItems
-        };
+        var saleResponse = SaleResponse.FromSale(sale);
         return Ok(saleResponse);  
     }
 
