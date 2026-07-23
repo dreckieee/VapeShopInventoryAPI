@@ -46,26 +46,8 @@ public class SaleItemsController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
-        var saleItems = sale.SaleItems.Select(item => new SaleItemResponse
-        {
-            Id = item.Id,
-            ProductId = item.ProductId,
-            Quantity = item.Quantity,
-            UnitPriceAtSale = item.UnitPriceAtSale,
-            TransactionNumber = item.TransactionNumber
-        }).ToList();
 
-        var saleResponse = new SaleResponse
-        {
-            Id = sale.Id,
-            SaleDate = sale.SaleDate, 
-            CreatedAt = sale.CreatedAt, 
-            IsClosed = sale.IsClosed, 
-            TransactionCount = sale.TransactionCount, 
-            ReductionFrequency = sale.ReductionFrequency, 
-            TotalQuantityReduction = sale.TotalQuantityReduction,
-            SaleItems = saleItems
-        };
+        var saleResponse = SaleResponse.FromSale(sale);
         return Ok(saleResponse);       
     }
 
@@ -95,26 +77,7 @@ public class SaleItemsController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
-        var saleItems = sale.SaleItems.Select(item => new SaleItemResponse
-        {
-            Id = item.Id,
-            ProductId = item.ProductId,
-            Quantity = item.Quantity,
-            UnitPriceAtSale = item.UnitPriceAtSale,
-            TransactionNumber = item.TransactionNumber
-        }).ToList();
-
-        var saleResponse = new SaleResponse
-        {
-            Id = sale.Id,
-            SaleDate = sale.SaleDate, 
-            CreatedAt = sale.CreatedAt, 
-            IsClosed = sale.IsClosed, 
-            TransactionCount = sale.TransactionCount, 
-            ReductionFrequency = sale.ReductionFrequency, 
-            TotalQuantityReduction = sale.TotalQuantityReduction,
-            SaleItems = saleItems
-        };
+        var saleResponse = SaleResponse.FromSale(sale);
         return Ok(saleResponse);       
     }
 
