@@ -1,33 +1,21 @@
-using System.Text.Json.Serialization;
-public class ProductResponse
+public record ProductResponse
 {
-    public int Id {get; private set;}
-    public string Name {get; private set;}
-    public string Sku {get; private set;}
-    public decimal Price {get; private set;}
-    public int StockQuantity {get; private set;}
-    public string Category {get; private set;}
-    public DateTime CreatedAt {get; private set;}
-    
-    [JsonConstructor]
-    private ProductResponse(int id, string name, string sku, decimal price, int stockQuantity, string category, DateTime createdAt)
+    public int Id {get; init;}
+    public string Name {get; init;} = string.Empty;
+    public string Sku {get; init;} = string.Empty;
+    public decimal Price {get; init;}
+    public int StockQuantity {get; init;}
+    public string Category {get; init;} = string.Empty;
+    public DateTime CreatedAt {get; init;}
+
+    public static ProductResponse FromProduct(Product product) => new()
     {
-        Id = id;
-        Name = name;
-        Sku = sku;
-        Price = price;
-        StockQuantity = stockQuantity;
-        Category = category;
-        CreatedAt = createdAt;
-    }
-    public static ProductResponse FromProduct(Product product) => new
-    (
-        product.Id, 
-        product.Name, 
-        product.Sku, 
-        product.Price, 
-        product.StockQuantity, 
-        product.Category, 
-        product.CreatedAt
-    ); 
+        Id = product.Id, 
+        Name = product.Name, 
+        Sku = product.Sku, 
+        Price = product.Price, 
+        StockQuantity = product.StockQuantity, 
+        Category = product.Category, 
+        CreatedAt = product.CreatedAt
+    };
 }
