@@ -67,6 +67,10 @@ public class SaleItemsController : ControllerBase
                 return NotFound();
             }
             sale.ReduceSaleItemQuantity(saleItem, request.Amount);
+            if (!sale.SaleItems.Contains(saleItem))
+            {
+                _context.SaleItems.Remove(saleItem);
+            }
             await _context.SaveChangesAsync();
         }
         catch (InvalidOperationException ex)
