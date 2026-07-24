@@ -59,24 +59,26 @@ public class SalesApiTests
 
     [Test]
     public async Task AddSaleItem_ValidRequest_ReturnsOk()
-    {
-        var saleDate = DateTime.Now;
-        var (_, sale) = await CreateTestSaleAsync(saleDate);
-        
-        Assert.That(sale, Is.Not.Null);
-        _createdSaleId = sale.Id;
-
+    {   
+        //product creation
         string productName = "TestCreateValidProduct"; 
         string productSku = "0a0a2d";
         decimal productPrice = 99.99m; 
         int productStockQuantity = 9;
         string productCategory = "Test";
-
-        var (_, product) = await CreateTestProductAsync(productName,productSku,productPrice,productStockQuantity,productCategory);
         
+        var (_, product) = await CreateTestProductAsync(productName,productSku,productPrice,productStockQuantity,productCategory);
         Assert.That(product, Is.Not.Null);
         _createdProductId = product.Id;
 
+        //sale creation
+        var saleDate = DateTime.Now;
+
+        var (_, sale) = await CreateTestSaleAsync(saleDate);
+        Assert.That(sale, Is.Not.Null);
+        _createdSaleId = sale.Id;
+
+        //adding sale item
         int saleItemQuantity = 1;
         decimal saleItemUnitPriceAtSale = product.Price;
         var payload = new
@@ -95,13 +97,129 @@ public class SalesApiTests
 
         var saleItem = sale.SaleItems.Find(si => si.ProductId == product.Id);
         Assert.That(saleItem, Is.Not.Null);
-
         Assert.That(saleItem.ProductId, Is.EqualTo(product.Id));
         Assert.That(saleItem.Quantity, Is.EqualTo(saleItemQuantity));
         Assert.That(saleItem.UnitPriceAtSale, Is.EqualTo(saleItemUnitPriceAtSale));
+    }
 
-        
-    
+
+    [Test]
+    public async Task ReduceSaleItemQuantity_ValidRequest_ReturnsOk()
+    {   
+        //product creation
+        string productName = "TestCreateValidProduct"; 
+        string productSku = "0a0a2e";
+        decimal productPrice = 99.99m; 
+        int productStockQuantity = 10;
+        string productCategory = "Test";
+
+        var (_, product) = await CreateTestProductAsync(productName,productSku,productPrice,productStockQuantity,productCategory);
+        Assert.That(product, Is.Not.Null);
+        _createdProductId = product.Id;
+
+        //sale creation
+        var saleDate = DateTime.Now;
+
+        var (_, sale) = await CreateTestSaleAsync(saleDate);
+        Assert.That(sale, Is.Not.Null);
+        _createdSaleId = sale.Id;
+
+        //adding sale item
+        int saleItemQuantity = 5;
+        decimal saleItemUnitPriceAtSale = product.Price;
+        var saleItemPayload = new
+        {
+            ProductId = product.Id,
+            Quantity = saleItemQuantity,
+            UnitPriceAtSale = saleItemUnitPriceAtSale
+        };
+
+        var responseCreateSaleItem = await _client.PostAsJsonAsync($"/api/SaleItems/{sale.Id}/items", saleItemPayload);
+        Assert.That(responseCreateSaleItem.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCreateSaleItem.StatusCode}");
+
+        sale = await responseCreateSaleItem.Content.ReadFromJsonAsync<SaleResponse>();
+        Assert.That(sale, Is.Not.Null);
+        Assert.That(sale.SaleItems.Count, Is.GreaterThan(0));
+
+        //reduce sale item quantity
+        var saleItem = sale.SaleItems.Find(si => si.ProductId == product.Id);
+        Assert.That(saleItem, Is.Not.Null);
+
+        var payload = new
+        {
+            Amount = 2
+        };
+
+        var response = await _client.PatchAsJsonAsync($"/api/SaleItems/{sale.Id}/items/{saleItem.Id}/reduce", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}.");
+
+        var saleAfterReducing = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        Assert.That(saleAfterReducing, Is.Not.Null);
+        Assert.That(saleAfterReducing.SaleItems.Count, Is.GreaterThan(0));
+
+        var saleItemAfterReducing = saleAfterReducing.SaleItems.Find(si => si.ProductId == product.Id);
+        Assert.That(saleItemAfterReducing, Is.Not.Null);
+        Assert.That(saleItemAfterReducing.Quantity, Is.EqualTo(saleItem.Quantity - payload.Amount));
+
+        Assert.That(saleAfterReducing.ReductionFrequency, Is.EqualTo(sale.ReductionFrequency + 1));
+        Assert.That(saleAfterReducing.TotalQuantityReduction, Is.EqualTo(sale.TotalQuantityReduction + payload.Amount));
+    }
+
+    [Test]
+    public async Task ReduceSaleItemQuantity_ReducesToZero_ReturnsOk()
+    {   
+        //product creation
+        string productName = "TestCreateValidProduct"; 
+        string productSku = "0a0a2f";
+        decimal productPrice = 99.99m; 
+        int productStockQuantity = 10;
+        string productCategory = "Test";
+
+        var (_, product) = await CreateTestProductAsync(productName,productSku,productPrice,productStockQuantity,productCategory);
+        Assert.That(product, Is.Not.Null);
+        _createdProductId = product.Id;
+
+        //sale creation
+        var saleDate = DateTime.Now;
+
+        var (_, sale) = await CreateTestSaleAsync(saleDate);
+        Assert.That(sale, Is.Not.Null);
+        _createdSaleId = sale.Id;
+
+        //adding sale item
+        int saleItemQuantity = 5;
+        decimal saleItemUnitPriceAtSale = product.Price;
+        var saleItemPayload = new
+        {
+            ProductId = product.Id,
+            Quantity = saleItemQuantity,
+            UnitPriceAtSale = saleItemUnitPriceAtSale
+        };
+
+        var responseCreateSaleItem = await _client.PostAsJsonAsync($"/api/SaleItems/{sale.Id}/items", saleItemPayload);
+        Assert.That(responseCreateSaleItem.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCreateSaleItem.StatusCode}");
+
+        sale = await responseCreateSaleItem.Content.ReadFromJsonAsync<SaleResponse>();
+        Assert.That(sale, Is.Not.Null);
+        Assert.That(sale.SaleItems.Count, Is.GreaterThan(0));
+
+        //reduce sale item quantity
+        var saleItem = sale.SaleItems.Find(si => si.ProductId == product.Id);
+        Assert.That(saleItem, Is.Not.Null);
+
+        var payload = new
+        {
+            Amount = saleItem.Quantity
+        };
+
+        var response = await _client.PatchAsJsonAsync($"/api/SaleItems/{sale.Id}/items/{saleItem.Id}/reduce", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}.");
+
+        var saleAfterReducing = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        Assert.That(saleAfterReducing, Is.Not.Null);
+
+        var saleItemAfterReducing = saleAfterReducing.SaleItems.Find(si => si.ProductId == product.Id);
+        Assert.That(saleItemAfterReducing, Is.Null);
     }
 
     [TearDown]
