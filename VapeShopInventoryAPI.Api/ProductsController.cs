@@ -109,16 +109,27 @@ public class ProductsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {
-        var product = await _context.Products.FindAsync(id);
-        if (product == null)
+        try
         {
-            return NotFound();
+            var product = await _context.Products.FindAsync(id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            var hasReferences = await _context.SaleItems.AnyAsync(si => si.ProductId == product.Id);
+            if (hasReferences)
+            {
+                return Conflict(new {message = "Cannot delete this product due to existing sale records."});
+            }
+            _context.Products.Remove(product);
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
-
-        _context.Products.Remove(product);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        catch(DbUpdateException)
+        {
+            return Conflict(new { message = "Unable to delete product due to a database constraint." });
+        }  
     }
-
 
 }
