@@ -32,7 +32,7 @@ public class ProductsApiTests
         int validStockQuantity = 9;
         string validCategory = "Test";
 
-        var (responseCreate, product) = await CreateTestProductAsync(validName,validSku,validPrice,validStockQuantity,validCategory);
+        var (_, product) = await CreateTestProductAsync(validName,validSku,validPrice,validStockQuantity,validCategory);
         Assert.That(product, Is.Not.Null);
         _createdProductId = product.Id;
 

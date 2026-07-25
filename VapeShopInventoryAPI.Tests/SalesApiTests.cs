@@ -4,14 +4,19 @@ using System.Net.Http.Json;
 
 namespace VapeShopInventoryAPI.Tests;
 
+[NonParallelizable]
 public class SalesApiTests
 {   
+    // Shared mutable test state (_createdSaleId, _createdProductId, _isCreatedSaleClosed, _skuCounter)
+    // assumes NUnit runs this fixture's tests sequentially, not in parallel.
+    // Do not enable [Parallelizable] on this class without refactoring this state.
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
     private int? _createdSaleId;
     private bool _isCreatedSaleClosed = false;
     private int? _createdProductId;
-    private int _testInvalidId = -1;
+    private const int _TestInvalidId = -1;
+    private int _skuCounter = 111;
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
@@ -29,7 +34,7 @@ public class SalesApiTests
     [Test]
     public async Task GetSale_NonExistentId_ReturnsNotFound()
     {
-        var response = await _client.GetAsync($"/api/Sales/{_testInvalidId}");
+        var response = await _client.GetAsync($"/api/Sales/{_TestInvalidId}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 NotFound() status, but received {response.StatusCode}");
     }
 
@@ -37,51 +42,55 @@ public class SalesApiTests
     public async Task CreateSale_ValidSaleRequest_ReturnsCreated()
     {
         var saleDate = DateTime.Now;
-        var (_, sale) = await CreateTestSaleAsync(saleDate);
+        var (response, sale) = await CreateTestSaleAsync(saleDate);
 
-        Assert.That(sale, Is.Not.Null);
-        _createdSaleId = sale.Id;
-
-        Assert.That(saleDate, Is.EqualTo(sale.SaleDate));
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created(), but received {response.StatusCode}");
+        Assert.That(sale!.SaleDate, Is.EqualTo(saleDate));
     }
 
     [Test]
     public async Task GetSale_ExistingId_ReturnsOk()
     {
+        //setup: create sale
         var saleDate = DateTime.Now;
         var (_, sale) = await CreateTestSaleAsync(saleDate);
 
-        Assert.That(sale, Is.Not.Null);
-        _createdSaleId = sale.Id;
-
-        var response = await _client.GetAsync($"/api/Sales/{sale.Id}");
+        //get sale with existing id
+        var response = await _client.GetAsync($"/api/Sales/{sale!.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}");
+
+        var saleFound = await response.Content.ReadFromJsonAsync<SaleResponse>();  
+        Assert.That(saleFound, Is.Not.Null);
+        Assert.That(saleFound.Id, Is.EqualTo(sale.Id));
+        Assert.That(saleFound.SaleDate, Is.EqualTo(sale.SaleDate));
+        Assert.That(saleFound.CreatedAt, Is.EqualTo(sale.CreatedAt));
+        Assert.That(saleFound.IsClosed, Is.EqualTo(sale.IsClosed));
+        Assert.That(saleFound.TransactionCount, Is.EqualTo(sale.TransactionCount));
+        Assert.That(saleFound.ReductionFrequency, Is.EqualTo(sale.ReductionFrequency));
+        Assert.That(saleFound.TotalQuantityReduction, Is.EqualTo(sale.TotalQuantityReduction));
+        Assert.That(saleFound.SaleItems.Count, Is.EqualTo(sale.SaleItems.Count));
     }
 
     [Test]
     public async Task AddSaleItem_ValidRequest_ReturnsOk()
     {   
         //product creation
-        string productName = "TestCreateValidProduct"; 
-        string productSku = "0a0a2d";
+        string productName = "Test Product"; 
+        string productSku = _skuCounter.ToString();
         decimal productPrice = 99.99m; 
         int productStockQuantity = 9;
         string productCategory = "Test";
         
         var (_, product) = await CreateTestProductAsync(productName,productSku,productPrice,productStockQuantity,productCategory);
-        Assert.That(product, Is.Not.Null);
-        _createdProductId = product.Id;
 
         //sale creation
         var saleDate = DateTime.Now;
 
         var (_, sale) = await CreateTestSaleAsync(saleDate);
-        Assert.That(sale, Is.Not.Null);
-        _createdSaleId = sale.Id;
 
         //adding sale item
         int saleItemQuantity = 1;
-        decimal saleItemUnitPriceAtSale = product.Price;
+        decimal saleItemUnitPriceAtSale = product!.Price;
         var payload = new
         {
             ProductId = product.Id,
@@ -89,7 +98,7 @@ public class SalesApiTests
             UnitPriceAtSale = saleItemUnitPriceAtSale
         };
 
-        var response = await _client.PostAsJsonAsync($"/api/SaleItems/{sale.Id}/items", payload);
+        var response = await _client.PostAsJsonAsync($"/api/SaleItems/{sale!.Id}/items", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}");
 
         sale = await response.Content.ReadFromJsonAsync<SaleResponse>();
@@ -107,45 +116,17 @@ public class SalesApiTests
     [Test]
     public async Task ReduceSaleItemQuantity_ValidRequest_ReturnsOk()
     {   
-        //product creation
-        string productName = "TestCreateValidProduct"; 
-        string productSku = "0a0a2e";
-        decimal productPrice = 99.99m; 
-        int productStockQuantity = 10;
-        string productCategory = "Test";
-
-        var (_, product) = await CreateTestProductAsync(productName,productSku,productPrice,productStockQuantity,productCategory);
-        Assert.That(product, Is.Not.Null);
-        _createdProductId = product.Id;
-
-        //sale creation
-        var saleDate = DateTime.Now;
-
-        var (_, sale) = await CreateTestSaleAsync(saleDate);
-        Assert.That(sale, Is.Not.Null);
-        _createdSaleId = sale.Id;
-
-        //adding sale item
-        int saleItemQuantity = 5;
-        decimal saleItemUnitPriceAtSale = product.Price;
-        var saleItemPayload = new
-        {
-            ProductId = product.Id,
-            Quantity = saleItemQuantity,
-            UnitPriceAtSale = saleItemUnitPriceAtSale
-        };
-
-        var responseCreateSaleItem = await _client.PostAsJsonAsync($"/api/SaleItems/{sale.Id}/items", saleItemPayload);
-        Assert.That(responseCreateSaleItem.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCreateSaleItem.StatusCode}");
-
-        sale = await responseCreateSaleItem.Content.ReadFromJsonAsync<SaleResponse>();
-        Assert.That(sale, Is.Not.Null);
-        Assert.That(sale.SaleItems.Count, Is.GreaterThan(0));
+        //setup: create product, create sale, create sale item
+        var (product, sale, saleItem) = await CreateSaleWithItemAsync(
+            productName: "Test Product", 
+            productSku: _skuCounter.ToString(), 
+            productPrice: 99.99m, 
+            productStockQuantity: 10, 
+            productCategory: "Test", 
+            saleItemQuantity: 3
+            );
 
         //reduce sale item quantity
-        var saleItem = sale.SaleItems.Find(si => si.ProductId == product.Id);
-        Assert.That(saleItem, Is.Not.Null);
-
         var payload = new
         {
             Amount = 2
@@ -169,45 +150,17 @@ public class SalesApiTests
     [Test]
     public async Task ReduceSaleItemQuantity_ReducesToZero_ReturnsOk()
     {   
-        //product creation
-        string productName = "TestCreateValidProduct"; 
-        string productSku = "0a0a2f";
-        decimal productPrice = 99.99m; 
-        int productStockQuantity = 10;
-        string productCategory = "Test";
+        //setup: create product, create sale, create sale item
+        var (product, sale, saleItem) = await CreateSaleWithItemAsync(
+            productName: "Test Product", 
+            productSku: _skuCounter.ToString(), 
+            productPrice: 99.99m, 
+            productStockQuantity: 10, 
+            productCategory: "Test", 
+            saleItemQuantity: 3
+            );
 
-        var (_, product) = await CreateTestProductAsync(productName,productSku,productPrice,productStockQuantity,productCategory);
-        Assert.That(product, Is.Not.Null);
-        _createdProductId = product.Id;
-
-        //sale creation
-        var saleDate = DateTime.Now;
-
-        var (_, sale) = await CreateTestSaleAsync(saleDate);
-        Assert.That(sale, Is.Not.Null);
-        _createdSaleId = sale.Id;
-
-        //adding sale item
-        int saleItemQuantity = 5;
-        decimal saleItemUnitPriceAtSale = product.Price;
-        var saleItemPayload = new
-        {
-            ProductId = product.Id,
-            Quantity = saleItemQuantity,
-            UnitPriceAtSale = saleItemUnitPriceAtSale
-        };
-
-        var responseCreateSaleItem = await _client.PostAsJsonAsync($"/api/SaleItems/{sale.Id}/items", saleItemPayload);
-        Assert.That(responseCreateSaleItem.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCreateSaleItem.StatusCode}");
-
-        sale = await responseCreateSaleItem.Content.ReadFromJsonAsync<SaleResponse>();
-        Assert.That(sale, Is.Not.Null);
-        Assert.That(sale.SaleItems.Count, Is.GreaterThan(0));
-
-        //reduce sale item quantity
-        var saleItem = sale.SaleItems.Find(si => si.ProductId == product.Id);
-        Assert.That(saleItem, Is.Not.Null);
-
+        //reduce sale item quantity to zero (0)
         var payload = new
         {
             Amount = saleItem.Quantity
@@ -226,59 +179,36 @@ public class SalesApiTests
     [Test]
     public async Task CloseSale_ValidSale_ReturnsOk()
     {   
-        //product creation
-        string productName = "TestCreateValidProduct"; 
-        string productSku = "0a0a2g";
-        decimal productPrice = 99.99m; 
-        int productStockQuantity = 10;
-        string productCategory = "Test";
-
-        var (_, product) = await CreateTestProductAsync(productName,productSku,productPrice,productStockQuantity,productCategory);
-        Assert.That(product, Is.Not.Null);
-        _createdProductId = product.Id;
-
-        //sale creation
-        var saleDate = DateTime.Now;
-
-        var (_, sale) = await CreateTestSaleAsync(saleDate);
-        Assert.That(sale, Is.Not.Null);
-        _createdSaleId = sale.Id;
-
-        //adding sale item
-        int saleItemQuantity = 3;
-        decimal saleItemUnitPriceAtSale = product.Price;
-        var saleItemPayload = new
-        {
-            ProductId = product.Id,
-            Quantity = saleItemQuantity,
-            UnitPriceAtSale = saleItemUnitPriceAtSale
-        };
-
-        var responseCreateSaleItem = await _client.PostAsJsonAsync($"/api/SaleItems/{sale.Id}/items", saleItemPayload);
-        Assert.That(responseCreateSaleItem.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCreateSaleItem.StatusCode}");
-
-        sale = await responseCreateSaleItem.Content.ReadFromJsonAsync<SaleResponse>();
-        Assert.That(sale, Is.Not.Null);
-        Assert.That(sale.SaleItems.Count, Is.GreaterThan(0));
+        //setup: create product, create sale, create sale item
+        var (product, sale, saleItem) = await CreateSaleWithItemAsync(
+            productName: "Test Product", 
+            productSku: _skuCounter.ToString(), 
+            productPrice: 99.99m, 
+            productStockQuantity: 10, 
+            productCategory: "Test", 
+            saleItemQuantity: 3
+            );
+        
 
         //close sale
         var response = await _client.PostAsync($"/api/Sales/{sale.Id}/close", null);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}.");
 
-        sale = await response.Content.ReadFromJsonAsync<SaleResponse>();
-        Assert.That(sale, Is.Not.Null);
-        Assert.That(sale.IsClosed, Is.True);
+        var saleAfterClosing = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        Assert.That(saleAfterClosing, Is.Not.Null);
+        Assert.That(saleAfterClosing.IsClosed, Is.True);
         _isCreatedSaleClosed = true;
 
-        var saleItem = sale.SaleItems.Find(si => si.ProductId == product.Id);
-        Assert.That(saleItem, Is.Not.Null);
+        var saleItemAfterClosing = saleAfterClosing.SaleItems.Find(si => si.ProductId == product.Id);
+        Assert.That(saleItemAfterClosing, Is.Not.Null);
+        Assert.That(saleItemAfterClosing.Quantity, Is.EqualTo(saleItem.Quantity));
 
         var responseGetProduct = await _client.GetAsync($"/api/Products/{product.Id}");
         Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetProduct.StatusCode}.");
         
         var productAfterClosing = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>();
         Assert.That(productAfterClosing, Is.Not.Null);
-        Assert.That(productAfterClosing.StockQuantity, Is.EqualTo(product.StockQuantity - saleItem.Quantity));
+        Assert.That(productAfterClosing.StockQuantity, Is.EqualTo(product.StockQuantity - saleItemAfterClosing.Quantity));
     }
 
     
@@ -337,9 +267,14 @@ public class SalesApiTests
     private async Task <(HttpResponseMessage Response, SaleResponse? Sale)> CreateTestSaleAsync(DateTime saleDate)
     {
         var payload = new { saleDate };
+        
         var response = await _client.PostAsJsonAsync("/api/Sales", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created(), but received {response.StatusCode}");
+        
         var sale = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        Assert.That(sale, Is.Not.Null);
+        _createdSaleId = sale.Id;
+        
         return (response, sale);
     }
 
@@ -351,7 +286,40 @@ public class SalesApiTests
         };
         var response = await _client.PostAsJsonAsync("/api/Products", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created(), but received {response.StatusCode}");
+        
         var product = await response.Content.ReadFromJsonAsync<ProductResponse>();
+        Assert.That(product, Is.Not.Null);
+        _createdProductId = product.Id;
+        _skuCounter ++;
+
         return (response, product);
+    }
+
+    private async Task<(ProductResponse Product, SaleResponse Sale, SaleItemResponse SaleItem)> CreateSaleWithItemAsync(string productName, string productSku, decimal productPrice, int productStockQuantity, string productCategory, int saleItemQuantity)
+    {
+        var (_, product) = await CreateTestProductAsync(productName, productSku, productPrice, productStockQuantity, productCategory);
+        var (_, sale) = await CreateTestSaleAsync(DateTime.Now);
+
+        var payload = new 
+        { 
+            ProductId = product!.Id, 
+            Quantity = saleItemQuantity, 
+            UnitPriceAtSale = product.Price 
+        };
+
+        var response = await _client.PostAsJsonAsync($"/api/SaleItems/{sale!.Id}/items", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}");
+
+        var updatedSale = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        Assert.That(updatedSale, Is.Not.Null);
+        Assert.That(updatedSale.SaleItems.Count, Is.GreaterThan(0));
+
+        var saleItem = updatedSale!.SaleItems.Find(si => si.ProductId == product.Id);
+        Assert.That(saleItem, Is.Not.Null);
+        Assert.That(saleItem.ProductId, Is.EqualTo(product.Id));
+        Assert.That(saleItem.Quantity, Is.EqualTo(saleItemQuantity));
+        Assert.That(saleItem.UnitPriceAtSale, Is.EqualTo(product.Price));
+
+        return (product, updatedSale, saleItem!);
     }
 }
