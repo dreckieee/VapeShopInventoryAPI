@@ -78,6 +78,22 @@ Both `SaleItem → Sale` and `SaleItem → Product` foreign keys use `OnDelete(D
 - `POST /api/Sales/{saleId}/items` — add an item to a sale
 - `PATCH /api/Sales/{saleId}/items/{itemId}/reduce` — reduce an item's quantity
 
+## Day 93 — Test suite design cleanup; Azure cancellation confirmed; deployment still pending
+
+**Context:** Day 93 was slated for DigitalOcean deployment (carried over from Day 92). No deployment work happened this session due to time constraints. Instead, existing test coverage from Day 92 was reviewed and a real test-design bug was found and fixed in `AddSaleItem_ValidRequest_ReturnsOk`.
+
+**Bug found — self-referential assertion, no actual coverage:** `AddSaleItem_ValidRequest_ReturnsOk` looked up a sale item via `sale.SaleItems.Find(...)` and asserted its fields against `saleItem` — but `saleItem` came from the exact same `Find()` call on the exact same `sale` object one level up. The assertions were comparing a value to itself, so they could not fail regardless of whether `AddSaleItem`'s response actually mapped fields correctly. Root cause traced back to `CreateSaleWithItemAsync` (the shared arrange-helper) also asserting the full `AddSaleItem` contract internally — duplicating what the test itself should own.
+
+**Fix:** `CreateSaleWithItemAsync` reverted to minimal arrange-only assertions (status OK, not-null), matching the existing pattern already used by `CreateTestSaleAsync` and `CreateTestProductAsync`. `AddSaleItem_ValidRequest_ReturnsOk` now asserts its own `ProductId`/`Quantity`/`UnitPriceAtSale` directly against known test inputs (`product.Id`, `saleItemQuantity`, `product.Price`), not against a second lookup of the same object. Net effect: this closes a real, previously-silent coverage gap on `AddSaleItem`'s response contract — it was not actually being tested before this session despite existing test code.
+
+**Standing principle reinforced:** shared arrange-helpers used across multiple tests should assert only enough to fail fast on broken setup — not the specific contract each individual test exists to verify. Assertion ownership belongs to the test that names the behavior.
+
+**Git hygiene:** one commit this session — `test:` SalesApiTests.cs (fixed self-referential assertion in AddSaleItem test, reverted helper to arrange-only).
+
+**Azure cleanup confirmed:** Azure Pay-As-You-Go subscription cancellation (initiated Day 89) verified complete — Subscriptions page shows 0 active subscriptions.
+
+**Deployment status:** still deferred — DigitalOcean account creation, Droplet provisioning (2GB RAM / 1 vCPU, Ubuntu 24.04 LTS, Singapore region — spec finalized Day 90), and full deployment (SSH, `dotnet publish`, systemd, firewall) now carry over to Day 94.
+
 ## Day 92 — Two production bugs found and fixed via test coverage; deployment deferred again
 
 **Test coverage added:** `AddSaleItem_ValidRequest_ReturnsOk`, `ReduceSaleItemQuantity_ValidRequest_ReturnsOk` (partial reduction, also asserts `ReductionFrequency`/`TotalQuantityReduction` counters), `ReduceSaleItemQuantity_ReducesToZero_ReturnsOk`, `CloseSale_ValidSale_ReturnsOk` (asserts stock deduction on close). Test suite grew from 7 to 11 tests.
