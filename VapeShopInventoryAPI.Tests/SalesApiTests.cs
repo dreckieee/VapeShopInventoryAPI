@@ -74,42 +74,25 @@ public class SalesApiTests
     [Test]
     public async Task AddSaleItem_ValidRequest_ReturnsOk()
     {   
-        //product creation
-        string productName = "Test Product"; 
-        string productSku = _skuCounter.ToString();
-        decimal productPrice = 99.99m; 
-        int productStockQuantity = 9;
-        string productCategory = "Test";
-        
-        var (_, product) = await CreateTestProductAsync(productName,productSku,productPrice,productStockQuantity,productCategory);
-
-        //sale creation
-        var saleDate = DateTime.Now;
-
-        var (_, sale) = await CreateTestSaleAsync(saleDate);
-
-        //adding sale item
+        //setup: create product, create sale, create sale item
         int saleItemQuantity = 1;
-        decimal saleItemUnitPriceAtSale = product!.Price;
-        var payload = new
-        {
-            ProductId = product.Id,
-            Quantity = saleItemQuantity,
-            UnitPriceAtSale = saleItemUnitPriceAtSale
-        };
 
-        var response = await _client.PostAsJsonAsync($"/api/SaleItems/{sale!.Id}/items", payload);
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}");
+        var (product, sale, saleItem) = await CreateSaleWithItemAsync(
+            productName: "Test Product", 
+            productSku: _skuCounter.ToString(), 
+            productPrice: 99.99m, 
+            productStockQuantity: 10, 
+            productCategory: "Test", 
+            saleItemQuantity: saleItemQuantity
+            );
 
-        sale = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        
         Assert.That(sale, Is.Not.Null);
-        Assert.That(sale.SaleItems.Count, Is.GreaterThan(0));
 
-        var saleItem = sale.SaleItems.Find(si => si.ProductId == product.Id);
         Assert.That(saleItem, Is.Not.Null);
         Assert.That(saleItem.ProductId, Is.EqualTo(product.Id));
         Assert.That(saleItem.Quantity, Is.EqualTo(saleItemQuantity));
-        Assert.That(saleItem.UnitPriceAtSale, Is.EqualTo(saleItemUnitPriceAtSale));
+        Assert.That(saleItem.UnitPriceAtSale, Is.EqualTo(product.Price));
     }
 
 
@@ -316,9 +299,6 @@ public class SalesApiTests
 
         var saleItem = updatedSale!.SaleItems.Find(si => si.ProductId == product.Id);
         Assert.That(saleItem, Is.Not.Null);
-        Assert.That(saleItem.ProductId, Is.EqualTo(product.Id));
-        Assert.That(saleItem.Quantity, Is.EqualTo(saleItemQuantity));
-        Assert.That(saleItem.UnitPriceAtSale, Is.EqualTo(product.Price));
 
         return (product, updatedSale, saleItem!);
     }
