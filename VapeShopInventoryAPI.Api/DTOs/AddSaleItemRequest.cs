@@ -1,3 +1,4 @@
+namespace VapeShopInventoryAPI.Api.DTOs;
 public class AddSaleItemRequest
 {
     public int ProductId {get; set;}

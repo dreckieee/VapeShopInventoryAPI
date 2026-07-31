@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using VapeShopInventoryAPI.Api.DTOs;
+namespace VapeShopInventoryAPI.Api;
 
 [ApiController]
 [Route("api/[controller]")]

@@ -1,3 +1,4 @@
+namespace VapeShopInventoryAPI.Api.DTOs;
 public class UpdateExpenseRequest
 {
     public required string Description {get; set;}

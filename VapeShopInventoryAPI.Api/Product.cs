@@ -1,4 +1,4 @@
-
+namespace VapeShopInventoryAPI.Api;
 public class Product
 {
     public int Id {get; private set;}

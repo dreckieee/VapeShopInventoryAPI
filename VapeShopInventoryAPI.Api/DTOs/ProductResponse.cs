@@ -1,3 +1,4 @@
+namespace VapeShopInventoryAPI.Api.DTOs;
 public record ProductResponse
 {
     public int Id {get; init;}

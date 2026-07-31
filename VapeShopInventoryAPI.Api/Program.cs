@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VapeShopInventoryAPI.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 

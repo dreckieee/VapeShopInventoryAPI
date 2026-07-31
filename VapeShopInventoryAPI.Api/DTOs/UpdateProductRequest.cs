@@ -1,3 +1,4 @@
+namespace VapeShopInventoryAPI.Api.DTOs;
 public class UpdateProductRequest
 {
     public required string Name {get; set;}

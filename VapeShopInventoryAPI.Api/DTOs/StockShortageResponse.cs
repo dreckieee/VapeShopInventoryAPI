@@ -1,3 +1,4 @@
+namespace VapeShopInventoryAPI.Api.DTOs;
 public class StockShortageResponse
 {
     public int ProductId { get; set;}

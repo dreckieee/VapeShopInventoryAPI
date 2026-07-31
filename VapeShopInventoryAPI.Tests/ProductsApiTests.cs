@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using VapeShopInventoryAPI.Api.DTOs;
 
 namespace VapeShopInventoryAPI.Tests;
 

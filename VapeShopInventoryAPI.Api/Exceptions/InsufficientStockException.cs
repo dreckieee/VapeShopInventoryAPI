@@ -1,3 +1,4 @@
+namespace VapeShopInventoryAPI.Api.Exceptions;
 public class InsufficientStockException : Exception
 {
     public  List<StockShortage> Shortages {get;}

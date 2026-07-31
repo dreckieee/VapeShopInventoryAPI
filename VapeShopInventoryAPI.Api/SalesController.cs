@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using VapeShopInventoryAPI.Api.DTOs;
+using VapeShopInventoryAPI.Api.Exceptions;
+namespace VapeShopInventoryAPI.Api;
 
 [ApiController]
 [Route("api/[controller]")]

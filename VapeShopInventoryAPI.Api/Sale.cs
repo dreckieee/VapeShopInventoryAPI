@@ -1,3 +1,5 @@
+using VapeShopInventoryAPI.Api.Exceptions;
+namespace VapeShopInventoryAPI.Api;
 public class Sale
 {
     public int Id {get; private set;}

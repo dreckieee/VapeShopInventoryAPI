@@ -12,6 +12,26 @@ Both `SaleItem → Sale` and `SaleItem → Product` foreign keys use `OnDelete(D
 ## Design decision: DTO construction pattern
 Response DTOs (`ProductResponse`, `SaleResponse`, `SaleItemResponse`) are `record` types with `init`-only properties, plus a static factory method (`FromX`) for mapping logic. An earlier private-constructor + `[JsonConstructor]` pattern was reconsidered as over-engineered for flat DTOs with no real invariant to protect — needing `[JsonConstructor]` at all was itself a signal the pattern fought `System.Text.Json`'s natural model.
 
+## Refactor: explicit namespace declarations across Api project (Day 98–99)
+All files in the main API project and test project now declare explicit namespaces
+(`VapeShopInventoryAPI.Api` for root files, `VapeShopInventoryAPI.Api.DTOs` for DTOs/,
+`VapeShopInventoryAPI.Api.Exceptions` for Exceptions/), replacing the previous
+implicit/global namespace. `Migrations/` files were already namespaced by EF Core
+codegen and needed no change. `Program.cs` stays in the global namespace by structural
+necessity (top-level statements can't carry a namespace declaration) and instead takes
+a `using VapeShopInventoryAPI.Api;` directive for the types it references.
+
+Migrated across two sessions: paused mid-way Day 98 in a known-broken intermediate
+state (expected — partial migration surfaces cascading CS0246 errors in any
+not-yet-migrated file referencing an already-migrated type), resumed and completed
+Day 99. Also required updates to the test project (`CustomWebApplicationFactory.cs`,
+`ProductsApiTests.cs`, `SalesApiTests.cs`) to add `using` directives for the newly
+namespaced types. Full build and all 11 NUnit tests verified passing before commit.
+
+Committed as a single bulk commit per the standing one-file-per-commit exception for
+uniform, zero-behavior-change mechanical refactors (see KEY_DECISIONS.md, General
+working rules).
+
 ## Known issue (fixed): orphaned `SaleItem` rows on quantity-reduce-to-zero
 `Sale.ReduceSaleItemQuantity` removes a `SaleItem` from its in-memory collection once its quantity reaches zero. Because the `SaleItem → Sale` foreign key is `Restrict` and required, EF Core had no valid action for an entity severed from its parent's tracked collection without explicit instruction — it threw `DbUpdateException` on save. Fixed by explicitly calling `_context.SaleItems.Remove(saleItem)` before saving whenever the domain call removes an item. Covered by a regression test.
 
@@ -41,3 +61,8 @@ Beyond automated tests, the full Product → Sale → SaleItem → CloseSale flo
 **Day 93 — Test suite design cleanup.** Found and fixed a self-referential assertion in `AddSaleItem_ValidRequest_ReturnsOk` that had been silently passing without actually testing anything. Azure subscription cancellation confirmed complete.
 
 **Day 94 — Deployment complete.** Provisioned a DigitalOcean droplet (1 vCPU / 2GB RAM / 50GB SSD, Ubuntu 24.04 LTS, Singapore, $12/mo) with SSH key auth. Installed .NET 10 SDK, cloned the repo, published via `dotnet publish`, and configured a systemd service with `Restart=always`. Configured `ufw` to allow SSH and the app port before enabling the firewall. Removed the `IsDevelopment()` guard around Swagger for demo accessibility. Found and fixed the DB path mismatch bug (see Known Issues above). Manually verified the full CRUD + Sale lifecycle against the live instance.
+
+**Day 99 — Namespace migration completed.** Resumed Day 98's paused mid-migration
+state; resolved cascading CS0246 errors file-by-file (root entities → DTOs →
+controllers → test project), verified clean build and full test suite pass, single
+bulk commit.

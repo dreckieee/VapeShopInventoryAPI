@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-
+namespace VapeShopInventoryAPI.Api;
 public class VapeShopInventoryDbContext : DbContext
 {
     public DbSet<Product> Products {get; private set;}
