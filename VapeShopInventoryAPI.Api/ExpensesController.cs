@@ -17,26 +17,47 @@ public class ExpensesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses()
+    public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses([FromQuery] int? year, [FromQuery] int? month)
     {
-        var expenses = await _context.Expenses.ToListAsync();
-        return Ok(expenses);
+        var query = _context.Expenses.AsQueryable();
+        if(year != null)
+        {
+            query = query.Where(expense => expense.Date.Year == year);
+        }
+        if(month != null)
+        {
+            query = query.Where(expense => expense.Date.Month == month);
+        }
+
+        var expenses = await query.ToListAsync();
+        var response = expenses.Select(expense => ExpenseResponse.FromExpense(expense)).ToList();
+
+        return Ok(response);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Expense>> GetExpense(int id)
+    public async Task<ActionResult<ExpenseResponse>> GetExpense(int id)
     {
         var expense = await _context.Expenses.FindAsync(id);
-        return expense == null ? NotFound() : Ok(expense);
+        if(expense == null)
+        {
+            return NotFound();
+        }
+        var response = ExpenseResponse.FromExpense(expense);
+        return Ok(response);
     }
 
 
     [HttpPost]
-    public async Task<ActionResult<Expense>> CreateExpense(Expense expense)
+    public async Task<ActionResult<ExpenseResponse>> CreateExpense([FromBody] CreateExpenseRequest request)
     {
+        var expense = new Expense(request.Date, request.Description, request.Amount, request.Category);
+
         _context.Expenses.Add(expense);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, expense);
+
+        var response = ExpenseResponse.FromExpense(expense);
+        return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, response);
     }
 
         
