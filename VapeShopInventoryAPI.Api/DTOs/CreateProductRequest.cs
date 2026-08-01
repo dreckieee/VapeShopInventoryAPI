@@ -5,5 +5,7 @@ public class CreateProductRequest
     public required string Sku {get; set;}
     public decimal Price {get; set;}
     public int StockQuantity {get; set;}
+    public int LowStockLevel {get; set;}
     public required string Category {get; set;}
+    
 }
