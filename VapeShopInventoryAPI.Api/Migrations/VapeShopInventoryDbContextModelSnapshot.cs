@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using VapeShopInventoryAPI.Api;
 
 #nullable disable
 
@@ -14,9 +15,9 @@ namespace VapeShopInventoryAPI.Api.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.9");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.10");
 
-            modelBuilder.Entity("Expense", b =>
+            modelBuilder.Entity("VapeShopInventoryAPI.Api.Expense", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -27,6 +28,9 @@ namespace VapeShopInventoryAPI.Api.Migrations
 
                     b.Property<string>("Category")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("Date")
@@ -41,7 +45,7 @@ namespace VapeShopInventoryAPI.Api.Migrations
                     b.ToTable("Expenses");
                 });
 
-            modelBuilder.Entity("Product", b =>
+            modelBuilder.Entity("VapeShopInventoryAPI.Api.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -53,6 +57,9 @@ namespace VapeShopInventoryAPI.Api.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("LowStockLevel")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -76,7 +83,7 @@ namespace VapeShopInventoryAPI.Api.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("Sale", b =>
+            modelBuilder.Entity("VapeShopInventoryAPI.Api.Sale", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -105,7 +112,7 @@ namespace VapeShopInventoryAPI.Api.Migrations
                     b.ToTable("Sales");
                 });
 
-            modelBuilder.Entity("SaleItem", b =>
+            modelBuilder.Entity("VapeShopInventoryAPI.Api.SaleItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -135,15 +142,15 @@ namespace VapeShopInventoryAPI.Api.Migrations
                     b.ToTable("SaleItems");
                 });
 
-            modelBuilder.Entity("SaleItem", b =>
+            modelBuilder.Entity("VapeShopInventoryAPI.Api.SaleItem", b =>
                 {
-                    b.HasOne("Product", "Product")
+                    b.HasOne("VapeShopInventoryAPI.Api.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Sale", "Sale")
+                    b.HasOne("VapeShopInventoryAPI.Api.Sale", "Sale")
                         .WithMany("SaleItems")
                         .HasForeignKey("SaleId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -154,7 +161,7 @@ namespace VapeShopInventoryAPI.Api.Migrations
                     b.Navigation("Sale");
                 });
 
-            modelBuilder.Entity("Sale", b =>
+            modelBuilder.Entity("VapeShopInventoryAPI.Api.Sale", b =>
                 {
                     b.Navigation("SaleItems");
                 });
