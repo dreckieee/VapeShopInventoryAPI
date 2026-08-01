@@ -1,3 +1,4 @@
+namespace VapeShopInventoryAPI.Api;
 public class Expense
 {
     public int Id {get; private set;}
@@ -5,6 +6,7 @@ public class Expense
     public decimal Amount {get; private set;}
     public string Category {get; private set;}
     public DateTime Date {get; private set;}
+    public DateTime CreatedAt {get; private set;}
     public Expense (DateTime date, string description, decimal amount, string category)
     {
         GuardExpense(date, description, amount, category);
@@ -12,6 +14,7 @@ public class Expense
         Description = description;
         Amount = amount;
         Category = category;
+        CreatedAt = DateTime.Now;
     }
 
     public void Edit(DateTime newExpenseDate, string newExpenseDescription, decimal newExpenseAmount, string newExpenseCategory)
