@@ -8,26 +8,31 @@ public class Product
     public int StockQuantity {get; private set;}
     public string Category {get; private set;}
     public DateTime CreatedAt {get; private set;}
-    public Product (string name, string sku, decimal price, int stockQuantity, string category)
+    public bool IsLowStock => StockQuantity <= LowStockLevel;
+    public int LowStockLevel {get; private set;}
+    public Product (string name, string sku, decimal price, int stockQuantity,int lowStockLevel, string category)
     {
-        GuardProduct(name, sku, price, stockQuantity, category);
+        GuardProduct(name, sku, price, stockQuantity, lowStockLevel, category);
         CreatedAt = DateTime.Now;
         Name = name;
         Sku = sku;
         Price = price;
         StockQuantity = stockQuantity;
+        LowStockLevel = lowStockLevel;
         Category = category;
+        
     }
 
-    public void Edit(string newProductName, string newProductSku, decimal newProductPrice, int newProductStockQuantity, string newProductCategory)
+    public void Edit(string newProductName, string newProductSku, decimal newProductPrice, int newProductStockQuantity, int newProductLowStockLevel, string newProductCategory)
     {
-        GuardProduct(newProductName, newProductSku, newProductPrice, newProductStockQuantity, newProductCategory);
-
+        GuardProduct(newProductName, newProductSku, newProductPrice, newProductStockQuantity, newProductLowStockLevel, newProductCategory);
         Name = newProductName;
         Sku = newProductSku;
         Price = newProductPrice;
         StockQuantity = newProductStockQuantity;
+        LowStockLevel = newProductLowStockLevel;
         Category = newProductCategory;
+        
     }
 
     public void ReduceStock(int amount)
@@ -42,7 +47,7 @@ public class Product
         }
         StockQuantity -= amount;
     }
-    private static void GuardProduct(string productName, string productSku, decimal productPrice, int productStockQuantity, string productCategory)
+    private static void GuardProduct(string productName, string productSku, decimal productPrice, int productStockQuantity, int productLowStockLevel, string productCategory)
     {
         if (productName == null)
         {
@@ -71,7 +76,10 @@ public class Product
         {
             throw new ArgumentException("Stock cannot be negative.", nameof(productStockQuantity));
         }
-
+        if (productLowStockLevel < 0)
+        {
+            throw new ArgumentException("A level of low stock cannot be negative.", nameof(productLowStockLevel));
+        }
         if (productCategory == null)
         {
             throw new ArgumentNullException(nameof(productCategory), "Category cannot be null.");
@@ -80,5 +88,6 @@ public class Product
         {
             throw new ArgumentException("Category cannot be empty", nameof(productCategory));
         }
+        
     }
 }
