@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using VapeShopInventoryAPI.Api.DTOs;
 using VapeShopInventoryAPI.Api.Exceptions;
 namespace VapeShopInventoryAPI.Api;
@@ -17,6 +18,28 @@ public class SalesController : ControllerBase
         _logger = logger;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<SaleResponse>>> GetSales ([FromQuery] int? year, [FromQuery] int? month, [FromQuery] bool? isClosed)
+    {
+        var query = _context.Sales.AsQueryable();
+        if (year != null)
+        {
+            query = query.Where(s => s.SaleDate.Year == year);
+        }
+        if (month != null)
+        {
+            query = query.Where(s => s.SaleDate.Month == month);
+        }
+        if (isClosed != null)
+        {
+            query = query.Where(s => s.IsClosed == isClosed);
+        }
+        
+        var sales = await query.ToListAsync();
+        var response = sales.Select(sale => SaleResponse.FromSale(sale)).ToList();
+        
+        return Ok(response);
+    }
     [HttpGet("{id}")]
     public async Task<ActionResult<SaleResponse>> GetSale(int id)
     {
