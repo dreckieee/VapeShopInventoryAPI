@@ -17,9 +17,15 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductResponse>>> GetProducts()
+    public async Task<ActionResult<IEnumerable<ProductResponse>>> GetProducts([FromQuery] string? name)
     {
-        var products = await _context.Products.ToListAsync();
+        var query = _context.Products.AsQueryable();
+        if(!string.IsNullOrWhiteSpace(name))
+        {
+            query = query.Where(product => product.Name.ToLower().Contains(name.ToLower()));
+        }
+
+        var products = await query.ToListAsync();
         var productResponses = products.Select(product => ProductResponse.FromProduct(product)).ToList();
         
         return Ok(productResponses);
@@ -42,7 +48,7 @@ public class ProductsController : ControllerBase
         Product product = null!;
         try
         {    
-            product = new Product(request.Name, request.Sku, request.Price, request.StockQuantity, request.Category);
+            product = new Product(request.Name, request.Sku, request.Price, request.StockQuantity, request.LowStockLevel, request.Category);
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
         }
@@ -72,7 +78,6 @@ public class ProductsController : ControllerBase
 
         var productResponse = ProductResponse.FromProduct(product);
             
-
         return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, productResponse);
     }
 
@@ -87,7 +92,7 @@ public class ProductsController : ControllerBase
             {
                 return NotFound();
             }
-            product.Edit(request.Name, request.Sku, request.Price, request.StockQuantity, request.Category);
+            product.Edit(request.Name, request.Sku, request.Price, request.StockQuantity, request.LowStockLevel, request.Category);
             await _context.SaveChangesAsync();
             return NoContent();
         }
