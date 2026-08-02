@@ -66,3 +66,13 @@ Beyond automated tests, the full Product → Sale → SaleItem → CloseSale flo
 state; resolved cascading CS0246 errors file-by-file (root entities → DTOs →
 controllers → test project), verified clean build and full test suite pass, single
 bulk commit.
+
+**Day 101 — Day 100 features deployed to production.** Migrations `AddLowStockLevelToProduct` and `AddCreatedAtToExpense` applied cleanly against the production DB, including the `CreatedAt` backfill (`UPDATE Expenses SET CreatedAt = Date`). Published and restarted via systemd; verified live through Swagger (name search, `IsLowStock` flag, Sales/Expenses monthly filters, `IncomeController`).
+
+## Design decision: two separate deploys over one batched deploy (Day 101)
+Day 100's features were finished and tested; the restock endpoint and `ProductHistory` feature (see below) were not yet started. Deployed Day 100 on its own rather than holding it behind unstarted work — bundling tested code behind untested code blocks it for no reason, and smaller, more frequent deploys are the target habit, not the exception.
+
+## Scoped, not yet built: restock endpoint + ProductHistory (Day 101)
+- **Restock endpoint** — increases `Product.StockQuantity` and creates a linked `Expense` for the delivery cost. Design questions open for next session: whether `Expense` needs a category/type field to mark "Restock" separately, exact route shape, and single-product vs multi-product-per-call scope.
+- **`ProductHistory`** (follow-on, depends on restock endpoint existing first) — unified per-product timeline covering name changes, price changes, stock increases (restock), and stock decreases (sale). Restock is one of its three sources, so it must exist first.
+- **Counter retirement** (follow-on cleanup) — once `ProductHistory` exists, retire `ReductionFrequency`/`TotalQuantityReduction` in favor of computing them from history on demand, same principle already applied to `IsLowStock` (don't store an aggregate that has to stay manually in sync).
