@@ -17,12 +17,16 @@ public class ProductsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductResponse>>> GetProducts([FromQuery] string? name)
+    public async Task<ActionResult<IEnumerable<ProductResponse>>> GetProducts([FromQuery] string? name, [FromQuery] string? category)
     {
         var query = _context.Products.AsQueryable();
-        if(!string.IsNullOrWhiteSpace(name))
+        if (!string.IsNullOrWhiteSpace(name))
         {
             query = query.Where(product => product.Name.ToLower().Contains(name.ToLower()));
+        }
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(product => product.Category.ToLower().Contains(category.ToLower()));
         }
 
         var products = await query.ToListAsync();
