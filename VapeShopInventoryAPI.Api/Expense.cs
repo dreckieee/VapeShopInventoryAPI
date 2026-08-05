@@ -7,6 +7,7 @@ public class Expense
     public string Category {get; private set;}
     public DateTime Date {get; private set;}
     public DateTime CreatedAt {get; private set;}
+    public const string RestockCategory = "Restock";
     public Expense (DateTime date, string description, decimal amount, string category)
     {
         GuardExpense(date, description, amount, category);
