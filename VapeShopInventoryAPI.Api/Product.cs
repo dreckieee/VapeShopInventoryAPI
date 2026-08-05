@@ -47,6 +47,14 @@ public class Product
         }
         StockQuantity -= amount;
     }
+    public void Restock(int amount)
+    {
+        if (amount <= 0)
+        {
+            throw new ArgumentException("Cannot restock by zero (0) or below.", nameof(amount));
+        }
+        StockQuantity += amount;
+    }
     private static void GuardProduct(string productName, string productSku, decimal productPrice, int productStockQuantity, int productLowStockLevel, string productCategory)
     {
         if (productName == null)
