@@ -17,7 +17,7 @@ public class ExpensesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Expense>>> GetExpenses([FromQuery] int? year, [FromQuery] int? month)
+    public async Task<ActionResult<IEnumerable<ExpenseResponse>>> GetExpenses([FromQuery] int? year, [FromQuery] int? month)
     {
         var query = _context.Expenses.AsQueryable();
         if(year != null)
@@ -81,6 +81,12 @@ public class ExpensesController : ControllerBase
         if (expense == null)
         {
             return NotFound();
+        }
+
+        var hasDeliveryReferences = await _context.DeliveryItems.AnyAsync(di => di.ExpenseId == expense.Id);
+        if (hasDeliveryReferences)
+        {
+            return Conflict(new {message = "Cannot delete this expense due to existing delivery item records."});
         }
 
         _context.Expenses.Remove(expense);
