@@ -36,6 +36,15 @@ public class RestockController : ControllerBase
                     return NotFound();
                 }
                 products.Add(product);
+
+                if (ri.Quantity <= 0)
+                {
+                    throw new ArgumentException($"Restock item request (Product Id: {ri.ProductId}) cannot have zero(0) as its quantity");
+                }
+                if (ri.UnitCost < 0)
+                {
+                    throw new ArgumentException($"Restock item request (Product Id: {ri.ProductId}) cannot have below zero(0) as its unit cost");
+                }
             }
 
             decimal restockTotalAmount = request.Items.Sum(item => item.Quantity * item.UnitCost);
