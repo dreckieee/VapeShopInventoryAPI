@@ -128,11 +128,17 @@ public class ProductsController : ControllerBase
                 return NotFound();
             }
 
-            var hasReferences = await _context.SaleItems.AnyAsync(si => si.ProductId == product.Id);
-            if (hasReferences)
+            var hasSaleReferences = await _context.SaleItems.AnyAsync(si => si.ProductId == product.Id);
+            if (hasSaleReferences)
             {
                 return Conflict(new {message = "Cannot delete this product due to existing sale records."});
             }
+            var hasDeliveryReferences = await _context.DeliveryItems.AnyAsync(di => di.ProductId == product.Id);
+            if (hasDeliveryReferences)
+            {
+                return Conflict(new {message = "Cannot delete this product due to existing delivery item records."});
+            }
+
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
             return NoContent();
