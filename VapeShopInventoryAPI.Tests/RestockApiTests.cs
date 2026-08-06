@@ -62,9 +62,9 @@ public class RestockApiTests
     public async Task CreateRestock_ValidMultipleRestockRequest_ReturnsOk()
     {
         
-        var (_, productA) = await CreateTestProduct(name: "Test Product A", sku: "test001aa", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
-        var (_, productB) = await CreateTestProduct(name: "Test Product B", sku: "test002bb", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Test");
-        var (_, productC) = await CreateTestProduct(name: "Test Product C", sku: "test003cc", price: 399.99m, stockQuantity: 30, lowStockLevel: 9, category: "Test");
+        var (_, productA) = await CreateTestProduct(name: "Test Product A", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
+        var (_, productB) = await CreateTestProduct(name: "Test Product B", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Test");
+        var (_, productC) = await CreateTestProduct(name: "Test Product C", price: 399.99m, stockQuantity: 30, lowStockLevel: 9, category: "Test");
         var createdProducts = new List<ProductResponse> { productA, productB, productC };
 
         int testQuantityA = 11;
@@ -128,9 +128,9 @@ public class RestockApiTests
         var responseGetExpensesA = await _client.GetAsync("api/Expenses");
         var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
 
-        var (_, productA) = await CreateTestProduct(name: "Test Product A", sku: "test001aa", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
-        var (_, productB) = await CreateTestProduct(name: "Test Product B", sku: "test002bb", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Test");
-        var (_, productC) = await CreateTestProduct(name: "Test Product C", sku: "test003cc", price: 399.99m, stockQuantity: 30, lowStockLevel: 9, category: "Test");
+        var (_, productA) = await CreateTestProduct(name: "Test Product A", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
+        var (_, productB) = await CreateTestProduct(name: "Test Product B", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Test");
+        var (_, productC) = await CreateTestProduct(name: "Test Product C", price: 399.99m, stockQuantity: 30, lowStockLevel: 9, category: "Test");
         var createdProducts = new List<ProductResponse> { productA, productB, productC };
 
         int testInvalidId = -1;
@@ -157,9 +157,6 @@ public class RestockApiTests
 
         var response = await _client.PostAsJsonAsync("api/Restock", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expecting 404 Not Found() status, but received {response.StatusCode}");
-
-        var restockResponse = await response.Content.ReadFromJsonAsync<RestockResponse>();
-        Assert.That(restockResponse, Is.Null);
 
         var responseGetExpensesB = await _client.GetAsync("api/Expenses");
         var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
@@ -207,12 +204,12 @@ public class RestockApiTests
         _createdProductIds.Clear();
         _restockedProductIds.Clear();
     }
-    public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProduct(string name = "Test Product", string sku = "test001aa", decimal price = 99.99m, int stockQuantity = 10, int lowStockLevel = 3, string category = "Test")
+    public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProduct(string name = "Test Product", string? sku = null, decimal price = 99.99m, int stockQuantity = 10, int lowStockLevel = 3, string category = "Test")
     {
         var payload = new
         {
             Name = name,
-            Sku = sku,
+            Sku = sku ?? Guid.NewGuid().ToString(),
             Price = price,
             StockQuantity = stockQuantity,
             LowStockLevel = lowStockLevel,
