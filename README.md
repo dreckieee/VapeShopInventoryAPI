@@ -3,7 +3,7 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: Deployed
-Product CRUD, Expense CRUD, full Sale/SaleItem lifecycle (create, add/reduce items, close, cancel), monthly filtering on Sales/Expenses, and a computed income endpoint are complete. A batch restock endpoint with itemized delivery cost tracking (`DeliveryItem`) is built and locally verified, not yet deployed. 11 automated tests via `WebApplicationFactory` against an isolated in-memory database cover Product and Sale/SaleItem flows, plus manual verification against the live deployed instance. Live on a DigitalOcean droplet as of Day 94, most recently redeployed Day 101.
+Product CRUD, Expense CRUD, full Sale/SaleItem lifecycle (create, add/reduce items, close, cancel), monthly filtering on Sales/Expenses, and a computed income endpoint are complete. A batch restock endpoint with itemized delivery cost tracking (`DeliveryItem`) is built and locally verified, not yet deployed. 14 automated tests via `WebApplicationFactory` against an isolated in-memory database cover Product, Sale/SaleItem, and restock flows, plus manual verification against the live deployed instance. Live on a DigitalOcean droplet as of Day 94, most recently redeployed Day 101.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
@@ -53,7 +53,7 @@ See [DECISIONS.md](./DECISIONS.md) for design rationale, known issues, and deplo
 - `POST /api/restock` — batch endpoint for recording a delivery: line items (product, quantity, unit cost) roll up into one `Expense` (category: `Restock`, amount computed from line costs) and itemized `DeliveryItem` records per line, while updating stock for each product. Not yet deployed.
 
 ## Testing
-`VapeShopInventoryAPI.Tests` — 11 NUnit tests (4 Products, 7 Sales/SaleItems) using `WebApplicationFactory<Program>` against an isolated in-memory SQLite database. Run with `dotnet test` from `VapeShopInventoryAPI.Tests` — no separate server needs to be running first. Restock endpoint coverage not yet written.
+`VapeShopInventoryAPI.Tests` — 14 NUnit tests (4 Products, 7 Sales/SaleItems, 3 Restock) using `WebApplicationFactory<Program>` against an isolated in-memory SQLite database. Run with `dotnet test` from `VapeShopInventoryAPI.Tests` — no separate server needs to be running first. Restock coverage is partial: valid single/multi-product and invalid-ProductId cases are covered; duplicate-ProductId, invalid quantity/cost, and empty-Items cases are still open.
 
 ## About
 Part of my transition into remote software engineering (QA Automation → SDET → Full-Stack).
