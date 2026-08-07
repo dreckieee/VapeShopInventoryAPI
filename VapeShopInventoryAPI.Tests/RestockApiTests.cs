@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Microsoft.Extensions.DependencyInjection;
 using VapeShopInventoryAPI.Api;
 using VapeShopInventoryAPI.Api.DTOs;
 namespace VapeShopInventoryAPI.Tests;
@@ -123,7 +124,7 @@ public class RestockApiTests
     }
 
     [Test]
-    public async Task CreateRestock_InvalidProductIdAllOrNothing_ReturnsBadRequest()
+    public async Task CreateRestock_InvalidProductIdAllOrNothing_ReturnsNotFound()
     {
         var responseGetExpensesA = await _client.GetAsync("api/Expenses");
         var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
@@ -176,10 +177,188 @@ public class RestockApiTests
             Assert.That(responseProduct.LowStockLevel, Is.EqualTo(pr.LowStockLevel));
             Assert.That(responseProduct.Category, Is.EqualTo(pr.Category));
             Assert.That(responseProduct.CreatedAt, Is.EqualTo(pr.CreatedAt));
+        }  
+    }
+
+    [Test]
+    public async Task CreateRestock_DuplicateProductIdDifferentUnitCost_ReturnsOk()
+    {
+        var (_, productA) = await CreateTestProduct(name: "Test Product A", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
+    
+        int testQuantityA = 11;
+        int testQuantityB = 22;
+        decimal testUnitCostA = 149.99m;
+        decimal testUnitCostB = 249.99m;
+
+        var payload = new RestockRequest
+        {
+            Date = new DateTime(2026, 01, 01),
+            Description = "Default restock test description",
+            Items = new List<RestockItemRequest>
+            {
+                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
+                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityB, UnitCost = testUnitCostB}
+            }
+        };
+
+        var responseMessage = await _client.PostAsJsonAsync("api/Restock", payload);
+        Assert.That(responseMessage.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseMessage.StatusCode}");
+
+        var restockResponse = await responseMessage.Content.ReadFromJsonAsync<RestockResponse>();
+        Assert.That(restockResponse, Is.Not.Null);
+        
+
+        Assert.That(restockResponse.Expense.Date, Is.EqualTo(payload.Date));
+        Assert.That(restockResponse.Expense.Amount, Is.EqualTo(payload.Items.Sum(i => i.Quantity * i.UnitCost)));
+        Assert.That(restockResponse.Expense.Category, Is.EqualTo(Expense.RestockCategory));
+
+        Assert.That(restockResponse.DeliveryItems.Count, Is.EqualTo(2));
+        Assert.That(restockResponse.DeliveryItems.Count, Is.EqualTo(payload.Items.Count));
+        for (int x = 0; x < restockResponse.DeliveryItems.Count; x++)
+        {
+            Assert.That(restockResponse.DeliveryItems[x].ProductId, Is.EqualTo(payload.Items[x].ProductId));
+            Assert.That(restockResponse.DeliveryItems[x].ExpenseId, Is.EqualTo(restockResponse.Expense.Id));
+            Assert.That(restockResponse.DeliveryItems[x].Quantity, Is.EqualTo(payload.Items[x].Quantity));
+            Assert.That(restockResponse.DeliveryItems[x].UnitCost, Is.EqualTo(payload.Items[x].UnitCost));
+            Assert.That(restockResponse.DeliveryItems[x].TotalCost, Is.EqualTo(payload.Items[x].UnitCost * payload.Items[x].Quantity));
         }
 
-        
+        Assert.That(restockResponse.UpdatedProducts.Count, Is.EqualTo(1));
+        var responseGetProduct = await _client.GetAsync($"api/Products/{productA.Id}");
+        Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseGetProduct.StatusCode}");
+
+        var updatedProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>();
+        Assert.That(updatedProduct, Is.Not.Null);
+        Assert.That(updatedProduct.StockQuantity, Is.EqualTo(productA.StockQuantity + testQuantityA + testQuantityB));
+        Assert.That(updatedProduct.Name, Is.EqualTo(productA.Name));
+        Assert.That(updatedProduct.Sku, Is.EqualTo(productA.Sku));
+        Assert.That(updatedProduct.Price, Is.EqualTo(productA.Price));
+        Assert.That(updatedProduct.LowStockLevel, Is.EqualTo(productA.LowStockLevel));
+        Assert.That(updatedProduct.Category, Is.EqualTo(productA.Category));
+        Assert.That(updatedProduct.CreatedAt, Is.EqualTo(productA.CreatedAt));
     }
+
+    [Test]
+    public async Task CreateRestock_InvalidQuantityAllOrNothing_ReturnsBadRequest()
+    {
+        var responseGetExpensesA = await _client.GetAsync("api/Expenses");
+        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+
+        var (_, productA) = await CreateTestProduct(name: "Test Product A", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
+        var (_, productB) = await CreateTestProduct(name: "Test Product B", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Test");
+        var createdProducts = new List<ProductResponse> { productA, productB };
+
+        int testQuantityA = 11;
+        int testQuantityB = 0;
+        decimal testUnitCostA = 149.99m;
+        decimal testUnitCostB = 249.99m;
+
+        var payload = new RestockRequest
+        {
+            Date = new DateTime(2026, 01, 01),
+            Description = "Default restock test description",
+            Items = new List<RestockItemRequest>
+            {
+                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
+                new RestockItemRequest {ProductId = productB.Id, Quantity = testQuantityB, UnitCost = testUnitCostB}
+            }
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Restock", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expecting 400 Bad Request() status, but received {response.StatusCode}");
+
+        var responseGetExpensesB = await _client.GetAsync("api/Expenses");
+        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        Assert.That(expensesB?.Count, Is.EqualTo(expensesA?.Count));
+
+        foreach(ProductResponse pr in createdProducts)
+        {
+            var responseGetProduct = await _client.GetAsync($"api/Products/{pr.Id}");
+            Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseGetProduct.StatusCode}");
+
+            var responseProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>();
+            Assert.That(responseProduct, Is.Not.Null);
+            Assert.That(responseProduct.StockQuantity, Is.EqualTo(pr.StockQuantity));
+            Assert.That(responseProduct.Name, Is.EqualTo(pr.Name));
+            Assert.That(responseProduct.Sku, Is.EqualTo(pr.Sku));
+            Assert.That(responseProduct.Price, Is.EqualTo(pr.Price));
+            Assert.That(responseProduct.LowStockLevel, Is.EqualTo(pr.LowStockLevel));
+            Assert.That(responseProduct.Category, Is.EqualTo(pr.Category));
+            Assert.That(responseProduct.CreatedAt, Is.EqualTo(pr.CreatedAt));
+        }  
+    }
+
+    [Test]
+    public async Task CreateRestock_InvalidUnitCostAllOrNothing_ReturnsBadRequest()
+    {
+        var responseGetExpensesA = await _client.GetAsync("api/Expenses");
+        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+
+        var (_, productA) = await CreateTestProduct(name: "Test Product A", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
+        var (_, productB) = await CreateTestProduct(name: "Test Product B", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Test");
+        var createdProducts = new List<ProductResponse> { productA, productB };
+
+        int testQuantityA = 11;
+        int testQuantityB = 22;
+        decimal testUnitCostA = 149.99m;
+        decimal testUnitCostB = -249.99m;
+
+        var payload = new RestockRequest
+        {
+            Date = new DateTime(2026, 01, 01),
+            Description = "Default restock test description",
+            Items = new List<RestockItemRequest>
+            {
+                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
+                new RestockItemRequest {ProductId = productB.Id, Quantity = testQuantityB, UnitCost = testUnitCostB}
+            }
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Restock", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expecting 400 Bad Request() status, but received {response.StatusCode}");
+
+        var responseGetExpensesB = await _client.GetAsync("api/Expenses");
+        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        Assert.That(expensesB?.Count, Is.EqualTo(expensesA?.Count));
+
+        foreach(ProductResponse pr in createdProducts)
+        {
+            var responseGetProduct = await _client.GetAsync($"api/Products/{pr.Id}");
+            Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseGetProduct.StatusCode}");
+
+            var responseProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>();
+            Assert.That(responseProduct, Is.Not.Null);
+            Assert.That(responseProduct.StockQuantity, Is.EqualTo(pr.StockQuantity));
+            Assert.That(responseProduct.Name, Is.EqualTo(pr.Name));
+            Assert.That(responseProduct.Sku, Is.EqualTo(pr.Sku));
+            Assert.That(responseProduct.Price, Is.EqualTo(pr.Price));
+            Assert.That(responseProduct.LowStockLevel, Is.EqualTo(pr.LowStockLevel));
+            Assert.That(responseProduct.Category, Is.EqualTo(pr.Category));
+            Assert.That(responseProduct.CreatedAt, Is.EqualTo(pr.CreatedAt));
+        }  
+    }
+
+    [Test]
+    public async Task CreateRestock_EmptyRestockItems_ReturnsBadRequest()
+    {
+        var responseGetExpensesA = await _client.GetAsync("api/Expenses");
+        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+
+        var payload = new RestockRequest
+        {
+            Date = new DateTime(2026, 01, 01),
+            Description = "Default restock test description",
+            Items = new List<RestockItemRequest> { }
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Restock", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expecting 400 Bad Request() status, but received {response.StatusCode}");
+
+        var responseGetExpensesB = await _client.GetAsync("api/Expenses");
+        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        Assert.That(expensesB?.Count, Is.EqualTo(expensesA?.Count));
+    }
+
     [TearDown]
     public async Task DeleteTestProduct()
     {
