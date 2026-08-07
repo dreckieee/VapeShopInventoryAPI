@@ -97,6 +97,92 @@ public class ProductsApiTests
         Assert.That(productsBefore?.Count, Is.EqualTo(productsAfter?.Count));
     }
 
+    [Test]
+    public async Task FilterProducts_FromQueryName_ReturnsOk()
+    {
+        var responseBefore = await _client.GetAsync("/api/Products?name=blue");
+        Assert.That(responseBefore.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {responseBefore.StatusCode}");
+        var productsBefore = await responseBefore.Content.ReadFromJsonAsync<List<ProductResponse>>();
+
+        var (_, productA) = await CreateTestProduct(name: "Blue Razz Vape Juice", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Liquids");
+        var (_, productB) = await CreateTestProduct(name: "Blue Coil Kit", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Hardware");
+        var (_, productC) = await CreateTestProduct(name: "Mint Vape Juice", price: 399.99m, stockQuantity: 30, lowStockLevel: 9, category: "Liquids");
+        var (_, productD) = await CreateTestProduct(name: "Battery Charger", price: 499.99m, stockQuantity: 40, lowStockLevel: 12, category: "Hardware");
+        var createdProducts = new List<ProductResponse> { productA, productB, productC, productD };
+
+        var response = await _client.GetAsync("/api/Products?name=blue");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {response.StatusCode}");
+
+        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        Assert.That(products, Is.Not.Null);
+        Assert.That(products.Count, Is.EqualTo(productsBefore?.Count + 2));
+        Assert.That(products.Any(p => p.Name == productA.Name), Is.True);
+        Assert.That(products.Any(p => p.Name == productB.Name), Is.True);
+        Assert.That(products.Any(p => p.Name == productC.Name), Is.False);
+        Assert.That(products.Any(p => p.Name == productD.Name), Is.False);
+    }
+
+    [Test]
+    public async Task FilterProducts_FromQueryCategory_ReturnsOk()
+    {
+        var responseBefore = await _client.GetAsync("/api/Products?category=liquids");
+        Assert.That(responseBefore.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {responseBefore.StatusCode}");
+        var productsBefore = await responseBefore.Content.ReadFromJsonAsync<List<ProductResponse>>();
+
+        var (_, productA) = await CreateTestProduct(name: "Blue Razz Vape Juice", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Liquids");
+        var (_, productB) = await CreateTestProduct(name: "Blue Coil Kit", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Hardware");
+        var (_, productC) = await CreateTestProduct(name: "Mint Vape Juice", price: 399.99m, stockQuantity: 30, lowStockLevel: 9, category: "Liquids");
+        var (_, productD) = await CreateTestProduct(name: "Battery Charger", price: 499.99m, stockQuantity: 40, lowStockLevel: 12, category: "Hardware");
+        var createdProducts = new List<ProductResponse> { productA, productB, productC, productD };
+
+        var response = await _client.GetAsync("/api/Products?category=liquids");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {response.StatusCode}");
+
+        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        Assert.That(products, Is.Not.Null);
+        Assert.That(products.Count, Is.EqualTo(productsBefore?.Count + 2));
+        Assert.That(products.Any(p => p.Name == productA.Name), Is.True);
+        Assert.That(products.Any(p => p.Name == productB.Name), Is.False);
+        Assert.That(products.Any(p => p.Name == productC.Name), Is.True);
+        Assert.That(products.Any(p => p.Name == productD.Name), Is.False);
+    }
+
+    [Test]
+    public async Task FilterProducts_FromQueryNameAndCategory_ReturnsOk()
+    {
+        var responseBefore = await _client.GetAsync("/api/Products?name=blue&category=hardware");
+        Assert.That(responseBefore.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {responseBefore.StatusCode}");
+        var productsBefore = await responseBefore.Content.ReadFromJsonAsync<List<ProductResponse>>();
+
+        var (_, productA) = await CreateTestProduct(name: "Blue Razz Vape Juice", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Liquids");
+        var (_, productB) = await CreateTestProduct(name: "Blue Coil Kit", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Hardware");
+        var (_, productC) = await CreateTestProduct(name: "Mint Vape Juice", price: 399.99m, stockQuantity: 30, lowStockLevel: 9, category: "Liquids");
+        var (_, productD) = await CreateTestProduct(name: "Battery Charger", price: 499.99m, stockQuantity: 40, lowStockLevel: 12, category: "Hardware");
+        var createdProducts = new List<ProductResponse> { productA, productB, productC, productD };
+
+        var response = await _client.GetAsync("/api/Products?name=blue&category=hardware");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {response.StatusCode}");
+
+        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        Assert.That(products, Is.Not.Null);
+        Assert.That(products.Count, Is.EqualTo(productsBefore?.Count + 1));
+        Assert.That(products.Any(p => p.Name == productA.Name), Is.False);
+        Assert.That(products.Any(p => p.Name == productB.Name), Is.True);
+        Assert.That(products.Any(p => p.Name == productC.Name), Is.False);
+        Assert.That(products.Any(p => p.Name == productD.Name), Is.False);
+    }
+
+    [Test]
+    public async Task FilterProducts_FromQueryNonExistentName_ReturnsOkEmptyList()
+    {
+        var response = await _client.GetAsync("/api/Products?name=nonexistentproduct12345");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {response.StatusCode}");
+
+        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        Assert.That(products, Is.Not.Null);
+        Assert.That(products.Count, Is.EqualTo(0));
+    }
+
     [TearDown]
     public async Task DeleteTestProduct()
     {
