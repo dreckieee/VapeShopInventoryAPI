@@ -5,17 +5,21 @@ public class Sale
     public int Id {get; private set;}
     public DateTime SaleDate {get; private set;}
     public DateTime CreatedAt {get; private set;}
+    public PaymentMethod PaymentMethod {get; private set;}
+    public string? PaymentNote {get; private set;}
     private readonly List<SaleItem> _saleItems = new();
     public IReadOnlyList<SaleItem> SaleItems => _saleItems;
     public bool IsClosed {get; private set;} = false;
     public int TransactionCount {get; private set;} = 0;
     public int ReductionFrequency {get; private set;} = 0;
     public int TotalQuantityReduction {get; private set;} = 0;
-    public Sale (DateTime saleDate)
+    public Sale (DateTime saleDate, PaymentMethod paymentMethod, string? paymentNote)
     {
-        GuardSale(saleDate);
+        GuardSale(saleDate, paymentMethod);
         SaleDate = saleDate;
         CreatedAt = DateTime.Now;
+        PaymentMethod = paymentMethod;
+        PaymentNote = paymentNote;
     }
 
     public void AddSaleItem (SaleItem saleItem)
@@ -52,11 +56,13 @@ public class Sale
         }
         _saleItems.Remove(saleItemToRemove);
     }
-    public void EditSaleDate(DateTime newSaleDate)
+    public void EditSale(DateTime newSaleDate, PaymentMethod newPaymentMethod, string? newPaymentNote)
     {
         GuardClosedSale();
-        GuardSale(newSaleDate);
+        GuardSale(newSaleDate, newPaymentMethod);
         SaleDate = newSaleDate;
+        PaymentMethod = newPaymentMethod;
+        PaymentNote = newPaymentNote;
     }
     public void ReduceSaleItemQuantity(SaleItem saleItem, int amount)
     {
@@ -109,7 +115,7 @@ public class Sale
         }
         IsClosed = true;
     }
-    private void GuardSale(DateTime saleDate)
+    private void GuardSale(DateTime saleDate, PaymentMethod paymentMethod)
     {
         if (saleDate == default)
         {
@@ -118,6 +124,11 @@ public class Sale
         if (saleDate > DateTime.Now)
         {
             throw new ArgumentException("Date of sale cannot be in the future.", nameof(saleDate));
+        }
+        if (!Enum.IsDefined(paymentMethod))
+        {
+            string paymentMethods = string.Join(", ", Enum.GetNames<PaymentMethod>());
+            throw new ArgumentOutOfRangeException(nameof(paymentMethod), $"Payment method provided for sale is incorrect. Choose between: {paymentMethods}");
         }
     }
 
