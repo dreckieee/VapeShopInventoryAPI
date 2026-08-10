@@ -1,7 +1,5 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using VapeShopInventoryAPI.Api.DTOs;
 using VapeShopInventoryAPI.Api.Exceptions;
 namespace VapeShopInventoryAPI.Api;
@@ -56,12 +54,19 @@ public class SalesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<SaleResponse>> CreateSale([FromBody] CreateSaleRequest request)
     {
-        var sale = new Sale(request.SaleDate);
-        _context.Sales.Add(sale);
-        await _context.SaveChangesAsync();
+        try
+        {
+            var sale = new Sale(request.SaleDate, request.PaymentMethod, request.PaymentNote);
+            _context.Sales.Add(sale);
+            await _context.SaveChangesAsync();
 
-        var saleResponse = SaleResponse.FromSale(sale);
-        return CreatedAtAction(nameof(GetSale), new { id = sale.Id }, saleResponse);
+            var saleResponse = SaleResponse.FromSale(sale);
+            return CreatedAtAction(nameof(GetSale), new { id = sale.Id }, saleResponse);
+        }
+        catch(ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPost("{id}/close")]
@@ -101,11 +106,8 @@ public class SalesController : ControllerBase
         }
     }
 
-
-
-
-    [HttpPatch("{id}/date")]
-    public async Task<ActionResult<SaleResponse>> EditSaleDate(int id, [FromBody] EditSaleDateRequest request)
+    [HttpPatch("{id}/edit")]
+    public async Task<ActionResult<SaleResponse>> EditSale(int id, [FromBody] EditSaleRequest request)
     {
         var sale = await _context.Sales.Include(s => s.SaleItems).FirstOrDefaultAsync(s => s.Id == id);
         if (sale == null)
@@ -114,7 +116,7 @@ public class SalesController : ControllerBase
         }
         try
         {
-            sale.EditSaleDate(request.SaleDate);
+            sale.EditSale(request.SaleDate, request.PaymentMethod, request.PaymentNote);
             await _context.SaveChangesAsync();
         }
         catch (InvalidOperationException ex)
