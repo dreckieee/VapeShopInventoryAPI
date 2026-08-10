@@ -51,27 +51,44 @@ public class ExpensesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ExpenseResponse>> CreateExpense([FromBody] CreateExpenseRequest request)
     {
-        var expense = new Expense(request.Date, request.Description, request.Amount, request.Category);
+        try
+        {
+            var expense = new Expense(request.Date, request.Description, request.Amount, request.Category, request.PaymentMethod, request.PaymentNote);
 
-        _context.Expenses.Add(expense);
-        await _context.SaveChangesAsync();
+            _context.Expenses.Add(expense);
+            await _context.SaveChangesAsync();
 
-        var response = ExpenseResponse.FromExpense(expense);
-        return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, response);
+            var response = ExpenseResponse.FromExpense(expense);
+            return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, response);
+        }
+        catch(ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
         
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateExpense(int id, [FromBody] UpdateExpenseRequest request)
+    public async Task<ActionResult<ExpenseResponse>> UpdateExpense(int id, [FromBody] UpdateExpenseRequest request)
     {
-        var expense = await _context.Expenses.FindAsync(id);
-        if (expense == null)
+        try
         {
-            return NotFound();
+            var expense = await _context.Expenses.FindAsync(id);
+            if (expense == null)
+            {
+                return NotFound();
+            }
+            expense.Edit(request.Date, request.Description, request.Amount, request.Category,request.PaymentMethod, request.PaymentNote); 
+            await _context.SaveChangesAsync();
+            
+            var response = ExpenseResponse.FromExpense(expense);
+            return Ok(response);
         }
-        expense.Edit(request.Date, request.Description, request.Amount, request.Category);
-        await _context.SaveChangesAsync();
-        return NoContent();
+        catch(ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message});
+        }
+        
     }
 
     [HttpDelete("{id}")]
