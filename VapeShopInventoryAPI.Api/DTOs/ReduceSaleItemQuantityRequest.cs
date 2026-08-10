@@ -1,5 +1,5 @@
 namespace VapeShopInventoryAPI.Api.DTOs;
 public class ReduceSaleItemQuantityRequest
 {
-    public int Amount {get; set;}
+    public required int Amount {get; set;}
 }

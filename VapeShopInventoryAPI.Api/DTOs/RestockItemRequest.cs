@@ -1,7 +1,7 @@
 namespace VapeShopInventoryAPI.Api.DTOs;
 public class RestockItemRequest
 {
-    public int ProductId {get; set;}
-    public int Quantity {get; set;}
-    public decimal UnitCost {get; set;}
+    public required int ProductId {get; set;}
+    public required int Quantity {get; set;}
+    public required decimal UnitCost {get; set;}
 }

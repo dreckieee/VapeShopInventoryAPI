@@ -1,7 +1,7 @@
 namespace VapeShopInventoryAPI.Api.DTOs;
 public class AddSaleItemRequest
 {
-    public int ProductId {get; set;}
-    public int Quantity {get; set;}
-    public decimal UnitPriceAtSale {get; set;}
+    public required int ProductId {get; set;}
+    public required int Quantity {get; set;}
+    public required decimal UnitPriceAtSale {get; set;}
 }

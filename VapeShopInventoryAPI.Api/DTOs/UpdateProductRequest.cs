@@ -3,9 +3,9 @@ public class UpdateProductRequest
 {
     public required string Name {get; set;}
     public required string Sku {get; set;}
-    public decimal Price {get; set;}
-    public int StockQuantity {get; set;}
-    public int LowStockLevel {get; set;}
+    public required decimal Price {get; set;}
+    public required int StockQuantity {get; set;}
+    public required int LowStockLevel {get; set;}
     public required string Category {get; set;}
     
 }
