@@ -48,7 +48,7 @@ public class RestockController : ControllerBase
             }
 
             decimal restockTotalAmount = request.Items.Sum(item => item.Quantity * item.UnitCost);
-            var expense = new Expense(request.Date, request.Description, restockTotalAmount, Expense.RestockCategory);
+            var expense = new Expense(request.Date, request.Description, restockTotalAmount, Expense.RestockCategory, request.PaymentMethod, request.PaymentNote);
             _context.Expenses.Add(expense);
             await _context.SaveChangesAsync();
 
