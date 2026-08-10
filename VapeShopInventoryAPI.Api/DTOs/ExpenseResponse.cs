@@ -2,6 +2,8 @@ namespace VapeShopInventoryAPI.Api.DTOs;
 public record ExpenseResponse
 {
     public int Id {get; init;}
+    public PaymentMethod PaymentMethod {get; init;}
+    public string? PaymentNote {get; init;}
     public required string Description {get; init;}
     public decimal Amount {get; init;}
     public required string Category {get; init;}
@@ -10,6 +12,8 @@ public record ExpenseResponse
     public static ExpenseResponse FromExpense(Expense expense) => new()
     {
         Id = expense.Id, 
+        PaymentMethod = expense.PaymentMethod,
+        PaymentNote = expense.PaymentNote,
         Description = expense.Description,
         Amount = expense.Amount,
         Category = expense.Category,
