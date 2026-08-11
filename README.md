@@ -3,7 +3,7 @@
 ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
 
 ## Status: Deployed
-Product CRUD, Expense CRUD, full Sale/SaleItem lifecycle (create, add/reduce items, close, cancel), monthly filtering on Sales/Expenses, a computed income endpoint, and a batch restock endpoint with itemized delivery cost tracking (`DeliveryItem`) are complete and deployed. `PaymentMethod`/`PaymentNote` tracking on Sales and Expenses is code-complete but not yet deployed — pending a database migration and updated test coverage. 14 automated tests via `WebApplicationFactory` against an isolated in-memory database cover Product, Sale/SaleItem, and restock flows, plus manual verification against the live deployed instance. Live on a DigitalOcean droplet as of Day 94, most recently redeployed Day 106.
+Product CRUD, Expense CRUD, full Sale/SaleItem lifecycle (create, add/reduce items, close, cancel), monthly filtering on Sales/Expenses, a computed income endpoint, and a batch restock endpoint with itemized delivery cost tracking (`DeliveryItem`) are complete and deployed. `PaymentMethod`/`PaymentNote` tracking on Sales and Expenses is code-complete, with the database migration created and applied locally — not yet deployed to production, pending final test coverage. 14 automated tests via `WebApplicationFactory` against an isolated in-memory database cover Product, Sale/SaleItem, and restock flows, plus manual verification against the live deployed instance. Live on a DigitalOcean droplet as of Day 94, most recently redeployed Day 106.
 
 ## Tech Stack
 - .NET 10 / ASP.NET Core (Controllers)
@@ -32,13 +32,13 @@ See [DECISIONS.md](./DECISIONS.md) for design rationale, known issues, and deplo
 - `GET /api/Expenses/{id}` — get expense by id
 - `POST /api/Expenses` — create expense (includes `PaymentMethod`, required; `PaymentNote`, optional — not yet deployed)
 - `PUT /api/Expenses/{id}` — update expense (includes `PaymentMethod`/`PaymentNote` — not yet deployed)
-- `DELETE /api/Expenses/{id}` — delete expense
+- `DELETE /api/Expenses/{id}` — delete expense (returns `409 Conflict` if the expense has existing delivery item references)
 
 ### Sales
 - `GET /api/Sales` — list sales, optionally filtered by `?year=`, `?month=`, and/or `?isClosed=`; filters are independent and can be combined (omitting a filter doesn't restrict on that axis)
 - `POST /api/Sales` — create a new sale (includes `PaymentMethod`, required; `PaymentNote`, optional — not yet deployed)
 - `GET /api/Sales/{id}` — get a sale with its items
-- `PATCH /api/Sales/{id}/edit` — edit sale date, payment method, and payment note (renamed from `/date` — not yet deployed)
+- `PUT /api/Sales/{id}` — edit sale date, payment method, and payment note (route/verb changed from `PATCH .../edit` for full-replacement consistency with Expenses — `PaymentMethod`/`PaymentNote` fields not yet deployed)
 - `POST /api/Sales/{id}/close` — finalize a sale, decrementing stock
 - `PUT /api/Sales/{id}/cancel` — permanently cancel an open sale
 
@@ -53,7 +53,7 @@ See [DECISIONS.md](./DECISIONS.md) for design rationale, known issues, and deplo
 - `POST /api/restock` — batch endpoint for recording a delivery: line items (product, quantity, unit cost) roll up into one `Expense` (category: `Restock`, amount computed from line costs, includes `PaymentMethod`/`PaymentNote` once deployed) and itemized `DeliveryItem` records per line, while updating stock for each product.
 
 ## Testing
-`VapeShopInventoryAPI.Tests` — 14 NUnit tests (4 Products, 7 Sales/SaleItems, 3 Restock) using `WebApplicationFactory<Program>` against an isolated in-memory SQLite database. Run with `dotnet test` from `VapeShopInventoryAPI.Tests` — no separate server needs to be running first. Restock coverage is partial: valid single/multi-product and invalid-ProductId cases are covered; duplicate-ProductId, invalid quantity/cost, and empty-Items cases are still open. `PaymentMethod` guard coverage (valid values, invalid enum rejection) not yet added — queued for Day 109.
+`VapeShopInventoryAPI.Tests` — 14 NUnit tests (4 Products, 7 Sales/SaleItems, 3 Restock) using `WebApplicationFactory<Program>` against an isolated in-memory SQLite database. Run with `dotnet test` from `VapeShopInventoryAPI.Tests` — no separate server needs to be running first. Restock coverage is partial: valid single/multi-product and invalid-ProductId cases are covered; duplicate-ProductId, invalid quantity/cost, and empty-Items cases are still open. `PaymentMethod` guard coverage (valid values, invalid enum rejection) not yet added — queued for Day 110. `ExpensesController` has no dedicated test file yet — also queued for Day 110.
 
 ## About
 Part of my transition into remote software engineering (QA Automation → SDET → Full-Stack).
