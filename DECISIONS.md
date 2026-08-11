@@ -1,5 +1,3 @@
-# Design Decisions & Development Log
-
 ## Design decision: stock deduction timing
 Stock is deducted from `Product.StockQuantity` at `CloseSale` time, not at `AddSaleItem` time. Built for a single-register, in-person retail context — not designed for multiple simultaneous registers against the same stock pool. Two registers could both add the last unit of a low-stock item to separate open sales before either closes; this is an accepted, documented tradeoff, not an oversight.
 
@@ -38,8 +36,8 @@ working rules).
 ## Known issue (fixed): `DeleteProduct` had no guard against existing sale records
 Previously attempted deletion unconditionally, resulting in a bare `500` whenever a product had any existing `SaleItem` reference. Fixed by adding an explicit existence check before deletion, returning `409 Conflict` with a clear message, plus a fallback catch for unexpected constraint failures.
 
-## Known issue (open): `ExpensesController`'s delete endpoint has no guard against `DeliveryItem` references (Day 102)
-Deleting an `Expense` that still has `DeliveryItem` rows pointing at it (e.g. a Restock-category expense) will hit the database's `Restrict` constraint and surface a raw `DbUpdateException` — likely an unhandled `500` — instead of a clean `409 Conflict`. `DeleteProduct` already guards against this exact failure mode for `SaleItem` references (see above); `ExpensesController` needs the same fix applied for `DeliveryItem`. Discovered while building the restock feature, not yet fixed.
+## Known issue (fixed): `ExpensesController`'s delete endpoint had no guard against `DeliveryItem` references (Day 102, fixed by Day 109)
+Deleting an `Expense` that still had `DeliveryItem` rows pointing at it (e.g. a Restock-category expense) would hit the database's `Restrict` constraint and surface a raw `DbUpdateException` — likely an unhandled `500` — instead of a clean `409 Conflict`. `DeleteProduct` already guarded against this exact failure mode for `SaleItem` references (see above); the same guard has since been applied to `ExpensesController.DeleteExpense`, checking for existing `DeliveryItem` references before deletion and returning `409 Conflict`. Confirmed fixed while reviewing the controller Day 109 (a stale note in `KEY_DECISIONS.md` had continued describing this as an open gap after the fix landed).
 
 ## Known issue (fixed): environment-specific DB path mismatch (Day 94)
 After deployment, `GET /api/Products` returned a `500` with `SQLite Error 1: 'no such table: Products'`. Root cause: the connection string used a relative path (`Data Source=vapeshop.db`), and EF Core migrations were run from the repo folder while the systemd service's working directory was different — two different folders, two different (and initially empty) database files. Fixed immediately by copying the migrated `.db` file to the service's working directory, then permanently by adding `appsettings.Production.json` with an absolute path override for the connection string, so this can't recur regardless of which folder migrations are run from.
@@ -135,3 +133,17 @@ Entities, guards, DTOs, and controllers are code-complete and pushed, but the da
 
 ## Outage note (Day 106–107)
 No work or posts during this window — a storm knocked out internet access for two days. Resumed Day 108; day numbering stays continuous (no backdating/renumbering), consistent with the project's pacing philosophy treating Day-N as a log marker, not a hard deadline.
+
+## Day 109 — PaymentMethod migration, test fixes, Sale edit route to PUT
+
+Created and applied the `AddPaymentMethodAndNote` EF migration locally, adding `PaymentMethod`/`PaymentNote` columns to `Sales` and `Expenses`. Existing dev/test rows backfilled to `PaymentMethod.Cash` (enum default 0) via EF's required `defaultValue` — accepted as a non-issue since the production DB holds only dev/test data and will be fully wiped before the first family demo.
+
+Fixed `SalesApiTests` and `RestockApiTests` to compile and pass against Day 108's DTO changes. Caught and removed a bug in `RestockApiTests.CreateTestProduct`, which had incorrectly been sending `PaymentMethod`/`PaymentNote` fields for `Product` creation — `Product` doesn't have these fields, only `Sale`/`Expense` do. The extra fields were silently ignored by model binding rather than causing a failure, but misrepresented the DTO's actual shape.
+
+Changed `SalesController.EditSale` from `PATCH /api/Sales/{id}/edit` to `PUT /api/Sales/{id}`, matching `ExpensesController.UpdateExpense`'s route and verb pattern — both are full-replacement operations, so both should use PUT for consistency.
+
+Confirmed `ExpensesApiTests` was never actually built as a file — a Day 108 devlog note describing it as needing updates was inaccurate. Deferred to Day 110.
+
+Corrected a stale `KEY_DECISIONS.md` entry claiming `ExpensesController`'s delete endpoint lacked a `DeliveryItem` FK guard — the guard is implemented and correctly returns 409 Conflict; see the updated "Known issue (fixed)" entry above.
+
+Emergency travel interrupted the session — Day 110 resumes on a different device via `git clone`, with `dotnet ef database update` needed to rebuild the local dev DB (gitignored, not included in clone).
