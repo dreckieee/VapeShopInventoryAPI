@@ -106,7 +106,7 @@ public class SalesController : ControllerBase
         }
     }
 
-    [HttpPatch("{id}/edit")]
+    [HttpPut("{id}")]
     public async Task<ActionResult<SaleResponse>> EditSale(int id, [FromBody] EditSaleRequest request)
     {
         var sale = await _context.Sales.Include(s => s.SaleItems).FirstOrDefaultAsync(s => s.Id == id);
