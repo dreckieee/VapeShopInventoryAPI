@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using VapeShopInventoryAPI.Api;
 using VapeShopInventoryAPI.Api.DTOs;
 
 namespace VapeShopInventoryAPI.Tests;
@@ -64,6 +65,8 @@ public class SalesApiTests
         Assert.That(saleFound.Id, Is.EqualTo(sale.Id));
         Assert.That(saleFound.SaleDate, Is.EqualTo(sale.SaleDate));
         Assert.That(saleFound.CreatedAt, Is.EqualTo(sale.CreatedAt));
+        Assert.That(saleFound.PaymentMethod, Is.EqualTo(sale.PaymentMethod));
+        Assert.That(saleFound.PaymentNote, Is.EqualTo(sale.PaymentNote));
         Assert.That(saleFound.IsClosed, Is.EqualTo(sale.IsClosed));
         Assert.That(saleFound.TransactionCount, Is.EqualTo(sale.TransactionCount));
         Assert.That(saleFound.ReductionFrequency, Is.EqualTo(sale.ReductionFrequency));
@@ -83,7 +86,8 @@ public class SalesApiTests
             productPrice: 99.99m, 
             productStockQuantity: 10, 
             productCategory: "Test", 
-            saleItemQuantity: saleItemQuantity
+            saleItemQuantity: saleItemQuantity,
+            productLowStockLevel: 0
             );
 
         
@@ -140,7 +144,8 @@ public class SalesApiTests
             productPrice: 99.99m, 
             productStockQuantity: 10, 
             productCategory: "Test", 
-            saleItemQuantity: 3
+            saleItemQuantity: 3,
+            productLowStockLevel: 0
             );
 
         //reduce sale item quantity to zero (0)
@@ -169,7 +174,8 @@ public class SalesApiTests
             productPrice: 99.99m, 
             productStockQuantity: 10, 
             productCategory: "Test", 
-            saleItemQuantity: 3
+            saleItemQuantity: 3,
+            productLowStockLevel: 0
             );
         
 
@@ -247,9 +253,9 @@ public class SalesApiTests
         _isCreatedSaleClosed = false;
     }
 
-    private async Task <(HttpResponseMessage Response, SaleResponse? Sale)> CreateTestSaleAsync(DateTime saleDate)
+    private async Task <(HttpResponseMessage Response, SaleResponse? Sale)> CreateTestSaleAsync(DateTime saleDate, string? paymentNote = null, PaymentMethod paymentMethod = PaymentMethod.Cash)
     {
-        var payload = new { saleDate };
+        var payload = new { saleDate, paymentMethod, paymentNote };
         
         var response = await _client.PostAsJsonAsync("/api/Sales", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created(), but received {response.StatusCode}");
@@ -261,11 +267,11 @@ public class SalesApiTests
         return (response, sale);
     }
 
-    private async Task <(HttpResponseMessage Response, ProductResponse? Product)> CreateTestProductAsync(string name, string sku, decimal price, int stockQuantity, string category)
+    private async Task <(HttpResponseMessage Response, ProductResponse? Product)> CreateTestProductAsync(string name, string sku, decimal price, int stockQuantity, string category, int lowStockLevel = 0)
     {
         var payload = new 
         { 
-            name, sku, price, stockQuantity, category
+            name, sku, price, stockQuantity, category, lowStockLevel
         };
         var response = await _client.PostAsJsonAsync("/api/Products", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created(), but received {response.StatusCode}");
@@ -278,9 +284,9 @@ public class SalesApiTests
         return (response, product);
     }
 
-    private async Task<(ProductResponse Product, SaleResponse Sale, SaleItemResponse SaleItem)> CreateSaleWithItemAsync(string productName, string productSku, decimal productPrice, int productStockQuantity, string productCategory, int saleItemQuantity)
+    private async Task<(ProductResponse Product, SaleResponse Sale, SaleItemResponse SaleItem)> CreateSaleWithItemAsync(string productName, string productSku, decimal productPrice, int productStockQuantity, string productCategory, int saleItemQuantity, int productLowStockLevel = 0)
     {
-        var (_, product) = await CreateTestProductAsync(productName, productSku, productPrice, productStockQuantity, productCategory);
+        var (_, product) = await CreateTestProductAsync(productName, productSku, productPrice, productStockQuantity, productCategory, productLowStockLevel);
         var (_, sale) = await CreateTestSaleAsync(DateTime.Now);
 
         var payload = new 
