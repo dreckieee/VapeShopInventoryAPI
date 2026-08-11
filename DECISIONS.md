@@ -108,3 +108,30 @@ Manually verified end-to-end via Swagger: single-product restock, multi-product 
 
 ## Resolved: restock endpoint + ProductHistory scoping (originally Day 101, restock completed Day 102)
 Restock endpoint (see Day 102 entry above for full design) is now built and locally verified — the open questions from Day 101 (category handling, route shape, single vs multi-product scope) are all settled. `ProductHistory` remains scoped but not built — see ACTIVE_PHASE working notes for current build queue and dependency order. Counter retirement (`ReductionFrequency`/`TotalQuantityReduction` → computed from history) remains queued behind `ProductHistory`.
+
+## Day 108 — PaymentMethod/PaymentNote wiring, DTO required-field audit
+
+### Enum guard design
+Added `Enum.IsDefined` validation for `PaymentMethod` in both `Sale.GuardSale` and `Expense.GuardExpense`, throwing `ArgumentOutOfRangeException` rather than plain `ArgumentException` — matches .NET's own convention for "value outside a defined set" and is still caught by existing `catch (ArgumentException)` blocks, since it's a subclass. The error message is built from `Enum.GetNames<PaymentMethod>()` joined at runtime rather than hand-typed, so it can't drift out of sync if the enum's values change later.
+
+### Bug: silent default on omitted/unassigned PaymentMethod
+Two related bugs surfaced in this session, both with the same root cause — validating a value without assigning it:
+1. `Sale`'s constructor called `GuardSale(saleDate, paymentMethod)` but never assigned `paymentMethod` to the `PaymentMethod` property, meaning every new `Sale` would silently default to `PaymentMethod.Cash` (enum value `0`) regardless of what the caller actually sent — indistinguishable from a legitimate `Cash` selection.
+2. The same risk exists structurally at the DTO layer: value types (`decimal`, `int`, `DateTime`, `enum`) have non-null defaults, so an omitted field in a JSON request body doesn't fail — it silently binds to that type's default, which can look like valid data (`PaymentMethod` → `Cash`, `Amount` → `0`). This differs from `string` fields, where an omission naturally reads as `null` and was already being caught by existing guards.
+
+Fix: the constructor bug was corrected directly (assign after guarding). For the systemic DTO risk, audited all 10 request DTOs and applied `required` to every field whose default value could pass as legitimate input — not just strings. `required` in ASP.NET model binding checks whether the JSON key was present at all, not the resulting value, so it correctly distinguishes "explicitly sent 0" from "omitted" even for fields like `LowStockLevel`, where `0` is itself a valid, meaningful value (see `Product.LowStockLevel` decision below). Response DTOs were excluded from the audit — they're populated by trusted `FromX` factories from domain state, not caller input, so there's no omission risk to protect against.
+
+### Bug: unhandled exceptions on Create/Update endpoints (500 instead of 400)
+`SalesController.CreateSale`, `ExpensesController.CreateExpense`, and `ExpensesController.UpdateExpense` all called entity constructors/mutators capable of throwing `ArgumentException`-family exceptions, with no try/catch around the call. An invalid `PaymentMethod` or other guard failure would've produced an unhandled exception — a raw `500 Internal Server Error` — instead of the project's standard `400 Bad Request` mapping already used elsewhere (e.g. `SalesController.EditSale`, `RestockController`). Fixed by wrapping all three in `try/catch (ArgumentException ex) → BadRequest`; this single catch also covers `ArgumentNullException` and `ArgumentOutOfRangeException` as subclasses, so no separate catch blocks were needed.
+
+### Inconsistency: UpdateExpense returning NoContent instead of the updated resource
+`ExpensesController.UpdateExpense` returned `NoContent()` (204, empty body) while `SalesController.EditSale` returns `Ok(saleResponse)` — inconsistent behavior for the same category of operation (edit an existing resource) across sibling controllers. Changed `UpdateExpense`'s return type to `Task<ActionResult<ExpenseResponse>>`, now returns `Ok(response)` with the mapped `ExpenseResponse`, matching `Sale`'s pattern.
+
+### Considered and rejected: true partial-update (PATCH) semantics
+Discussed whether `Sale`/`Expense` edits should support true partial updates (caller sends only changed fields) rather than full-replacement (caller resends every field). Rejected for now: partial updates require either an `Optional<T>` wrapper type or `JsonPatchDocument` to resolve an unavoidable ambiguity — a nullable field like `PaymentNote` can't distinguish "caller omitted this field, don't touch it" from "caller explicitly wants to clear it to null," since both produce an identical `null` value after JSON deserialization. That's meaningfully more complexity than the current need justifies. Full-replacement PUT/PATCH stays as the standing pattern; the "caller has to remember every field" concern is addressed at the client layer instead — a frontend pre-fills the edit form via `GET` before submitting, which is standard REST practice and fully solves the original concern without touching the API's request shape.
+
+### Not yet deployed
+Entities, guards, DTOs, and controllers are code-complete and pushed, but the database migration for the new `PaymentMethod`/`PaymentNote` columns has not yet been created or run, and `SalesApiTests`/`ExpensesApiTests` have not been updated to match the new constructor/method signatures (they will currently fail to compile). Migration, test updates, and deployment are queued for Day 109.
+
+## Outage note (Day 106–107)
+No work or posts during this window — a storm knocked out internet access for two days. Resumed Day 108; day numbering stays continuous (no backdating/renumbering), consistent with the project's pacing philosophy treating Day-N as a log marker, not a hard deadline.
