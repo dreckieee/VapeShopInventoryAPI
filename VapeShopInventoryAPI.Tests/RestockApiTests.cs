@@ -31,15 +31,19 @@ public class RestockApiTests
         int testQuantity = 11;
         decimal testUnitCost = 149.99m;
         DateTime testDate = new DateTime(2026, 01, 01);
+        string? testPaymentNote = "test payment note";
+        PaymentMethod testPaymentMethod = PaymentMethod.Cash;
         var items = new List<RestockItemRequest> { new RestockItemRequest {ProductId = product.Id, Quantity = testQuantity, UnitCost = testUnitCost} };
         
-        var (responseMessage, restockResponse) = await RestockTestProducts(items, date: testDate);
+        var (responseMessage, restockResponse) = await RestockTestProducts(items, date: testDate, paymentNote: testPaymentNote, paymentMethod: testPaymentMethod);
         Assert.That(responseMessage.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseMessage.StatusCode}");
         Assert.That(restockResponse, Is.Not.Null);
 
         Assert.That(restockResponse.Expense.Date, Is.EqualTo(testDate));
         Assert.That(restockResponse.Expense.Amount, Is.EqualTo(items.Sum(i => i.Quantity * i.UnitCost)));
         Assert.That(restockResponse.Expense.Category, Is.EqualTo(Expense.RestockCategory));
+        Assert.That(restockResponse.Expense.PaymentNote, Is.EqualTo(testPaymentNote));
+        Assert.That(restockResponse.Expense.PaymentMethod, Is.EqualTo(testPaymentMethod));
 
         Assert.That(restockResponse.DeliveryItems.Count, Is.EqualTo(items.Count));
         Assert.That(restockResponse.DeliveryItems[0].ProductId, Is.EqualTo(items[0].ProductId));
@@ -75,6 +79,8 @@ public class RestockApiTests
         decimal testUnitCostB = 249.99m;
         decimal testUnitCostC = 349.99m;
         DateTime testDate = new DateTime(2026, 01, 01);
+        string? testPaymentNote = "test payment note";
+        PaymentMethod testPaymentMethod = PaymentMethod.Cash;
         var items = new List<RestockItemRequest> 
         { 
             new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
@@ -82,13 +88,15 @@ public class RestockApiTests
             new RestockItemRequest {ProductId = productC.Id, Quantity = testQuantityC, UnitCost = testUnitCostC}
         };
 
-        var (responseMessage, restockResponse) = await RestockTestProducts(items, date: testDate);
+        var (responseMessage, restockResponse) = await RestockTestProducts(items, date: testDate, paymentNote: testPaymentNote, paymentMethod: testPaymentMethod);
         Assert.That(responseMessage.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseMessage.StatusCode}");
         Assert.That(restockResponse, Is.Not.Null);
 
         Assert.That(restockResponse.Expense.Date, Is.EqualTo(testDate));
         Assert.That(restockResponse.Expense.Amount, Is.EqualTo(items.Sum(i => i.Quantity * i.UnitCost)));
         Assert.That(restockResponse.Expense.Category, Is.EqualTo(Expense.RestockCategory));
+        Assert.That(restockResponse.Expense.PaymentNote, Is.EqualTo(testPaymentNote));
+        Assert.That(restockResponse.Expense.PaymentMethod, Is.EqualTo(testPaymentMethod));
 
         Assert.That(restockResponse.DeliveryItems.Count, Is.GreaterThan(0));
         Assert.That(restockResponse.DeliveryItems.Count, Is.EqualTo(items.Count));
@@ -153,7 +161,9 @@ public class RestockApiTests
                 new RestockItemRequest {ProductId = productB.Id, Quantity = testQuantityB, UnitCost = testUnitCostB},
                 new RestockItemRequest {ProductId = productC.Id, Quantity = testQuantityC, UnitCost = testUnitCostC},
                 new RestockItemRequest {ProductId = testInvalidId, Quantity = 1, UnitCost = 1m}
-            }
+            },
+            PaymentNote = "test payment note",
+            PaymentMethod = PaymentMethod.Cash
         };
 
         var response = await _client.PostAsJsonAsync("api/Restock", payload);
@@ -198,7 +208,9 @@ public class RestockApiTests
             {
                 new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
                 new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityB, UnitCost = testUnitCostB}
-            }
+            },
+            PaymentNote = "test payment note",
+            PaymentMethod = PaymentMethod.Cash
         };
 
         var responseMessage = await _client.PostAsJsonAsync("api/Restock", payload);
@@ -211,6 +223,8 @@ public class RestockApiTests
         Assert.That(restockResponse.Expense.Date, Is.EqualTo(payload.Date));
         Assert.That(restockResponse.Expense.Amount, Is.EqualTo(payload.Items.Sum(i => i.Quantity * i.UnitCost)));
         Assert.That(restockResponse.Expense.Category, Is.EqualTo(Expense.RestockCategory));
+        Assert.That(restockResponse.Expense.PaymentNote, Is.EqualTo(payload.PaymentNote));
+        Assert.That(restockResponse.Expense.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
 
         Assert.That(restockResponse.DeliveryItems.Count, Is.EqualTo(2));
         Assert.That(restockResponse.DeliveryItems.Count, Is.EqualTo(payload.Items.Count));
@@ -261,7 +275,9 @@ public class RestockApiTests
             {
                 new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
                 new RestockItemRequest {ProductId = productB.Id, Quantity = testQuantityB, UnitCost = testUnitCostB}
-            }
+            },
+            PaymentNote = "test payment note",
+            PaymentMethod = PaymentMethod.Cash
         };
 
         var response = await _client.PostAsJsonAsync("api/Restock", payload);
@@ -311,7 +327,9 @@ public class RestockApiTests
             {
                 new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
                 new RestockItemRequest {ProductId = productB.Id, Quantity = testQuantityB, UnitCost = testUnitCostB}
-            }
+            },
+            PaymentNote = "test payment note",
+            PaymentMethod = PaymentMethod.Cash
         };
 
         var response = await _client.PostAsJsonAsync("api/Restock", payload);
@@ -348,7 +366,9 @@ public class RestockApiTests
         {
             Date = new DateTime(2026, 01, 01),
             Description = "Default restock test description",
-            Items = new List<RestockItemRequest> { }
+            Items = new List<RestockItemRequest> { },
+            PaymentNote = "test payment note",
+            PaymentMethod = PaymentMethod.Cash
         };
 
         var response = await _client.PostAsJsonAsync("api/Restock", payload);
@@ -392,7 +412,7 @@ public class RestockApiTests
             Price = price,
             StockQuantity = stockQuantity,
             LowStockLevel = lowStockLevel,
-            Category = category
+            Category = category,
         };
 
         var response = await _client.PostAsJsonAsync("api/Products", payload);
@@ -411,13 +431,15 @@ public class RestockApiTests
         return (response, product);
     }
 
-    public async Task<(HttpResponseMessage Response, RestockResponse Restock)> RestockTestProducts (List<RestockItemRequest> items, DateTime? date = null, string description = "Default restock test description")
+    public async Task<(HttpResponseMessage Response, RestockResponse Restock)> RestockTestProducts (List<RestockItemRequest> items, DateTime? date = null, string description = "Default restock test description", string? paymentNote = null, PaymentMethod paymentMethod = 0)
     {
         var payload = new RestockRequest
         {
             Date = date ?? DateTime.Now,
             Description = description,
-            Items = items
+            Items = items,
+            PaymentNote = paymentNote,
+            PaymentMethod = paymentMethod
         };
 
         var response = await _client.PostAsJsonAsync("api/Restock", payload);
