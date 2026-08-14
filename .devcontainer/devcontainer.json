@@ -9,5 +9,5 @@
     }
   },
   "forwardPorts": [5000, 5001],
-  "postCreateCommand": "dotnet restore"
+  "postCreateCommand": "dotnet restore && dotnet tool install --global dotnet-ef"
 }
