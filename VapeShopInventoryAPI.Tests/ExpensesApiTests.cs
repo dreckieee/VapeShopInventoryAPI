@@ -31,7 +31,15 @@ public class ExpensesApiTests
             foreach(int i in _createdExpenseIds)
             {
                 var response = await _client.DeleteAsync($"api/Expenses/{i}");
-                if (response.StatusCode != HttpStatusCode.NoContent)
+                if (response.StatusCode == HttpStatusCode.Conflict)
+                {
+                    TestContext.Progress.WriteLine($"Skipped expense cleanup: expense {i} has existing reference (to a delivery item or delivery items) - deletion blocked by design (audit trail preserved).");
+                }
+                else if(response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    TestContext.Progress.WriteLine($"Expense with an Id of {i} is Not Found: Deletion blocked. Expected 204 No Content() status, but received {response.StatusCode}");
+                }
+                else if (response.StatusCode != HttpStatusCode.NoContent)
                 { 
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting an expense with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                 }
