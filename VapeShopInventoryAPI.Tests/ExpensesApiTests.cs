@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using VapeShopInventoryAPI.Api;
 using VapeShopInventoryAPI.Api.DTOs;
 
 namespace VapeShopInventoryAPI.Tests;
@@ -23,6 +24,42 @@ public class ExpensesApiTests
         _client.Dispose();
         _factory.Dispose();
     }
+    
+    public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
+    PaymentMethod paymentMethod = PaymentMethod.Cash, 
+    string? paymentNote = null, 
+    string description = "Test expense description", 
+    decimal amount = 99.99m, 
+    string category = "Test Expense Category",
+    DateTime? date = null)
+    {
+        var payload = new CreateExpenseRequest
+        {
+            PaymentMethod = paymentMethod,
+            PaymentNote = paymentNote,
+            Description = description,
+            Amount = amount,
+            Category = category,
+            Date = date ?? DateTime.Now
+
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Expenses", payload);
+        if(response.StatusCode != HttpStatusCode.Created)
+        {
+            throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
+        }
+
+        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>();
+        if (expense == null)
+        {
+            throw new InvalidOperationException($"Failed to deserialize ExpenseResponse after creating test expense");
+        }
+
+        _createdExpenseIds.Add(expense.Id);
+        return (response, expense);
+    }
+
     [TearDown]
     public async Task DeleteTestExpense()
     {
@@ -37,7 +74,7 @@ public class ExpensesApiTests
                 }
                 else if(response.StatusCode == HttpStatusCode.NotFound)
                 {
-                    TestContext.Progress.WriteLine($"Expense with an Id of {i} is Not Found: Deletion blocked. Expected 204 No Content() status, but received {response.StatusCode}");
+                    TestContext.Progress.WriteLine($"Expense with an Id of {i} cannot be found -- already deleted or does not exist.");
                 }
                 else if (response.StatusCode != HttpStatusCode.NoContent)
                 { 
