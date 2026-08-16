@@ -39,7 +39,7 @@ public class ExpensesApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Expenses", payload);
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but reaceived {response.StatusCode} instead.");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {response.StatusCode} instead.");
 
         var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>();
         Assert.That(expense, Is.Not.Null);
@@ -53,6 +53,32 @@ public class ExpensesApiTests
         Assert.That(expense.Date, Is.EqualTo(payload.Date));
     }
     
+    [Test]
+    public async Task CreateExpense_WithInvalidData_ReturnsBadRequest()
+    {
+        var responseExpensesBefore = await _client.GetAsync("api/Expenses");
+        var expensesBefore = await responseExpensesBefore.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+
+        var payload = new CreateExpenseRequest
+        {
+            PaymentMethod = PaymentMethod.DigitalPayment,
+            PaymentNote = "Testing Digital Payment Method",
+            Description = "Test description for create expense test",
+            Amount = -99.75m,
+            Category = "Test Category for Expense Creation",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Expenses", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
+
+        var responseExpensesAfter = await _client.GetAsync("api/Expenses");
+        var expensesAfter = await responseExpensesAfter.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        Assert.That(expensesBefore?.Count, Is.EqualTo(expensesAfter?.Count));
+        
+    }
+    
+
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
     PaymentMethod paymentMethod = PaymentMethod.Cash, 
     string? paymentNote = null, 
