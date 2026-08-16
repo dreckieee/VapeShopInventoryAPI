@@ -24,6 +24,34 @@ public class ExpensesApiTests
         _client.Dispose();
         _factory.Dispose();
     }
+
+    [Test]
+    public async Task CreateExpense_WithValidData_ReturnsCreatedExpense()
+    {
+        var payload = new CreateExpenseRequest
+        {
+            PaymentMethod = PaymentMethod.DigitalPayment,
+            PaymentNote = "Testing Digital Payment Method",
+            Description = "Test description for create expense test",
+            Amount = 99.75m,
+            Category = "Test Category for Expense Creation",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Expenses", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but reaceived {response.StatusCode} instead.");
+
+        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>();
+        Assert.That(expense, Is.Not.Null);
+        _createdExpenseIds.Add(expense.Id);
+
+        Assert.That(expense.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
+        Assert.That(expense.PaymentNote, Is.EqualTo(payload.PaymentNote));
+        Assert.That(expense.Description, Is.EqualTo(payload.Description));
+        Assert.That(expense.Amount, Is.EqualTo(payload.Amount));
+        Assert.That(expense.Category, Is.EqualTo(payload.Category));
+        Assert.That(expense.Date, Is.EqualTo(payload.Date));
+    }
     
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
     PaymentMethod paymentMethod = PaymentMethod.Cash, 
