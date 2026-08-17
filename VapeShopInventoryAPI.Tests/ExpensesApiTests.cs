@@ -78,6 +78,26 @@ public class ExpensesApiTests
         
     }
     
+    [Test]
+    public async Task GetExpense_WithExistingId_ReturnsExpense()
+    {
+        var (_, testExpense) = await CreateTestExpense();
+
+        var response = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>();
+        Assert.That(expense, Is.Not.Null);
+        Assert.That(expense.Id, Is.EqualTo(testExpense.Id));
+        Assert.That(expense.PaymentMethod, Is.EqualTo(testExpense.PaymentMethod));
+        Assert.That(expense.PaymentNote, Is.EqualTo(testExpense.PaymentNote));
+        Assert.That(expense.Description, Is.EqualTo(testExpense.Description));
+        Assert.That(expense.Amount, Is.EqualTo(testExpense.Amount));
+        Assert.That(expense.Category, Is.EqualTo(testExpense.Category));
+        Assert.That(expense.Date, Is.EqualTo(testExpense.Date));
+        Assert.That(expense.CreatedAt, Is.EqualTo(testExpense.CreatedAt));
+    }
+
 
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
     PaymentMethod paymentMethod = PaymentMethod.Cash, 
