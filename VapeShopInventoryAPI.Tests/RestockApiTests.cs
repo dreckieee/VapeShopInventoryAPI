@@ -218,7 +218,7 @@ public class RestockApiTests
 
         var restockResponse = await responseMessage.Content.ReadFromJsonAsync<RestockResponse>();
         Assert.That(restockResponse, Is.Not.Null);
-        
+        _restockedProductIds.Add(productA.Id);
 
         Assert.That(restockResponse.Expense.Date, Is.EqualTo(payload.Date));
         Assert.That(restockResponse.Expense.Amount, Is.EqualTo(payload.Items.Sum(i => i.Quantity * i.UnitCost)));
@@ -389,6 +389,7 @@ public class RestockApiTests
                 if(_restockedProductIds.Contains(i))
                 {
                     TestContext.Progress.WriteLine($"Skipped product cleanup: product with id {i} has references to a delivery item/expense — deletion blocked by design (audit trail preserved).");
+                    
                 }
                 else
                 {
