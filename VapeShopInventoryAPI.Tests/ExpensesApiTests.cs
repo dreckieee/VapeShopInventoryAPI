@@ -10,6 +10,7 @@ public class ExpensesApiTests
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
     private List<int> _createdExpenseIds = new ();
+    
 
     [OneTimeSetUp]
     public void OneTimeSetup()
@@ -79,7 +80,8 @@ public class ExpensesApiTests
     }
     
     [Test]
-    public async Task GetExpense_WithExistingId_ReturnsExpense()
+
+    public async Task GetExpense_WithExistingId_ReturnsOk()
     {
         var (_, testExpense) = await CreateTestExpense();
 
@@ -98,6 +100,13 @@ public class ExpensesApiTests
         Assert.That(expense.CreatedAt, Is.EqualTo(testExpense.CreatedAt));
     }
 
+    [Test]
+    public async Task GetExpense_WithNonExistentId_ReturnsNotFound()
+    {
+        var response = await _client.GetAsync($"api/Expenses/{int.MaxValue}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 Not Found() status, but received {response.StatusCode} instead.");
+    }
+    
 
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
     PaymentMethod paymentMethod = PaymentMethod.Cash, 
