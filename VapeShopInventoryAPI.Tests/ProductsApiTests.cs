@@ -191,15 +191,22 @@ public class ProductsApiTests
             foreach(int i in _createdProductIds)
             {
                 var response = await _client.DeleteAsync($"api/Products/{i}");
-                if (response.StatusCode != HttpStatusCode.NoContent)
+                if (response.StatusCode == HttpStatusCode.Conflict)
+                {
+                    TestContext.Progress.WriteLine($"Skipped product cleanup: product with id {i} has existing reference(s) — deletion blocked by design (audit trail preserved).");
+                }
+                else if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    TestContext.Progress.WriteLine($"Product with an Id of {i} cannot be found -- already deleted or does not exist.");
+                }
+                else if (response.StatusCode != HttpStatusCode.NoContent)
                 { 
-                    TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
+                    TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}.");
                 }
             }
         }
         _createdProductIds.Clear();
     }
-
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProduct(string name = "Test Product", string? sku = null, decimal price = 99.99m, int stockQuantity = 10, int lowStockLevel = 3, string category = "Test")
     {
         var payload = new
