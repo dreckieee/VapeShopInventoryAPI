@@ -106,6 +106,35 @@ public class ExpensesApiTests
         var response = await _client.GetAsync($"api/Expenses/{int.MaxValue}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 Not Found() status, but received {response.StatusCode} instead.");
     }
+
+    [Test]
+    public async Task UpdateExpense_WithValidData_ReturnsOk()
+    {
+        var (_, testExpense) = await CreateTestExpense();
+
+        var payload = new UpdateExpenseRequest
+        {
+            PaymentMethod = PaymentMethod.Payable,
+            PaymentNote = "Promised to pay rent in 2 months",
+            Description = "Rent Credit",
+            Amount = 6000m,
+            Category = "Rent",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PutAsJsonAsync($"api/Expenses/{testExpense.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>();
+        Assert.That(expense, Is.Not.Null);
+        Assert.That(expense.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
+        Assert.That(expense.PaymentNote, Is.EqualTo(payload.PaymentNote));
+        Assert.That(expense.Description, Is.EqualTo(payload.Description));
+        Assert.That(expense.Amount, Is.EqualTo(payload.Amount));
+        Assert.That(expense.Category, Is.EqualTo(payload.Category));
+        Assert.That(expense.Date, Is.EqualTo(payload.Date));
+        Assert.That(expense.CreatedAt, Is.EqualTo(testExpense.CreatedAt));
+    }
     
 
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
