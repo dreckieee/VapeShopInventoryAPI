@@ -10,6 +10,8 @@ public class ExpensesApiTests
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
     private List<int> _createdExpenseIds = new ();
+    private List<int> _createdProductIds = new ();
+    private List<int> _restockedProductIds = new ();
     
 
     [OneTimeSetUp]
@@ -185,13 +187,56 @@ public class ExpensesApiTests
         var response = await _client.PutAsJsonAsync($"api/Expenses/{int.MaxValue}", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 NotFound() status, but received {response.StatusCode} instead.");
     }
+
+    [Test]
+    public async Task UpdateExpense_WithRestockReference_ReturnsConflict()
+    {
+        var (_, product) = await CreateTestProduct();
+
+        int testQuantity = 11;
+        decimal testUnitCost = 149.99m;
+        DateTime testDate = new DateTime(2026, 01, 01);
+        string? testPaymentNote = "test restock payment note";
+        PaymentMethod testPaymentMethod = PaymentMethod.Cash;
+        var items = new List<RestockItemRequest> { new RestockItemRequest {ProductId = product.Id, Quantity = testQuantity, UnitCost = testUnitCost} };
+        
+        var (_, restockResponse) = await RestockTestProducts(items, date: testDate, paymentNote: testPaymentNote, paymentMethod: testPaymentMethod);
+
+        var payload = new UpdateExpenseRequest
+        {
+            PaymentMethod = restockResponse.Expense.PaymentMethod,
+            PaymentNote = restockResponse.Expense.PaymentNote,
+            Description = restockResponse.Expense.Description,
+            Amount = restockResponse.Expense.Amount + 1,
+            Category = restockResponse.Expense.Category,
+            Date = restockResponse.Expense.Date
+        };
+
+        var response = await _client.PutAsJsonAsync($"api/Expenses/{restockResponse.Expense.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict), $"Expected 409 Conflict() status, but received {response.StatusCode} instead.");
+
+        var responseGetExpense = await _client.GetAsync($"api/Expenses/{restockResponse.Expense.Id}");
+        Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
+
+        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>();
+        Assert.That(expense, Is.Not.Null);
+        Assert.That(expense.Id, Is.EqualTo(restockResponse.Expense.Id));
+        Assert.That(expense.PaymentMethod, Is.EqualTo(restockResponse.Expense.PaymentMethod));
+        Assert.That(expense.PaymentNote, Is.EqualTo(restockResponse.Expense.PaymentNote));
+        Assert.That(expense.Description, Is.EqualTo(restockResponse.Expense.Description));
+        Assert.That(expense.Amount, Is.EqualTo(restockResponse.Expense.Amount));
+        Assert.That(expense.Category, Is.EqualTo(restockResponse.Expense.Category));
+        Assert.That(expense.Date, Is.EqualTo(restockResponse.Expense.Date));
+        Assert.That(expense.CreatedAt, Is.EqualTo(restockResponse.Expense.CreatedAt));
+    }
+
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
-    PaymentMethod paymentMethod = PaymentMethod.Cash, 
-    string? paymentNote = null, 
-    string description = "Test expense description", 
-    decimal amount = 99.99m, 
-    string category = "Test Expense Category",
-    DateTime? date = null)
+        PaymentMethod paymentMethod = PaymentMethod.Cash, 
+        string? paymentNote = null, 
+        string description = "Test expense description", 
+        decimal amount = 99.99m, 
+        string category = "Test Expense Category",
+        DateTime? date = null)
     {
         var payload = new CreateExpenseRequest
         {
@@ -220,6 +265,72 @@ public class ExpensesApiTests
         return (response, expense);
     }
 
+    public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProduct(
+        string name = "Test Product", 
+        string? sku = null, 
+        decimal price = 99.99m, 
+        int stockQuantity = 10, 
+        int lowStockLevel = 3, 
+        string category = "Test")
+    {
+        var payload = new
+        {
+            Name = name,
+            Sku = sku ?? Guid.NewGuid().ToString(),
+            Price = price,
+            StockQuantity = stockQuantity,
+            LowStockLevel = lowStockLevel,
+            Category = category,
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Products", payload);
+        if (response.StatusCode != HttpStatusCode.Created)
+        {
+            throw new InvalidOperationException($"Expected 201 Created() status in creating test product (setup helper), but received {response.StatusCode}");
+        }
+
+        var product = await response.Content.ReadFromJsonAsync<ProductResponse>();
+        if (product == null)
+        {
+            throw new InvalidOperationException($"Product is null in creating test product (setup helper) but expected otherwise");
+        }
+        _createdProductIds.Add(product.Id);
+
+        return (response, product);
+    }
+
+    public async Task<(HttpResponseMessage Response, RestockResponse Restock)> RestockTestProducts (
+        List<RestockItemRequest> items, 
+        DateTime? date = null, 
+        string description = "Default restock test description", 
+        string? paymentNote = null, 
+        PaymentMethod paymentMethod = PaymentMethod.Cash)
+    {
+        var payload = new RestockRequest
+        {
+            Date = date ?? DateTime.Now,
+            Description = description,
+            Items = items,
+            PaymentNote = paymentNote,
+            PaymentMethod = paymentMethod
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Restock", payload);
+        if(response.StatusCode != HttpStatusCode.OK)
+        {
+            throw new InvalidOperationException($"Expecting 200 Ok() status, but received {response.StatusCode}");
+        }
+        
+        var restockResponse = await response.Content.ReadFromJsonAsync<RestockResponse>();
+        if (restockResponse == null)
+        {
+            throw new InvalidOperationException($"RestockResponse is null in restocking a test product (setup helper) but expected otherwise");
+        }
+
+        _restockedProductIds.AddRange(restockResponse.UpdatedProducts.Select(p => p.Id));
+        return (response, restockResponse);
+    }
+
     [TearDown]
     public async Task DeleteTestExpense()
     {
@@ -243,5 +354,27 @@ public class ExpensesApiTests
             }
         }
         _createdExpenseIds.Clear();
+
+        if(_createdProductIds.Count > 0)
+        {
+            foreach(int i in _createdProductIds)
+            {
+                if(_restockedProductIds.Contains(i))
+                {
+                    TestContext.Progress.WriteLine($"Skipped product cleanup: product with id {i} has references to a delivery item/expense — deletion blocked by design (audit trail preserved).");
+                    
+                }
+                else
+                {
+                    var response = await _client.DeleteAsync($"api/Products/{i}");
+                    if (response.StatusCode != HttpStatusCode.NoContent)
+                    { 
+                        TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
+                    }
+                }
+            }
+        }
+        _createdProductIds.Clear();
+        _restockedProductIds.Clear();
     }
 }
