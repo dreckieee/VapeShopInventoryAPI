@@ -169,6 +169,22 @@ public class ExpensesApiTests
     
     }
 
+    [Test]
+    public async Task UpdateExpense_WithNonExistentId_ReturnsNotFound()
+    {
+        var payload = new UpdateExpenseRequest
+        {
+            PaymentMethod = PaymentMethod.Payable,
+            PaymentNote = "Promised to pay rent in 2 months",
+            Description = "Rent Credit",
+            Amount = 6000m,
+            Category = "Rent",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PutAsJsonAsync($"api/Expenses/{int.MaxValue}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 NotFound() status, but received {response.StatusCode} instead.");
+    }
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
     PaymentMethod paymentMethod = PaymentMethod.Cash, 
     string? paymentNote = null, 
