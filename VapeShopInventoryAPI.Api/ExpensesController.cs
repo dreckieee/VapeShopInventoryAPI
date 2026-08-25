@@ -78,6 +78,13 @@ public class ExpensesController : ControllerBase
             {
                 return NotFound();
             }
+
+            var hasDeliveryReferences = await _context.DeliveryItems.AnyAsync(di => di.ExpenseId == expense.Id);
+            if (hasDeliveryReferences && (expense.Amount != request.Amount || expense.Category != request.Category))
+            {
+                return Conflict(new {message = "Cannot edit Amount or Category on an expense linked to existing delivery item record/s."});
+            }
+
             expense.Edit(request.Date, request.Description, request.Amount, request.Category,request.PaymentMethod, request.PaymentNote); 
             await _context.SaveChangesAsync();
             
