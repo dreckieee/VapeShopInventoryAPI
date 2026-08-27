@@ -230,6 +230,57 @@ public class ExpensesApiTests
         Assert.That(expense.CreatedAt, Is.EqualTo(restockResponse.Expense.CreatedAt));
     }
 
+    [Test]
+    public async Task DeleteExpense_WithValidId_ReturnsNoContent()
+    {
+        var (_, testExpense) = await CreateTestExpense();
+
+        var response = await _client.DeleteAsync($"api/Expenses/{testExpense.Id}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent), $"Expected 204 No Content() status, but received {response.StatusCode} instead.");
+
+        var responseGet = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
+        Assert.That(responseGet.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 Not Found() status, but received {responseGet.StatusCode} instead.");
+    }   
+
+    [Test]
+    public async Task DeleteExpense_WithNonExistentId_ReturnsNotFound()
+    {
+        var response = await _client.DeleteAsync($"api/Expenses/{int.MaxValue}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 Not Found() status, but received {response.StatusCode} instead.");
+    }   
+
+    [Test]
+    public async Task DeleteExpense_WithRestockReference_ReturnsConflict()
+    {
+        var (_, product) = await CreateTestProduct();
+
+        int testQuantity = 11;
+        decimal testUnitCost = 149.99m;
+        DateTime testDate = new DateTime(2026, 01, 01);
+        string? testPaymentNote = "test restock payment note";
+        PaymentMethod testPaymentMethod = PaymentMethod.Cash;
+        var items = new List<RestockItemRequest> { new RestockItemRequest {ProductId = product.Id, Quantity = testQuantity, UnitCost = testUnitCost} };
+        
+        var (_, restockResponse) = await RestockTestProducts(items, date: testDate, paymentNote: testPaymentNote, paymentMethod: testPaymentMethod);
+
+        var response = await _client.DeleteAsync($"api/Expenses/{restockResponse.Expense.Id}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict), $"Expected 409 Conflict() status, but received {response.StatusCode} instead.");
+
+        var responseGetExpense = await _client.GetAsync($"api/Expenses/{restockResponse.Expense.Id}");
+        Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
+
+        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>();
+        Assert.That(expense, Is.Not.Null);
+        Assert.That(expense.Id, Is.EqualTo(restockResponse.Expense.Id));
+        Assert.That(expense.PaymentMethod, Is.EqualTo(restockResponse.Expense.PaymentMethod));
+        Assert.That(expense.PaymentNote, Is.EqualTo(restockResponse.Expense.PaymentNote));
+        Assert.That(expense.Description, Is.EqualTo(restockResponse.Expense.Description));
+        Assert.That(expense.Amount, Is.EqualTo(restockResponse.Expense.Amount));
+        Assert.That(expense.Category, Is.EqualTo(restockResponse.Expense.Category));
+        Assert.That(expense.Date, Is.EqualTo(restockResponse.Expense.Date));
+        Assert.That(expense.CreatedAt, Is.EqualTo(restockResponse.Expense.CreatedAt));
+    }
+
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
         PaymentMethod paymentMethod = PaymentMethod.Cash, 
         string? paymentNote = null, 
