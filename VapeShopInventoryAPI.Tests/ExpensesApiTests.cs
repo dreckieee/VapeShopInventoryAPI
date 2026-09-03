@@ -109,60 +109,6 @@ public class ExpensesApiTests
     }
 
     [Test]
-    public async Task GetExpenses_FilterByYear_ReturnsOkAndOnlyMatchingYear()
-    {
-        var responseBefore = await _client.GetAsync("/api/Expenses?year=2026");
-        Assert.That(responseBefore.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {responseBefore.StatusCode}");
-        var expensesBefore = await responseBefore.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
-
-        var (_, expenseA) = await CreateTestExpense(
-            paymentMethod = PaymentMethod.Cash, 
-            paymentNote = null, 
-            description = "Test expense description", 
-            amount = 99.99m, 
-            category = "Test Expense Category",
-            date = null)
-        );
-        var (_, productB) = await CreateTestProduct(name: "Blue Coil Kit", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Hardware");
-        var (_, productC) = await CreateTestProduct(name: "Mint Vape Juice", price: 399.99m, stockQuantity: 30, lowStockLevel: 9, category: "Liquids");
-        var (_, productD) = await CreateTestProduct(name: "Battery Charger", price: 499.99m, stockQuantity: 40, lowStockLevel: 12, category: "Hardware");
-        var createdProducts = new List<ProductResponse> { productA, productB, productC, productD };
-
-        var response = await _client.GetAsync("/api/Products?name=blue");
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {response.StatusCode}");
-
-        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>();
-        Assert.That(products, Is.Not.Null);
-        Assert.That(products.Count, Is.EqualTo(productsBefore?.Count + 2));
-        Assert.That(products.Any(p => p.Name == productA.Name), Is.True);
-        Assert.That(products.Any(p => p.Name == productB.Name), Is.True);
-        Assert.That(products.Any(p => p.Name == productC.Name), Is.False);
-        Assert.That(products.Any(p => p.Name == productD.Name), Is.False);
-    }
-
-    /*
-        public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
-        PaymentMethod paymentMethod = PaymentMethod.Cash, 
-        string? paymentNote = null, 
-        string description = "Test expense description", 
-        decimal amount = 99.99m, 
-        string category = "Test Expense Category",
-        DateTime? date = null)
-    {
-        var payload = new CreateExpenseRequest
-        {
-            PaymentMethod = paymentMethod,
-            PaymentNote = paymentNote,
-            Description = description,
-            Amount = amount,
-            Category = category,
-            Date = date ?? DateTime.Now
-
-    */
-
-
-
-    [Test]
     public async Task UpdateExpense_WithValidData_ReturnsOk()
     {
         var (_, testExpense) = await CreateTestExpense();
