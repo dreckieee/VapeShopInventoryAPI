@@ -50,6 +50,24 @@ public class SalesApiTests
     }
 
     [Test]
+    public async Task CreateSale_WithInvalidEnumPaymentMethod_ReturnsBadRequest()
+    {
+        var payload = new { 
+        SaleDate = new DateTime(2026, 01, 01), 
+        PaymentMethod = (PaymentMethod)999, 
+        PaymentNote = "Test Invalid Enum PaymentMethod in Sale Creation" 
+        };
+        
+        var response = await _client.PostAsJsonAsync("/api/Sales", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.StatusCode} instead.");
+        
+        var responseGetSalesAfter = await _client.GetAsync("api/Sales");
+        var salesAfter = await responseGetSalesAfter.Content.ReadFromJsonAsync<List<SaleResponse>>();
+        Assert.That(salesAfter, Is.Not.Null);
+        Assert.That(salesAfter.Any(s => s.PaymentNote == payload.PaymentNote), Is.False);
+    }
+
+    [Test]
     public async Task GetSale_ExistingId_ReturnsOk()
     {
         //setup: create sale
