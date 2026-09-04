@@ -80,6 +80,28 @@ public class ExpensesApiTests
         Assert.That(expensesBefore?.Count, Is.EqualTo(expensesAfter?.Count));
         
     }
+
+    [Test]
+    public async Task CreateExpense_WithInvalidEnumPaymentMethod_ReturnsBadRequest()
+    {
+        var payload = new CreateExpenseRequest
+        {
+            PaymentMethod = (PaymentMethod)999,
+            PaymentNote = "Testing Enum Payment Method",
+            Description = "Test description for create expense test",
+            Amount = 99.75m,
+            Category = "Test Category for Expense Creation with invalid Enum Payment Method",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Expenses", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
+
+        var responseGetExpensesAfter = await _client.GetAsync("api/Expenses");
+        var expensesAfter = await responseGetExpensesAfter.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        Assert.That(expensesAfter, Is.Not.Null);
+        Assert.That(expensesAfter.Any(e => e.Category == payload.Category), Is.False);
+    }
     
     [Test]
     public async Task GetExpense_WithExistingId_ReturnsOk()
