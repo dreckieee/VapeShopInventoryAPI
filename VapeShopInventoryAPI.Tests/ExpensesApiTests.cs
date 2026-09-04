@@ -151,6 +151,29 @@ public class ExpensesApiTests
     }
 
     [Test]
+    public async Task GetExpenses_FilterByYearAndMonth_ReturnsComposedResult()
+    {
+        var (_, testExpense1) = await CreateTestExpense(paymentMethod: PaymentMethod.DigitalPayment, paymentNote: "payment note for test expense 1", description: "description for test expense 1", amount: 99.99m, category: "Test Expense 1 Category", date: new DateTime(2026, 06, 01));
+        var (_, testExpense2) = await CreateTestExpense(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 2", description: "description for test expense 2", amount: 199.99m, category: "Test Expense 2 Category", date: new DateTime(2026, 09, 02));
+        var (_, testExpense3) = await CreateTestExpense(paymentMethod: PaymentMethod.Payable, paymentNote: "payment note for test expense 3", description: "description for test expense 3", amount: 299.99m, category: "Test Expense 3 Category", date: new DateTime(2023, 06, 03));
+        var (_, testExpense4) = await CreateTestExpense(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 4", description: "description for test expense 4", amount: 399.99m, category: "Test Expense 4 Category", date: new DateTime(2023, 09, 04));
+
+        int year = 2026;
+        int month = 6;
+        var response = await _client.GetAsync($"api/Expenses?year={year}&month={month}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var expenses = await response.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        Assert.That(expenses, Is.Not.Null);
+
+        Assert.That(expenses.All(e => e.Date.Year == year && e.Date.Month == month), Is.True);
+        Assert.That(expenses.Any(e => e.Id == testExpense1.Id), Is.True);
+        Assert.That(expenses.Any(e => e.Id == testExpense2.Id), Is.False);
+        Assert.That(expenses.Any(e => e.Id == testExpense3.Id), Is.False);
+        Assert.That(expenses.Any(e => e.Id == testExpense4.Id), Is.False);
+    }
+
+    [Test]
     public async Task UpdateExpense_WithValidData_ReturnsOk()
     {
         var (_, testExpense) = await CreateTestExpense();
