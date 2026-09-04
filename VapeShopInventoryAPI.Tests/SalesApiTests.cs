@@ -52,6 +52,8 @@ public class SalesApiTests
     [Test]
     public async Task CreateSale_WithInvalidEnumPaymentMethod_ReturnsBadRequest()
     {
+        var (_, testSale) = await CreateTestSaleAsync();
+
         var payload = new { 
         SaleDate = new DateTime(2026, 01, 01), 
         PaymentMethod = (PaymentMethod)999, 
@@ -90,6 +92,38 @@ public class SalesApiTests
         Assert.That(saleFound.ReductionFrequency, Is.EqualTo(sale.ReductionFrequency));
         Assert.That(saleFound.TotalQuantityReduction, Is.EqualTo(sale.TotalQuantityReduction));
         Assert.That(saleFound.SaleItems.Count, Is.EqualTo(sale.SaleItems.Count));
+    }
+
+    [Test]
+    public async Task EditSale_WithInvalidEnumPaymentMethod_ReturnsBadRequest()
+    {
+        var (_, testSale) = await CreateTestSaleAsync();
+
+        var payload = new { 
+        SaleDate = new DateTime(2026, 01, 01), 
+        PaymentMethod = (PaymentMethod)999, 
+        PaymentNote = "Test Invalid Enum PaymentMethod in Editing Sale" 
+        };
+        
+        var response = await _client.PutAsJsonAsync($"/api/Sales/{testSale!.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.StatusCode} instead.");
+        
+        var responseGetSale = await _client.GetAsync($"api/Sales/{testSale.Id}");
+        Assert.That(responseGetSale.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetSale.StatusCode} instead.");
+        
+        var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>();
+        Assert.That(sale, Is.Not.Null);
+
+        Assert.That(sale.Id, Is.EqualTo(testSale.Id));
+        Assert.That(sale.SaleDate, Is.EqualTo(testSale.SaleDate));
+        Assert.That(sale.CreatedAt, Is.EqualTo(testSale.CreatedAt));
+        Assert.That(sale.PaymentMethod, Is.EqualTo(testSale.PaymentMethod));
+        Assert.That(sale.PaymentNote, Is.EqualTo(testSale.PaymentNote));
+        Assert.That(sale.IsClosed, Is.EqualTo(testSale.IsClosed));
+        Assert.That(sale.TransactionCount, Is.EqualTo(testSale.TransactionCount));
+        Assert.That(sale.ReductionFrequency, Is.EqualTo(testSale.ReductionFrequency));
+        Assert.That(sale.TotalQuantityReduction, Is.EqualTo(testSale.TotalQuantityReduction));
+        Assert.That(sale.SaleItems.Count, Is.EqualTo(testSale.SaleItems.Count));
     }
 
     [Test]
@@ -271,9 +305,13 @@ public class SalesApiTests
         _isCreatedSaleClosed = false;
     }
 
-    private async Task <(HttpResponseMessage Response, SaleResponse? Sale)> CreateTestSaleAsync(DateTime saleDate, string? paymentNote = null, PaymentMethod paymentMethod = PaymentMethod.Cash)
+    private async Task <(HttpResponseMessage Response, SaleResponse? Sale)> CreateTestSaleAsync(DateTime? saleDate = null, string? paymentNote = null, PaymentMethod paymentMethod = PaymentMethod.Cash)
     {
-        var payload = new { saleDate, paymentMethod, paymentNote };
+        var payload = new { 
+        SaleDate = saleDate ?? DateTime.Now, 
+        PaymentMethod = paymentMethod, 
+        PaymentNote = paymentNote 
+        };
         
         var response = await _client.PostAsJsonAsync("/api/Sales", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created(), but received {response.StatusCode}");
