@@ -48,8 +48,7 @@ public class ProductsApiTests
     [Test]
     public async Task GetProduct_NonExistentId_ReturnsNotFound()
     {
-        int testInvalidId = -1;
-        var response = await _client.GetAsync($"/api/Products/{testInvalidId}");
+        var response = await _client.GetAsync($"/api/Products/{int.MaxValue}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 NotFound() status, but received {response.StatusCode}");
     }
 

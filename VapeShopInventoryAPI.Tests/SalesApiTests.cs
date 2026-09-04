@@ -16,7 +16,6 @@ public class SalesApiTests
     private int? _createdSaleId;
     private bool _isCreatedSaleClosed = false;
     private int? _createdProductId;
-    private const int _TestInvalidId = -1;
     private int _skuCounter = 111;
     [OneTimeSetUp]
     public void OneTimeSetup()
@@ -35,7 +34,7 @@ public class SalesApiTests
     [Test]
     public async Task GetSale_NonExistentId_ReturnsNotFound()
     {
-        var response = await _client.GetAsync($"/api/Sales/{_TestInvalidId}");
+        var response = await _client.GetAsync($"/api/Sales/{int.MaxValue}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 NotFound() status, but received {response.StatusCode}");
     }
 
