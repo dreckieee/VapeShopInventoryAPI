@@ -174,6 +174,19 @@ public class ExpensesApiTests
     }
 
     [Test]
+    public async Task GetExpenses_WithNoMatches_ReturnsEmptyList()
+    {
+        int year = 1;
+        int month = 1;
+        var response = await _client.GetAsync($"api/Expenses?year={year}&month={month}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var expenses = await response.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        Assert.That(expenses, Is.Not.Null);
+        Assert.That(expenses, Is.Empty);
+    }
+
+    [Test]
     public async Task UpdateExpense_WithValidData_ReturnsOk()
     {
         var (_, testExpense) = await CreateTestExpense();
