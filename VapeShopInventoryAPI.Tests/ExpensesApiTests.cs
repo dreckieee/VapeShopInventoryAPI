@@ -268,7 +268,39 @@ public class ExpensesApiTests
         Assert.That(expense.Category, Is.EqualTo(testExpense.Category));
         Assert.That(expense.Date, Is.EqualTo(testExpense.Date));
         Assert.That(expense.CreatedAt, Is.EqualTo(testExpense.CreatedAt));
-    
+    }
+
+    [Test]
+    public async Task UpdateExpense_WithInvalidEnumPaymentMethod_ReturnsBadRequest()
+    {
+        var (_, testExpense) = await CreateTestExpense();
+
+        var payload = new UpdateExpenseRequest
+        {
+            PaymentMethod = (PaymentMethod)999,
+            PaymentNote = "Promised to pay rent in 2 months",
+            Description = "Test Invalid Enum Payment Method",
+            Amount = 6000m,
+            Category = "Rent",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PutAsJsonAsync($"api/Expenses/{testExpense.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.StatusCode} instead.");
+
+        var responseGetExpense = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
+        Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
+
+        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>();
+        Assert.That(expense, Is.Not.Null);
+        Assert.That(expense.Id, Is.EqualTo(testExpense.Id));
+        Assert.That(expense.PaymentMethod, Is.EqualTo(testExpense.PaymentMethod));
+        Assert.That(expense.PaymentNote, Is.EqualTo(testExpense.PaymentNote));
+        Assert.That(expense.Description, Is.EqualTo(testExpense.Description));
+        Assert.That(expense.Amount, Is.EqualTo(testExpense.Amount));
+        Assert.That(expense.Category, Is.EqualTo(testExpense.Category));
+        Assert.That(expense.Date, Is.EqualTo(testExpense.Date));
+        Assert.That(expense.CreatedAt, Is.EqualTo(testExpense.CreatedAt));
     }
 
     [Test]
