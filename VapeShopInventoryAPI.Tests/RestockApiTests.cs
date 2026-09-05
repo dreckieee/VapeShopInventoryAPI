@@ -135,7 +135,7 @@ public class RestockApiTests
     public async Task CreateRestock_InvalidProductIdAllOrNothing_ReturnsNotFound()
     {
         var responseGetExpensesA = await _client.GetAsync("api/Expenses");
-        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
 
         var (_, productA) = await CreateTestProduct(name: "Test Product A", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
         var (_, productB) = await CreateTestProduct(name: "Test Product B", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Test");
@@ -170,7 +170,7 @@ public class RestockApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expecting 404 Not Found() status, but received {response.StatusCode}");
 
         var responseGetExpensesB = await _client.GetAsync("api/Expenses");
-        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expensesB?.Count, Is.EqualTo(expensesA?.Count));
 
         foreach(ProductResponse pr in createdProducts)
@@ -178,7 +178,7 @@ public class RestockApiTests
             var responseGetProduct = await _client.GetAsync($"api/Products/{pr.Id}");
             Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseGetProduct.StatusCode}");
 
-            var responseProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>();
+            var responseProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>(TestJsonOptions.Default);
             Assert.That(responseProduct, Is.Not.Null);
             Assert.That(responseProduct.StockQuantity, Is.EqualTo(pr.StockQuantity));
             Assert.That(responseProduct.Name, Is.EqualTo(pr.Name));
@@ -216,7 +216,7 @@ public class RestockApiTests
         var responseMessage = await _client.PostAsJsonAsync("api/Restock", payload);
         Assert.That(responseMessage.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseMessage.StatusCode}");
 
-        var restockResponse = await responseMessage.Content.ReadFromJsonAsync<RestockResponse>();
+        var restockResponse = await responseMessage.Content.ReadFromJsonAsync<RestockResponse>(TestJsonOptions.Default);
         Assert.That(restockResponse, Is.Not.Null);
         _restockedProductIds.Add(productA.Id);
 
@@ -241,7 +241,7 @@ public class RestockApiTests
         var responseGetProduct = await _client.GetAsync($"api/Products/{productA.Id}");
         Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseGetProduct.StatusCode}");
 
-        var updatedProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>();
+        var updatedProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>(TestJsonOptions.Default);
         Assert.That(updatedProduct, Is.Not.Null);
         Assert.That(updatedProduct.StockQuantity, Is.EqualTo(productA.StockQuantity + testQuantityA + testQuantityB));
         Assert.That(updatedProduct.Name, Is.EqualTo(productA.Name));
@@ -256,7 +256,7 @@ public class RestockApiTests
     public async Task CreateRestock_InvalidQuantityAllOrNothing_ReturnsBadRequest()
     {
         var responseGetExpensesA = await _client.GetAsync("api/Expenses");
-        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
 
         var (_, productA) = await CreateTestProduct(name: "Test Product A", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
         var (_, productB) = await CreateTestProduct(name: "Test Product B", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Test");
@@ -284,7 +284,7 @@ public class RestockApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expecting 400 Bad Request() status, but received {response.StatusCode}");
 
         var responseGetExpensesB = await _client.GetAsync("api/Expenses");
-        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expensesB?.Count, Is.EqualTo(expensesA?.Count));
 
         foreach(ProductResponse pr in createdProducts)
@@ -292,7 +292,7 @@ public class RestockApiTests
             var responseGetProduct = await _client.GetAsync($"api/Products/{pr.Id}");
             Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseGetProduct.StatusCode}");
 
-            var responseProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>();
+            var responseProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>(TestJsonOptions.Default);
             Assert.That(responseProduct, Is.Not.Null);
             Assert.That(responseProduct.StockQuantity, Is.EqualTo(pr.StockQuantity));
             Assert.That(responseProduct.Name, Is.EqualTo(pr.Name));
@@ -308,7 +308,7 @@ public class RestockApiTests
     public async Task CreateRestock_InvalidUnitCostAllOrNothing_ReturnsBadRequest()
     {
         var responseGetExpensesA = await _client.GetAsync("api/Expenses");
-        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
 
         var (_, productA) = await CreateTestProduct(name: "Test Product A", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
         var (_, productB) = await CreateTestProduct(name: "Test Product B", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Test");
@@ -336,7 +336,7 @@ public class RestockApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expecting 400 Bad Request() status, but received {response.StatusCode}");
 
         var responseGetExpensesB = await _client.GetAsync("api/Expenses");
-        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expensesB?.Count, Is.EqualTo(expensesA?.Count));
 
         foreach(ProductResponse pr in createdProducts)
@@ -344,7 +344,7 @@ public class RestockApiTests
             var responseGetProduct = await _client.GetAsync($"api/Products/{pr.Id}");
             Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseGetProduct.StatusCode}");
 
-            var responseProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>();
+            var responseProduct = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>(TestJsonOptions.Default);
             Assert.That(responseProduct, Is.Not.Null);
             Assert.That(responseProduct.StockQuantity, Is.EqualTo(pr.StockQuantity));
             Assert.That(responseProduct.Name, Is.EqualTo(pr.Name));
@@ -360,7 +360,7 @@ public class RestockApiTests
     public async Task CreateRestock_EmptyRestockItems_ReturnsBadRequest()
     {
         var responseGetExpensesA = await _client.GetAsync("api/Expenses");
-        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesA = await responseGetExpensesA.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
 
         var payload = new RestockRequest
         {
@@ -375,7 +375,7 @@ public class RestockApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expecting 400 Bad Request() status, but received {response.StatusCode}");
 
         var responseGetExpensesB = await _client.GetAsync("api/Expenses");
-        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expensesB?.Count, Is.EqualTo(expensesA?.Count));
     }
 
@@ -422,7 +422,7 @@ public class RestockApiTests
             throw new InvalidOperationException($"Expected 201 Created() status in creating test product (setup helper), but received {response.StatusCode}");
         }
 
-        var product = await response.Content.ReadFromJsonAsync<ProductResponse>();
+        var product = await response.Content.ReadFromJsonAsync<ProductResponse>(TestJsonOptions.Default);
         if (product == null)
         {
             throw new InvalidOperationException($"Product is null in creating test product (setup helper) but expected otherwise");
@@ -449,7 +449,7 @@ public class RestockApiTests
             throw new InvalidOperationException($"Expecting 200 Ok() status, but received {response.StatusCode}");
         }
         
-        var restockResponse = await response.Content.ReadFromJsonAsync<RestockResponse>();
+        var restockResponse = await response.Content.ReadFromJsonAsync<RestockResponse>(TestJsonOptions.Default);
         if (restockResponse == null)
         {
             throw new InvalidOperationException($"RestockResponse is null in restocking a test product (setup helper) but expected otherwise");

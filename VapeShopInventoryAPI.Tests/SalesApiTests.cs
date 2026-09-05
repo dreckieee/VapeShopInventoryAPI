@@ -63,7 +63,7 @@ public class SalesApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.StatusCode} instead.");
         
         var responseGetSalesAfter = await _client.GetAsync("api/Sales");
-        var salesAfter = await responseGetSalesAfter.Content.ReadFromJsonAsync<List<SaleResponse>>();
+        var salesAfter = await responseGetSalesAfter.Content.ReadFromJsonAsync<List<SaleResponse>>(TestJsonOptions.Default);
         Assert.That(salesAfter, Is.Not.Null);
         Assert.That(salesAfter.Any(s => s.PaymentNote == payload.PaymentNote), Is.False);
     }
@@ -79,7 +79,7 @@ public class SalesApiTests
         var response = await _client.GetAsync($"/api/Sales/{sale!.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}");
 
-        var saleFound = await response.Content.ReadFromJsonAsync<SaleResponse>();  
+        var saleFound = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);  
         Assert.That(saleFound, Is.Not.Null);
         Assert.That(saleFound.Id, Is.EqualTo(sale.Id));
         Assert.That(saleFound.SaleDate, Is.EqualTo(sale.SaleDate));
@@ -110,7 +110,7 @@ public class SalesApiTests
         var responseGetSale = await _client.GetAsync($"api/Sales/{testSale.Id}");
         Assert.That(responseGetSale.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetSale.StatusCode} instead.");
         
-        var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>();
+        var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(sale, Is.Not.Null);
 
         Assert.That(sale.Id, Is.EqualTo(testSale.Id));
@@ -173,7 +173,7 @@ public class SalesApiTests
         var response = await _client.PatchAsJsonAsync($"/api/SaleItems/{sale.Id}/items/{saleItem.Id}/reduce", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}.");
 
-        var saleAfterReducing = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        var saleAfterReducing = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(saleAfterReducing, Is.Not.Null);
         Assert.That(saleAfterReducing.SaleItems.Count, Is.GreaterThan(0));
 
@@ -208,7 +208,7 @@ public class SalesApiTests
         var response = await _client.PatchAsJsonAsync($"/api/SaleItems/{sale.Id}/items/{saleItem.Id}/reduce", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}.");
 
-        var saleAfterReducing = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        var saleAfterReducing = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(saleAfterReducing, Is.Not.Null);
 
         var saleItemAfterReducing = saleAfterReducing.SaleItems.Find(si => si.ProductId == product.Id);
@@ -234,7 +234,7 @@ public class SalesApiTests
         var response = await _client.PostAsync($"/api/Sales/{sale.Id}/close", null);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}.");
 
-        var saleAfterClosing = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        var saleAfterClosing = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(saleAfterClosing, Is.Not.Null);
         Assert.That(saleAfterClosing.IsClosed, Is.True);
         _isCreatedSaleClosed = true;
@@ -246,7 +246,7 @@ public class SalesApiTests
         var responseGetProduct = await _client.GetAsync($"/api/Products/{product.Id}");
         Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetProduct.StatusCode}.");
         
-        var productAfterClosing = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>();
+        var productAfterClosing = await responseGetProduct.Content.ReadFromJsonAsync<ProductResponse>(TestJsonOptions.Default);
         Assert.That(productAfterClosing, Is.Not.Null);
         Assert.That(productAfterClosing.StockQuantity, Is.EqualTo(product.StockQuantity - saleItemAfterClosing.Quantity));
     }
@@ -315,7 +315,7 @@ public class SalesApiTests
         var response = await _client.PostAsJsonAsync("/api/Sales", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created(), but received {response.StatusCode}");
         
-        var sale = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        var sale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(sale, Is.Not.Null);
         _createdSaleId = sale.Id;
         
@@ -331,7 +331,7 @@ public class SalesApiTests
         var response = await _client.PostAsJsonAsync("/api/Products", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created(), but received {response.StatusCode}");
         
-        var product = await response.Content.ReadFromJsonAsync<ProductResponse>();
+        var product = await response.Content.ReadFromJsonAsync<ProductResponse>(TestJsonOptions.Default);
         Assert.That(product, Is.Not.Null);
         _createdProductId = product.Id;
         _skuCounter ++;
@@ -354,7 +354,7 @@ public class SalesApiTests
         var response = await _client.PostAsJsonAsync($"/api/SaleItems/{sale!.Id}/items", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}");
 
-        var updatedSale = await response.Content.ReadFromJsonAsync<SaleResponse>();
+        var updatedSale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(updatedSale, Is.Not.Null);
         Assert.That(updatedSale.SaleItems.Count, Is.GreaterThan(0));
 

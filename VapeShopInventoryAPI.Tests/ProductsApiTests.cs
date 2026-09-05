@@ -40,7 +40,7 @@ public class ProductsApiTests
         var response = await _client.GetAsync("/api/Products");
         Assert.That(response.IsSuccessStatusCode, Is.True, $"Expected 200 Ok() status, but received {response.StatusCode}");
 
-        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>(TestJsonOptions.Default);
         Assert.That(products, Is.Not.Null);
         Assert.That(products.Count, Is.GreaterThan(0));
     }
@@ -77,7 +77,7 @@ public class ProductsApiTests
     public async Task CreateProduct_InvalidProduct_ReturnsBadRequest()
     {
         var responseGetProductsBefore = await _client.GetAsync("api/Products");
-        var productsBefore = await responseGetProductsBefore.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        var productsBefore = await responseGetProductsBefore.Content.ReadFromJsonAsync<List<ProductResponse>>(TestJsonOptions.Default);
 
         var invalidProductPayload = new
         {
@@ -92,7 +92,7 @@ public class ProductsApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.StatusCode}");
 
         var responseGetProductsAfter = await _client.GetAsync("api/Products");
-        var productsAfter = await responseGetProductsAfter.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        var productsAfter = await responseGetProductsAfter.Content.ReadFromJsonAsync<List<ProductResponse>>(TestJsonOptions.Default);
         Assert.That(productsBefore?.Count, Is.EqualTo(productsAfter?.Count));
     }
 
@@ -101,7 +101,7 @@ public class ProductsApiTests
     {
         var responseBefore = await _client.GetAsync("/api/Products?name=blue");
         Assert.That(responseBefore.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {responseBefore.StatusCode}");
-        var productsBefore = await responseBefore.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        var productsBefore = await responseBefore.Content.ReadFromJsonAsync<List<ProductResponse>>(TestJsonOptions.Default);
 
         var (_, productA) = await CreateTestProduct(name: "Blue Razz Vape Juice", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Liquids");
         var (_, productB) = await CreateTestProduct(name: "Blue Coil Kit", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Hardware");
@@ -112,7 +112,7 @@ public class ProductsApiTests
         var response = await _client.GetAsync("/api/Products?name=blue");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {response.StatusCode}");
 
-        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>(TestJsonOptions.Default);
         Assert.That(products, Is.Not.Null);
         Assert.That(products.Count, Is.EqualTo(productsBefore?.Count + 2));
         Assert.That(products.Any(p => p.Name == productA.Name), Is.True);
@@ -126,7 +126,7 @@ public class ProductsApiTests
     {
         var responseBefore = await _client.GetAsync("/api/Products?category=liquids");
         Assert.That(responseBefore.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {responseBefore.StatusCode}");
-        var productsBefore = await responseBefore.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        var productsBefore = await responseBefore.Content.ReadFromJsonAsync<List<ProductResponse>>(TestJsonOptions.Default);
 
         var (_, productA) = await CreateTestProduct(name: "Blue Razz Vape Juice", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Liquids");
         var (_, productB) = await CreateTestProduct(name: "Blue Coil Kit", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Hardware");
@@ -137,7 +137,7 @@ public class ProductsApiTests
         var response = await _client.GetAsync("/api/Products?category=liquids");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {response.StatusCode}");
 
-        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>(TestJsonOptions.Default);
         Assert.That(products, Is.Not.Null);
         Assert.That(products.Count, Is.EqualTo(productsBefore?.Count + 2));
         Assert.That(products.Any(p => p.Name == productA.Name), Is.True);
@@ -151,7 +151,7 @@ public class ProductsApiTests
     {
         var responseBefore = await _client.GetAsync("/api/Products?name=blue&category=hardware");
         Assert.That(responseBefore.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {responseBefore.StatusCode}");
-        var productsBefore = await responseBefore.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        var productsBefore = await responseBefore.Content.ReadFromJsonAsync<List<ProductResponse>>(TestJsonOptions.Default);
 
         var (_, productA) = await CreateTestProduct(name: "Blue Razz Vape Juice", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Liquids");
         var (_, productB) = await CreateTestProduct(name: "Blue Coil Kit", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Hardware");
@@ -162,7 +162,7 @@ public class ProductsApiTests
         var response = await _client.GetAsync("/api/Products?name=blue&category=hardware");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {response.StatusCode}");
 
-        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>(TestJsonOptions.Default);
         Assert.That(products, Is.Not.Null);
         Assert.That(products.Count, Is.EqualTo(productsBefore?.Count + 1));
         Assert.That(products.Any(p => p.Name == productA.Name), Is.False);
@@ -177,7 +177,7 @@ public class ProductsApiTests
         var response = await _client.GetAsync("/api/Products?name=nonexistentproduct12345");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() Status, but received {response.StatusCode}");
 
-        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>();
+        var products = await response.Content.ReadFromJsonAsync<List<ProductResponse>>(TestJsonOptions.Default);
         Assert.That(products, Is.Not.Null);
         Assert.That(products.Count, Is.EqualTo(0));
     }
@@ -224,7 +224,7 @@ public class ProductsApiTests
             throw new InvalidOperationException($"Expected 201 Created() status in creating test product (setup helper), but received {response.StatusCode}");
         }
 
-        var product = await response.Content.ReadFromJsonAsync<ProductResponse>();
+        var product = await response.Content.ReadFromJsonAsync<ProductResponse>(TestJsonOptions.Default);
         if (product == null)
         {
             throw new InvalidOperationException($"Product is null in creating test product (setup helper) but expected otherwise");

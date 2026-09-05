@@ -44,7 +44,7 @@ public class ExpensesApiTests
         var response = await _client.PostAsJsonAsync("api/Expenses", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {response.StatusCode} instead.");
 
-        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>();
+        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
         Assert.That(expense, Is.Not.Null);
         _createdExpenseIds.Add(expense.Id);
 
@@ -60,7 +60,7 @@ public class ExpensesApiTests
     public async Task CreateExpense_WithInvalidData_ReturnsBadRequest()
     {
         var responseExpensesBefore = await _client.GetAsync("api/Expenses");
-        var expensesBefore = await responseExpensesBefore.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesBefore = await responseExpensesBefore.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
 
         var payload = new CreateExpenseRequest
         {
@@ -76,7 +76,7 @@ public class ExpensesApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
 
         var responseExpensesAfter = await _client.GetAsync("api/Expenses");
-        var expensesAfter = await responseExpensesAfter.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesAfter = await responseExpensesAfter.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expensesBefore?.Count, Is.EqualTo(expensesAfter?.Count));
         
     }
@@ -98,7 +98,7 @@ public class ExpensesApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
 
         var responseGetExpensesAfter = await _client.GetAsync("api/Expenses");
-        var expensesAfter = await responseGetExpensesAfter.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expensesAfter = await responseGetExpensesAfter.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expensesAfter, Is.Not.Null);
         Assert.That(expensesAfter.Any(e => e.Category == payload.Category), Is.False);
     }
@@ -111,7 +111,7 @@ public class ExpensesApiTests
         var response = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
 
-        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>();
+        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
         Assert.That(expense, Is.Not.Null);
         Assert.That(expense.Id, Is.EqualTo(testExpense.Id));
         Assert.That(expense.PaymentMethod, Is.EqualTo(testExpense.PaymentMethod));
@@ -142,7 +142,7 @@ public class ExpensesApiTests
         var response = await _client.GetAsync($"api/Expenses?year={year}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
 
-        var expenses = await response.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expenses = await response.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expenses, Is.Not.Null);
         Assert.That(expenses.All(e => e.Date.Year == year), Is.True);
         Assert.That(expenses.Any(e => e.Id == testExpense1.Id), Is.True);
@@ -163,7 +163,7 @@ public class ExpensesApiTests
         var response = await _client.GetAsync($"api/Expenses?month={month}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
 
-        var expenses = await response.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expenses = await response.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expenses, Is.Not.Null);
         Assert.That(expenses.All(e => e.Date.Month == month), Is.True);
         Assert.That(expenses.Any(e => e.Id == testExpense1.Id), Is.True);
@@ -185,7 +185,7 @@ public class ExpensesApiTests
         var response = await _client.GetAsync($"api/Expenses?year={year}&month={month}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
 
-        var expenses = await response.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expenses = await response.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expenses, Is.Not.Null);
 
         Assert.That(expenses.All(e => e.Date.Year == year && e.Date.Month == month), Is.True);
@@ -203,7 +203,7 @@ public class ExpensesApiTests
         var response = await _client.GetAsync($"api/Expenses?year={year}&month={month}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
 
-        var expenses = await response.Content.ReadFromJsonAsync<List<ExpenseResponse>>();
+        var expenses = await response.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expenses, Is.Not.Null);
         Assert.That(expenses, Is.Empty);
     }
@@ -226,7 +226,7 @@ public class ExpensesApiTests
         var response = await _client.PutAsJsonAsync($"api/Expenses/{testExpense.Id}", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
 
-        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>();
+        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
         Assert.That(expense, Is.Not.Null);
         Assert.That(expense.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
         Assert.That(expense.PaymentNote, Is.EqualTo(payload.PaymentNote));
@@ -258,7 +258,7 @@ public class ExpensesApiTests
         var responseGetExpense = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
         Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
 
-        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>();
+        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
         Assert.That(expense, Is.Not.Null);
         Assert.That(expense.Id, Is.EqualTo(testExpense.Id));
         Assert.That(expense.PaymentMethod, Is.EqualTo(testExpense.PaymentMethod));
@@ -291,7 +291,7 @@ public class ExpensesApiTests
         var responseGetExpense = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
         Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
 
-        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>();
+        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
         Assert.That(expense, Is.Not.Null);
         Assert.That(expense.Id, Is.EqualTo(testExpense.Id));
         Assert.That(expense.PaymentMethod, Is.EqualTo(testExpense.PaymentMethod));
@@ -350,7 +350,7 @@ public class ExpensesApiTests
         var responseGetExpense = await _client.GetAsync($"api/Expenses/{restockResponse.Expense.Id}");
         Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
 
-        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>();
+        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
         Assert.That(expense, Is.Not.Null);
         Assert.That(expense.Id, Is.EqualTo(restockResponse.Expense.Id));
         Assert.That(expense.PaymentMethod, Is.EqualTo(restockResponse.Expense.PaymentMethod));
@@ -401,7 +401,7 @@ public class ExpensesApiTests
         var responseGetExpense = await _client.GetAsync($"api/Expenses/{restockResponse.Expense.Id}");
         Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
 
-        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>();
+        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
         Assert.That(expense, Is.Not.Null);
         Assert.That(expense.Id, Is.EqualTo(restockResponse.Expense.Id));
         Assert.That(expense.PaymentMethod, Is.EqualTo(restockResponse.Expense.PaymentMethod));
@@ -438,7 +438,7 @@ public class ExpensesApiTests
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
 
-        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>();
+        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
         if (expense == null)
         {
             throw new InvalidOperationException($"Failed to deserialize ExpenseResponse after creating test expense");
@@ -472,7 +472,7 @@ public class ExpensesApiTests
             throw new InvalidOperationException($"Expected 201 Created() status in creating test product (setup helper), but received {response.StatusCode}");
         }
 
-        var product = await response.Content.ReadFromJsonAsync<ProductResponse>();
+        var product = await response.Content.ReadFromJsonAsync<ProductResponse>(TestJsonOptions.Default);
         if (product == null)
         {
             throw new InvalidOperationException($"Product is null in creating test product (setup helper) but expected otherwise");
@@ -504,7 +504,7 @@ public class ExpensesApiTests
             throw new InvalidOperationException($"Expecting 200 Ok() status, but received {response.StatusCode}");
         }
         
-        var restockResponse = await response.Content.ReadFromJsonAsync<RestockResponse>();
+        var restockResponse = await response.Content.ReadFromJsonAsync<RestockResponse>(TestJsonOptions.Default);
         if (restockResponse == null)
         {
             throw new InvalidOperationException($"RestockResponse is null in restocking a test product (setup helper) but expected otherwise");
