@@ -7,6 +7,7 @@ public class VapeShopInventoryDbContext : DbContext
     public DbSet<Sale> Sales {get; private set;}
     public DbSet<SaleItem> SaleItems {get; private set;}
     public DbSet<DeliveryItem> DeliveryItems {get; private set;}
+    public DbSet<Settlement> Settlements {get; private set;}
     public VapeShopInventoryDbContext (DbContextOptions<VapeShopInventoryDbContext> options) : base (options){}
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +43,18 @@ public class VapeShopInventoryDbContext : DbContext
             .HasOne<Product>()
             .WithMany()
             .HasForeignKey(di => di.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Settlement>()
+            .HasOne<Expense>()
+            .WithMany()
+            .HasForeignKey(se => se.ExpenseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Settlement>()
+            .HasOne<Sale>()
+            .WithMany()
+            .HasForeignKey(se => se.SaleId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
