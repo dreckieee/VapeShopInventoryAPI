@@ -1,8 +1,8 @@
 namespace VapeShopInventoryAPI.Api.DTOs;
-public class StockShortageResponse
+public record StockShortageResponse
 {
-    public required int ProductId { get; set;}
-    public required string ProductName { get; set;}
-    public required int RequestedQuantity { get; set;}
-    public required int AvailableQuantity { get; set;}
+    public required int ProductId { get; init;}
+    public required string ProductName { get; init;}
+    public required int RequestedQuantity { get; init;}
+    public required int AvailableQuantity { get; init;}
 }
