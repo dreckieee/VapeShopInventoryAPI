@@ -1,7 +1,7 @@
 namespace VapeShopInventoryAPI.Api.DTOs;
 public record SettlementResponse
 {
-    public int Id {get; init;}
+    public required int Id {get; init;}
     public int? SaleId {get; init;}
     public int? ExpenseId {get; init;}
     public required decimal Amount {get; init;}
