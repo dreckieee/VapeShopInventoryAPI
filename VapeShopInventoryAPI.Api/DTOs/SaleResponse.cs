@@ -2,16 +2,16 @@ using VapeShopInventoryAPI.Api;
 namespace VapeShopInventoryAPI.Api.DTOs;
 public record SaleResponse
 {
-    public int Id {get; init;}
-    public DateTime SaleDate {get; init;}
-    public DateTime CreatedAt {get; init;}
-    public PaymentMethod PaymentMethod {get; init;}
+    public required int Id {get; init;}
+    public required DateTime SaleDate {get; init;}
+    public required DateTime CreatedAt {get; init;}
+    public required PaymentMethod PaymentMethod {get; init;}
     public string? PaymentNote {get; init;}
-    public bool IsClosed {get; init;}
-    public int TransactionCount {get; init;}
-    public int ReductionFrequency {get; init;}
-    public int TotalQuantityReduction {get; init;}
-    public List<SaleItemResponse> SaleItems {get; init;} = new();
+    public required bool IsClosed {get; init;}
+    public required int TransactionCount {get; init;}
+    public required int ReductionFrequency {get; init;}
+    public required int TotalQuantityReduction {get; init;}
+    public required List<SaleItemResponse> SaleItems {get; init;} = new();
     public static SaleResponse FromSale(Sale sale) 
     {
         var saleItems = sale.SaleItems.Select(item => SaleItemResponse.FromSaleItem(item)).ToList();
