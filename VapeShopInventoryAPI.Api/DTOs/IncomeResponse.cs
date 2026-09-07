@@ -3,9 +3,9 @@ public record IncomeResponse
 {
     public int? Year {get; init;}
     public int? Month {get; init;}
-    public decimal TotalSales {get; init;}
-    public decimal TotalExpenses {get; init;}
-    public decimal NetIncome {get; init;}
+    public required decimal TotalSales {get; init;}
+    public required decimal TotalExpenses {get; init;}
+    public required decimal NetIncome {get; init;}
     public static IncomeResponse FromSalesExpenses (int? year, int? month, decimal totalSales, decimal totalExpenses) => new()
     {
         Year = year,
