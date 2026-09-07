@@ -1,14 +1,14 @@
 namespace VapeShopInventoryAPI.Api.DTOs;
 public record ExpenseResponse
 {
-    public int Id {get; init;}
-    public PaymentMethod PaymentMethod {get; init;}
+    public required int Id {get; init;}
+    public required PaymentMethod PaymentMethod {get; init;}
     public string? PaymentNote {get; init;}
     public required string Description {get; init;}
-    public decimal Amount {get; init;}
+    public required decimal Amount {get; init;}
     public required string Category {get; init;}
-    public DateTime Date {get; init;}
-    public DateTime CreatedAt {get; init;}
+    public required DateTime Date {get; init;}
+    public required DateTime CreatedAt {get; init;}
     public static ExpenseResponse FromExpense(Expense expense) => new()
     {
         Id = expense.Id, 
