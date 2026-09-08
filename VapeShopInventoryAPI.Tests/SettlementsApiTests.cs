@@ -37,7 +37,7 @@ public class SettlementsApiTests
             ExpenseId = null,
             Amount = 99.75m,
             PaymentMethod = PaymentMethod.Cash,
-            PaymentNote = "Test payment note for create settlement test valid sale",
+            PaymentNote = "Test payment note for create settlement test (valid) existing sale",
             Date = new DateTime(2026, 01, 01)
         };
 
@@ -65,12 +65,31 @@ public class SettlementsApiTests
             ExpenseId = null,
             Amount = 99.75m,
             PaymentMethod = PaymentMethod.Cash,
-            PaymentNote = "Test payment note for create settlement test non-existent sale id",
+            PaymentNote = "Test payment note for create settlement test (invalid) non-existent sale id",
             Date = new DateTime(2026, 01, 01)
         };
 
         var response = await _client.PostAsJsonAsync("api/Settlements", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.StatusCode} instead.");
+    }
+
+    [Test]
+    public async Task CreateSettlement_SaleNotReceivable_ReturnsBadRequest()
+    {
+        var (_, testSale) = await CreateTestSaleAsync(paymentMethod: PaymentMethod.Cash);
+
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = testSale.Id,
+            ExpenseId = null,
+            Amount = 99.75m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test (invalid) sale not receivable",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
     }
 
     [Test]
@@ -84,7 +103,7 @@ public class SettlementsApiTests
             ExpenseId = testExpense.Id,
             Amount = 99.75m,
             PaymentMethod = PaymentMethod.Cash,
-            PaymentNote = "Test payment note for create settlement test valid expense",
+            PaymentNote = "Test payment note for create settlement test (valid) existing expense",
             Date = new DateTime(2026, 01, 01)
         };
 
@@ -112,7 +131,7 @@ public class SettlementsApiTests
             ExpenseId = int.MaxValue,
             Amount = 99.75m,
             PaymentMethod = PaymentMethod.Cash,
-            PaymentNote = "Test payment note for create settlement test non-existent expense id",
+            PaymentNote = "Test payment note for create settlement test (invalid) non-existent expense id",
             Date = new DateTime(2026, 01, 01)
         };
 
