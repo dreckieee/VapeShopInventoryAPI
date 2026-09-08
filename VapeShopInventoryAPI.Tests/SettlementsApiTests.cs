@@ -29,11 +29,12 @@ public class SettlementsApiTests
     [Test]
     public async Task CreateSettlement_ValidSaleSettlement_ReturnsCreated()
     {
-        var(_, testSale) = await CreateTestSaleAsync();
+        var (_, testSale) = await CreateTestSaleAsync();
 
         var payload = new CreateSettlementRequest
         {
-            SaleId = testSale!.Id,
+            SaleId = testSale.Id,
+            ExpenseId = null,
             Amount = 99.75m,
             PaymentMethod = PaymentMethod.Cash,
             PaymentNote = "Test payment note for create settlement test valid sale",
@@ -48,6 +49,37 @@ public class SettlementsApiTests
         _createdSettlementIds.Add(settlement.Id);
 
         Assert.That(settlement.SaleId, Is.EqualTo(payload.SaleId));
+        Assert.That(settlement.ExpenseId, Is.EqualTo(payload.ExpenseId));
+        Assert.That(settlement.Amount, Is.EqualTo(payload.Amount));
+        Assert.That(settlement.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
+        Assert.That(settlement.PaymentNote, Is.EqualTo(payload.PaymentNote));
+        Assert.That(settlement.Date, Is.EqualTo(payload.Date));
+    }
+
+    [Test]
+    public async Task CreateSettlement_ValidExpenseSettlement_ReturnsCreated()
+    {
+        var (_, testExpense) = await CreateTestExpenseAsync();
+
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = null,
+            ExpenseId = testExpense.Id,
+            Amount = 99.75m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test valid expense",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {response.StatusCode} instead.");
+
+        var settlement = await response.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
+
+        Assert.That(settlement.SaleId, Is.EqualTo(payload.SaleId));
+        Assert.That(settlement.ExpenseId, Is.EqualTo(payload.ExpenseId));
         Assert.That(settlement.Amount, Is.EqualTo(payload.Amount));
         Assert.That(settlement.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
         Assert.That(settlement.PaymentNote, Is.EqualTo(payload.PaymentNote));
@@ -55,7 +87,7 @@ public class SettlementsApiTests
     }
 
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpenseAsync(
-        PaymentMethod paymentMethod = PaymentMethod.Cash, 
+        PaymentMethod paymentMethod = PaymentMethod.Payable, 
         string? paymentNote = null, 
         string description = "Test expense description", 
         decimal amount = 99.99m, 
@@ -88,7 +120,7 @@ public class SettlementsApiTests
         return (response, expense);
     }
 
-    private async Task <(HttpResponseMessage Response, SaleResponse? Sale)> CreateTestSaleAsync(
+    private async Task <(HttpResponseMessage Response, SaleResponse Sale)> CreateTestSaleAsync(
         DateTime? saleDate = null, 
         string? paymentNote = null, 
         PaymentMethod paymentMethod = PaymentMethod.Receivable)
@@ -165,6 +197,7 @@ public class SettlementsApiTests
                 if(responseGetSale.StatusCode == HttpStatusCode.NotFound)
                 {
                     TestContext.Progress.WriteLine($"Sale with an Id of {i} cannot be found -- already deleted or does not exist.");
+                    continue;
                 }
                 
                 try
