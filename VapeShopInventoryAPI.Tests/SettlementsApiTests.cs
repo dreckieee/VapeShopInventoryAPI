@@ -57,7 +57,7 @@ public class SettlementsApiTests
     }
 
     [Test]
-    public async Task CreateSettlement_NonExistentId_ReturnsBadRequest()
+    public async Task CreateSettlement_NonExistentSaleId_ReturnsBadRequest()
     {
         var payload = new CreateSettlementRequest
         {
@@ -65,7 +65,7 @@ public class SettlementsApiTests
             ExpenseId = null,
             Amount = 99.75m,
             PaymentMethod = PaymentMethod.Cash,
-            PaymentNote = "Test payment note for create settlement test valid sale",
+            PaymentNote = "Test payment note for create settlement test non-existent sale id",
             Date = new DateTime(2026, 01, 01)
         };
 
@@ -101,6 +101,23 @@ public class SettlementsApiTests
         Assert.That(settlement.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
         Assert.That(settlement.PaymentNote, Is.EqualTo(payload.PaymentNote));
         Assert.That(settlement.Date, Is.EqualTo(payload.Date));
+    }
+
+    [Test]
+    public async Task CreateSettlement_NonExistentExpenseId_ReturnsBadRequest()
+    {
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = null,
+            ExpenseId = int.MaxValue,
+            Amount = 99.75m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test non-existent expense id",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.StatusCode} instead.");
     }
 
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpenseAsync(
