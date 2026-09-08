@@ -1,6 +1,6 @@
 # Vape Shop Inventory API
 
-ASP.NET Core Web API for inventory management — built for a real Vape Shop business.
+ASP.NET Core Web API for inventory management — built for a real Vape Shop business. 
 
 ## Status: Deployed (Settlement feature in progress, not yet deployed)
 Product CRUD, Expense CRUD, full Sale/SaleItem lifecycle (create, add/reduce items, close, cancel), monthly filtering on Sales/Expenses, a computed income endpoint, and a batch restock endpoint with itemized delivery cost tracking (`DeliveryItem`) are complete and deployed. `PaymentMethod`/`PaymentNote` tracking on Sales and Expenses is live in production as of Day 133 — enum values serialize as strings (e.g. `"Cash"`) in all API responses and accept either string or int form on input. A new Settlement feature (recording payments against outstanding Receivable/Payable balances) is under active local development as of Day 135 — core create/get endpoints exist with target-record validation, but the full guard set (overpayment prevention, PaymentMethod lock on settled records) is not yet complete, and the feature has not been deployed to production. 42 automated tests via `WebApplicationFactory` against an isolated in-memory database cover Product, Sale/SaleItem, Restock, Expense, and Settlement flows, plus manual verification against the live deployed instance. Live on a DigitalOcean droplet as of Day 94, most recently redeployed Day 133.
