@@ -40,6 +40,10 @@ public class SettlementsController : ControllerBase
                 {
                     return BadRequest(new { message = $"Cannot find any sale with an id of {request.SaleId}" });
                 }
+                if (!sale.IsClosed)
+                {
+                    return BadRequest(new { message = $"Sale with an id of {request.SaleId} is still open. Settlements are only for closed sales" });
+                }
                 if(sale.PaymentMethod != PaymentMethod.Receivable)
                 {
                     return BadRequest(new { message = "Found Sale's payment method is not receivable" });
