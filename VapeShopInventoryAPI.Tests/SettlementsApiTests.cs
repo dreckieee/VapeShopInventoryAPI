@@ -235,6 +235,25 @@ public class SettlementsApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
     }
 
+    [Test]
+    public async Task CreateSettlement_FutureDate_ReturnsBadRequest()
+    {
+        var (_, testSale) = await CreateTestSaleAsync();
+
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = testSale.Id,
+            ExpenseId = null,
+            Amount = 99.75m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test (invalid) future date",
+            Date = DateTime.Now.AddYears(100)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
+    }
+
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpenseAsync(
         PaymentMethod paymentMethod = PaymentMethod.Payable, 
         string? paymentNote = null, 
