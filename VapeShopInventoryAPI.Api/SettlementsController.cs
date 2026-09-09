@@ -35,7 +35,7 @@ public class SettlementsController : ControllerBase
         {
             if(request.SaleId != null)
             {
-                var sale = await _context.Sales.FindAsync(request.SaleId);
+                var sale = await _context.Sales.Include(s => s.SaleItems).FirstOrDefaultAsync(s => s.Id == request.SaleId);
                 if (sale == null)
                 {
                     return BadRequest(new { message = $"Cannot find any sale with an id of {request.SaleId}" });
@@ -44,8 +44,15 @@ public class SettlementsController : ControllerBase
                 {
                     return BadRequest(new { message = "Found Sale's payment method is not receivable" });
                 }
-            }
 
+                decimal alreadySettled = await _context.Settlements.Where(se => se.SaleId == sale.Id).SumAsync(se => se.Amount);
+                decimal targetTotal = sale.SaleItems.Sum(s => s.Quantity * s.UnitPriceAtSale);
+                decimal outstandingBalance = targetTotal - alreadySettled;
+                if (request.Amount > outstandingBalance)
+                {
+                    return BadRequest(new { message = "Settlement amount is greater than the sale outstanding balance" });
+                }
+            }
             if(request.ExpenseId != null)
             {
                 var expense = await _context.Expenses.FindAsync(request.ExpenseId);
@@ -56,6 +63,12 @@ public class SettlementsController : ControllerBase
                 if(expense.PaymentMethod != PaymentMethod.Payable)
                 {
                     return BadRequest(new { message = "Found Expense's payment method is not payable" });
+                }
+                decimal alreadySettled = await _context.Settlements.Where(se => se.ExpenseId == expense.Id).SumAsync(se => se.Amount);
+                decimal outstandingBalance = expense.Amount - alreadySettled;
+                if (request.Amount > outstandingBalance)
+                {
+                    return BadRequest(new { message = "Settlement amount is greater than the expense outstanding balance" });
                 }
             }
             
