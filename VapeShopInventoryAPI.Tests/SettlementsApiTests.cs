@@ -12,6 +12,7 @@ public class SettlementsApiTests
 {
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
+    private List<int> _createdProductIds = new ();
     private List<int> _createdExpenseIds = new ();
     private List<int> _createdSaleIds = new ();
     private List<int> _createdSettlementIds = new ();
@@ -31,7 +32,7 @@ public class SettlementsApiTests
     [Test]
     public async Task CreateSettlement_ValidSaleSettlement_ReturnsCreated()
     {
-        var (_, testSale) = await CreateTestSaleAsync();
+        var (_, testSale, _) = await CreateTestSaleWithItemAsync();
 
         var payload = new CreateSettlementRequest
         {
@@ -254,6 +255,40 @@ public class SettlementsApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
     }
 
+    public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
+        string name = "Test Product", 
+        string? sku = null, 
+        decimal price = 99.75m, 
+        int stockQuantity = 10, 
+        int lowStockLevel = 3, 
+        string category = "Test")
+    {
+        var payload = new
+        {
+            Name = name,
+            Sku = sku ?? Guid.NewGuid().ToString(),
+            Price = price,
+            StockQuantity = stockQuantity,
+            LowStockLevel = lowStockLevel,
+            Category = category,
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Products", payload);
+        if (response.StatusCode != HttpStatusCode.Created)
+        {
+            throw new InvalidOperationException($"Expected 201 Created() status in creating test product (setup helper), but received {response.StatusCode}");
+        }
+
+        var product = await response.Content.ReadFromJsonAsync<ProductResponse>(TestJsonOptions.Default);
+        if (product == null)
+        {
+            throw new InvalidOperationException($"Product is null in creating test product (setup helper) but expected otherwise");
+        }
+        _createdProductIds.Add(product.Id);
+
+        return (response, product);
+    }
+
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpenseAsync(
         PaymentMethod paymentMethod = PaymentMethod.Payable, 
         string? paymentNote = null, 
@@ -315,8 +350,72 @@ public class SettlementsApiTests
         return (response, sale);
     }
 
+    private async Task<(ProductResponse Product, SaleResponse Sale, SaleItemResponse SaleItem)> CreateTestSaleWithItemAsync(
+        string name = "Test Product", 
+        string? sku = null, 
+        decimal price = 99.75m, 
+        int stockQuantity = 10, 
+        int lowStockLevel = 3, 
+        string category = "Test",
+
+        DateTime? saleDate = null, 
+        string? paymentNote = null, 
+        PaymentMethod paymentMethod = PaymentMethod.Receivable,
+        
+        int saleItemQuantity = 1)
+    {
+        var (_, product) = await CreateTestProductAsync(name, sku, price, stockQuantity, lowStockLevel, category);
+        var (_, sale) = await CreateTestSaleAsync(saleDate, paymentNote, paymentMethod);
+
+        var payload = new 
+        { 
+            ProductId = product!.Id, 
+            Quantity = saleItemQuantity, 
+            UnitPriceAtSale = product.Price 
+        };
+
+        var response = await _client.PostAsJsonAsync($"/api/SaleItems/{sale!.Id}/items", payload);
+        if(response.StatusCode != HttpStatusCode.OK)
+        {
+            throw new InvalidOperationException($"Expected 200 Ok() status, but received {response.StatusCode}");
+        }
+
+        var updatedSale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
+        if (updatedSale == null)
+        {
+            throw new InvalidOperationException($"Failed to deserialize SaleResponse after creating test sale");
+        }
+        if (updatedSale.SaleItems.Count == 0)
+        {
+            throw new InvalidOperationException($"Updated sale (with sale item) does not reflect any sale item added");
+        }
+
+        var saleItem = updatedSale!.SaleItems.Find(si => si.ProductId == product.Id);
+        if (saleItem == null)
+        {
+            throw new InvalidOperationException($"Failure in finding added sale item");
+        }
+        
+        var responseCloseSale = await _client.PostAsync($"/api/Sales/{updatedSale.Id}/close", null);
+        if(responseCloseSale.StatusCode != HttpStatusCode.OK)
+        {
+            throw new Exception($"Expected 200 Ok() status, but received {responseCloseSale.StatusCode}");
+        }
+
+        updatedSale = await responseCloseSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
+        if (updatedSale == null)
+        {
+            throw new InvalidOperationException($"Failed to deserialize SaleResponse after creating test sale");
+        }
+        if (!updatedSale.IsClosed)
+        {
+            throw new InvalidOperationException($"Failed to close test sale");
+        }
+        return (product, updatedSale, saleItem);
+    }
+
     [TearDown]
-    public async Task DeleteTestExpenseSaleSettlement()
+    public async Task DeleteTestExpenseSaleProductSettlement()
     {
         //Test Settlement Cleanup
         if(_createdSettlementIds.Count > 0)
@@ -352,6 +451,27 @@ public class SettlementsApiTests
                 else if (response.StatusCode != HttpStatusCode.NoContent)
                 { 
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting an expense with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
+                }
+            }
+        }
+
+        //Test Product Cleanup
+        if(_createdProductIds.Count > 0)
+        {
+            foreach(int i in _createdProductIds)
+            {
+                var response = await _client.DeleteAsync($"api/Products/{i}");
+                if (response.StatusCode == HttpStatusCode.Conflict)
+                {
+                    TestContext.Progress.WriteLine($"Skipped product cleanup: product with id {i} has existing reference(s) — deletion blocked by design (audit trail preserved).");
+                }
+                else if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    TestContext.Progress.WriteLine($"Product with an Id of {i} cannot be found -- already deleted or does not exist.");
+                }
+                else if (response.StatusCode != HttpStatusCode.NoContent)
+                { 
+                    TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                 }
             }
         }
@@ -392,6 +512,7 @@ public class SettlementsApiTests
         }
         _createdSettlementIds.Clear();
         _createdExpenseIds.Clear();
+        _createdProductIds.Clear();
         _createdSaleIds.Clear();
     }
 }
