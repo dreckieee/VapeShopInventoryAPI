@@ -237,6 +237,25 @@ public class SettlementsApiTests
     }
 
     [Test]
+    public async Task CreateSettlement_AmountExceedsOutstandingBalance_ReturnsBadRequest()
+    {
+        var (_, testSale, _) = await CreateTestSaleWithItemAsync();
+
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = testSale.Id,
+            ExpenseId = null,
+            Amount = 99.76m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test (invalid) amount exceeds outstanding balance",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
+    }
+
+    [Test]
     public async Task CreateSettlement_InvalidPaymentMethod_ReturnsBadRequest()
     {
         var (_, testExpense) = await CreateTestExpenseAsync();
