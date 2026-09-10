@@ -19,7 +19,7 @@ public class SalesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<SaleResponse>>> GetSales ([FromQuery] int? year, [FromQuery] int? month, [FromQuery] bool? isClosed)
     {
-        var query = _context.Sales.AsQueryable();
+        var query = _context.Sales.Include(s => s.SaleItems).AsQueryable();
         if (year != null)
         {
             query = query.Where(s => s.SaleDate.Year == year);
