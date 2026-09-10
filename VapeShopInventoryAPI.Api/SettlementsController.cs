@@ -48,10 +48,7 @@ public class SettlementsController : ControllerBase
                 {
                     return BadRequest(new { message = "Found Sale's payment method is not receivable" });
                 }
-
-                decimal alreadySettled = await _context.Settlements.Where(se => se.SaleId == sale.Id).SumAsync(se => se.Amount);
-                decimal targetTotal = sale.SaleItems.Sum(s => s.Quantity * s.UnitPriceAtSale);
-                decimal outstandingBalance = targetTotal - alreadySettled;
+                var (outstandingBalance, _) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
                 if (request.Amount > outstandingBalance)
                 {
                     return BadRequest(new { message = "Settlement amount is greater than the sale outstanding balance" });
@@ -68,8 +65,7 @@ public class SettlementsController : ControllerBase
                 {
                     return BadRequest(new { message = "Found Expense's payment method is not payable" });
                 }
-                decimal alreadySettled = await _context.Settlements.Where(se => se.ExpenseId == expense.Id).SumAsync(se => se.Amount);
-                decimal outstandingBalance = expense.Amount - alreadySettled;
+                var (outstandingBalance, _) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
                 if (request.Amount > outstandingBalance)
                 {
                     return BadRequest(new { message = "Settlement amount is greater than the expense outstanding balance" });
