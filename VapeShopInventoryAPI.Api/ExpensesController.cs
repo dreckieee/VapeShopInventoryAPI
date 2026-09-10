@@ -91,6 +91,12 @@ public class ExpensesController : ControllerBase
                 return Conflict(new {message = "Cannot edit Amount or Category on an expense linked to existing delivery item record/s."});
             }
 
+            var hasSettlementReferences = await _context.Settlements.AnyAsync(se => se.ExpenseId == expense.Id);
+            if (hasSettlementReferences && request.PaymentMethod != expense.PaymentMethod)
+            {
+                return Conflict(new {message = "Cannot edit Payment Method on an expense linked to existing settlement record/s."});
+            }
+
             expense.Edit(request.Date, request.Description, request.Amount, request.Category,request.PaymentMethod, request.PaymentNote); 
             await _context.SaveChangesAsync();
             
@@ -102,7 +108,6 @@ public class ExpensesController : ControllerBase
         {
             return BadRequest(new { message = ex.Message});
         }
-        
     }
 
     [HttpDelete("{id}")]

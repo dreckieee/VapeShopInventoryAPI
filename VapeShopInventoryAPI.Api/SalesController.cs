@@ -121,6 +121,11 @@ public class SalesController : ControllerBase
         {
             return NotFound();
         }
+        var hasSettlementReferences = await _context.Settlements.AnyAsync(se => se.SaleId == sale.Id);
+        if (hasSettlementReferences && request.PaymentMethod != sale.PaymentMethod)
+        {
+            return Conflict(new {message = "Cannot edit Payment Method on a sale linked to existing settlement record/s."});
+        }
         try
         {
             sale.EditSale(request.SaleDate, request.PaymentMethod, request.PaymentNote);
