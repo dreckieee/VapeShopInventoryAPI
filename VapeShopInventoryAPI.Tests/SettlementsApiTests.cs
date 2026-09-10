@@ -96,6 +96,25 @@ public class SettlementsApiTests
     }
 
     [Test]
+    public async Task CreateSettlement_SaleNotClosed_ReturnsBadRequest()
+    {
+        var (_, testSale) = await CreateTestSaleAsync();
+
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = testSale.Id,
+            ExpenseId = null,
+            Amount = 99.75m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test (invalid) sale not closed",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
+    }
+
+    [Test]
     public async Task CreateSettlement_ValidExpenseSettlement_ReturnsCreated()
     {
         var (_, testExpense) = await CreateTestExpenseAsync();
