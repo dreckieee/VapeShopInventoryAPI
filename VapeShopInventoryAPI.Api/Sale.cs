@@ -13,6 +13,7 @@ public class Sale
     public int TransactionCount {get; private set;} = 0;
     public int ReductionFrequency {get; private set;} = 0;
     public int TotalQuantityReduction {get; private set;} = 0;
+    public decimal TotalAmount => _saleItems.Sum(si => si.Quantity * si.UnitPriceAtSale); 
     public Sale (DateTime saleDate, PaymentMethod paymentMethod, string? paymentNote)
     {
         GuardSale(saleDate, paymentMethod);
