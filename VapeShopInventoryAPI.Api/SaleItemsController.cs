@@ -49,7 +49,8 @@ public class SaleItemsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
 
-        var saleResponse = SaleResponse.FromSale(sale);
+        var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
+        var saleResponse = SaleResponse.FromSale(sale, outstandingBalance, alreadySettled);
         return Ok(saleResponse);       
     }
 
@@ -83,7 +84,8 @@ public class SaleItemsController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
-        var saleResponse = SaleResponse.FromSale(sale);
+        var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
+        var saleResponse = SaleResponse.FromSale(sale, outstandingBalance, alreadySettled);
         return Ok(saleResponse);       
     }
 

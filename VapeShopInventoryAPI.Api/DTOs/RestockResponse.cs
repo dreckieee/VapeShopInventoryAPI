@@ -5,9 +5,9 @@ public record RestockResponse
     public required List<DeliveryItemResponse> DeliveryItems { get; init; }
     public required List<ProductResponse> UpdatedProducts { get; init; }
 
-    public static RestockResponse FromRestock(Expense expense, List<DeliveryItem> deliveryItems, List<Product> products) => new()
+    public static RestockResponse FromRestock(Expense expense, decimal outstandingBalance, decimal amountSettled, List<DeliveryItem> deliveryItems, List<Product> products) => new()
     {
-        Expense = ExpenseResponse.FromExpense(expense),
+        Expense = ExpenseResponse.FromExpense(expense, outstandingBalance, amountSettled),
         DeliveryItems = deliveryItems.Select(di =>
         {
             var product = products.Find(p => p.Id == di.ProductId);

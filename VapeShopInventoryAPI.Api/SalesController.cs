@@ -34,10 +34,15 @@ public class SalesController : ControllerBase
         }
         
         var sales = await query.ToListAsync();
-        var response = sales.Select(sale => SaleResponse.FromSale(sale)).ToList();
-        
+        var response = new List<SaleResponse>();
+        foreach(Sale sale in sales)
+        {
+            var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
+            response.Add(SaleResponse.FromSale(sale, outstandingBalance, alreadySettled));
+        }
         return Ok(response);
     }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<SaleResponse>> GetSale(int id)
     {
@@ -46,8 +51,8 @@ public class SalesController : ControllerBase
         {
             return NotFound();
         }
-
-        var saleResponse = SaleResponse.FromSale(sale);
+        var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
+        var saleResponse = SaleResponse.FromSale(sale, outstandingBalance, alreadySettled);
         return Ok(saleResponse);
     }
 
@@ -60,7 +65,8 @@ public class SalesController : ControllerBase
             _context.Sales.Add(sale);
             await _context.SaveChangesAsync();
 
-            var saleResponse = SaleResponse.FromSale(sale);
+            var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
+            var saleResponse = SaleResponse.FromSale(sale, outstandingBalance, alreadySettled);
             return CreatedAtAction(nameof(GetSale), new { id = sale.Id }, saleResponse);
         }
         catch(ArgumentException ex)
@@ -82,7 +88,8 @@ public class SalesController : ControllerBase
             sale.CloseSale();
             await _context.SaveChangesAsync();
 
-            var saleResponse = SaleResponse.FromSale(sale);
+            var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
+            var saleResponse = SaleResponse.FromSale(sale, outstandingBalance, alreadySettled);
             return Ok(saleResponse);
         }
         catch (InvalidOperationException ex)
@@ -128,7 +135,8 @@ public class SalesController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
 
-        var saleResponse = SaleResponse.FromSale(sale);
+        var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
+        var saleResponse = SaleResponse.FromSale(sale, outstandingBalance, alreadySettled);
         return Ok(saleResponse);  
     }
 

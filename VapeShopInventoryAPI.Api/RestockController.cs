@@ -65,7 +65,8 @@ public class RestockController : ControllerBase
             await _context.SaveChangesAsync();
 
             var distinctProducts = products.DistinctBy(p => p.Id).ToList();
-            var response = RestockResponse.FromRestock(expense, deliveryItems, distinctProducts);
+            var (outstandingBalance, amountSettled) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
+            var response = RestockResponse.FromRestock(expense, outstandingBalance, amountSettled, deliveryItems, distinctProducts);
             return Ok(response);
         }
         catch (ArgumentNullException ex)

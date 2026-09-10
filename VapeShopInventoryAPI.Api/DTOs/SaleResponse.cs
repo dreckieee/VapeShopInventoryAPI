@@ -12,7 +12,10 @@ public record SaleResponse
     public required int ReductionFrequency {get; init;}
     public required int TotalQuantityReduction {get; init;}
     public required List<SaleItemResponse> SaleItems {get; init;} = new();
-    public static SaleResponse FromSale(Sale sale) 
+    public required decimal TotalAmount {get; init;}
+    public required decimal OutstandingBalance {get; init;}
+    public required decimal AmountSettled {get; init;}
+    public static SaleResponse FromSale(Sale sale, decimal outstandingBalance, decimal amountSettled) 
     {
         var saleItems = sale.SaleItems.Select(item => SaleItemResponse.FromSaleItem(item)).ToList();
       
@@ -25,8 +28,11 @@ public record SaleResponse
         TransactionCount = sale.TransactionCount,
         ReductionFrequency = sale.ReductionFrequency,
         TotalQuantityReduction = sale.TotalQuantityReduction,
-        SaleItems = saleItems};
-
+        SaleItems = saleItems,
+        TotalAmount = sale.TotalAmount,
+        OutstandingBalance = outstandingBalance,
+        AmountSettled = amountSettled
+        };
     }
     
 }

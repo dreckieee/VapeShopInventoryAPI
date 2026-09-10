@@ -30,8 +30,12 @@ public class ExpensesController : ControllerBase
         }
 
         var expenses = await query.ToListAsync();
-        var response = expenses.Select(expense => ExpenseResponse.FromExpense(expense)).ToList();
-
+        var response = new List<ExpenseResponse>();
+        foreach(Expense expense in expenses)
+        {
+            var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
+            response.Add(ExpenseResponse.FromExpense(expense, outstandingBalance, alreadySettled));
+        }
         return Ok(response);
     }
 
@@ -43,7 +47,8 @@ public class ExpensesController : ControllerBase
         {
             return NotFound();
         }
-        var response = ExpenseResponse.FromExpense(expense);
+        var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
+        var response = ExpenseResponse.FromExpense(expense, outstandingBalance, alreadySettled);
         return Ok(response);
     }
 
@@ -58,7 +63,8 @@ public class ExpensesController : ControllerBase
             _context.Expenses.Add(expense);
             await _context.SaveChangesAsync();
 
-            var response = ExpenseResponse.FromExpense(expense);
+            var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
+            var response = ExpenseResponse.FromExpense(expense, outstandingBalance, alreadySettled);
             return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, response);
         }
         catch(ArgumentException ex)
@@ -88,7 +94,8 @@ public class ExpensesController : ControllerBase
             expense.Edit(request.Date, request.Description, request.Amount, request.Category,request.PaymentMethod, request.PaymentNote); 
             await _context.SaveChangesAsync();
             
-            var response = ExpenseResponse.FromExpense(expense);
+            var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
+            var response = ExpenseResponse.FromExpense(expense, outstandingBalance, alreadySettled);
             return Ok(response);
         }
         catch(ArgumentException ex)

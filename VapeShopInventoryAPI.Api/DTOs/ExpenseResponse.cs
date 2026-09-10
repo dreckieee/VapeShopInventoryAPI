@@ -9,7 +9,9 @@ public record ExpenseResponse
     public required string Category {get; init;}
     public required DateTime Date {get; init;}
     public required DateTime CreatedAt {get; init;}
-    public static ExpenseResponse FromExpense(Expense expense) => new()
+    public required decimal OutstandingBalance {get; init;}
+    public required decimal AmountSettled {get; init;}
+    public static ExpenseResponse FromExpense(Expense expense, decimal outstandingBalance, decimal amountSettled) => new()
     {
         Id = expense.Id, 
         PaymentMethod = expense.PaymentMethod,
@@ -18,6 +20,8 @@ public record ExpenseResponse
         Amount = expense.Amount,
         Category = expense.Category,
         Date = expense.Date,
-        CreatedAt = expense.CreatedAt
+        CreatedAt = expense.CreatedAt,
+        OutstandingBalance = outstandingBalance,
+        AmountSettled = amountSettled
     };
 }
