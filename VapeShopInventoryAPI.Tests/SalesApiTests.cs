@@ -119,6 +119,37 @@ public class SalesApiTests
     }
 
     [Test]
+    public async Task CreateSale_FullSettlement_ReturnsCorrectComputedFields()
+    {
+        var (testProduct, testSale, testSaleItem) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Receivable);
+        
+        var responseCloseSale = await _client.PostAsync($"/api/Sales/{testSale.Id}/close", null);
+        Assert.That(responseCloseSale.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCloseSale.StatusCode}.");
+
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = testSale.Id,
+            ExpenseId = null,
+            Amount = testSaleItem.Quantity * testSaleItem.UnitPriceAtSale,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create sale test (valid) full settlement for an existing sale",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var responseFullSettlement = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(responseFullSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responseFullSettlement.StatusCode} instead.");
+
+        var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+        
+        var sale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
+        Assert.That(sale, Is.Not.Null);
+        Assert.That(sale.TotalAmount, Is.EqualTo(testSaleItem.Quantity * testSaleItem.UnitPriceAtSale));
+        Assert.That(sale.OutstandingBalance, Is.EqualTo(0));
+        Assert.That(sale.AmountSettled, Is.EqualTo(payload.Amount));
+    }
+
+    [Test]
     public async Task GetSale_ExistingId_ReturnsOk()
     {
         var (_, testSale) = await CreateTestSaleAsync();
