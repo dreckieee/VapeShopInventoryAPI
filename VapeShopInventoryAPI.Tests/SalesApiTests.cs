@@ -229,6 +229,35 @@ public class SalesApiTests
         Assert.That(saleItem.UnitPriceAtSale, Is.EqualTo(payload.UnitPriceAtSale));
     }
 
+    [Test]
+    public async Task AddSaleItem_ClosedSale_ReturnsBadRequest()
+    {   
+        var (testProduct1, testSale, testSaleItem) = await CreateTestSaleWithItemAsync();
+        var (_, testProduct2) = await CreateTestProductAsync();
+        
+        var responseCloseSale = await _client.PostAsync($"/api/Sales/{testSale.Id}/close", null);
+        Assert.That(responseCloseSale.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCloseSale.StatusCode}.");
+
+        var payload = new AddSaleItemRequest
+        {
+            ProductId = testProduct2.Id,
+            Quantity = 1,
+            UnitPriceAtSale = testProduct2.Price
+        };
+
+        var response = await _client.PostAsJsonAsync($"api/SaleItems/{testSale.Id}/items", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.StatusCode} instead.");
+
+        var responseGetSale = await _client.GetAsync($"api/Sales/{testSale.Id}");
+        Assert.That(responseGetSale.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetSale.StatusCode}.");
+
+        var saleAfter = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
+        Assert.That(saleAfter, Is.Not.Null);
+        Assert.That(saleAfter.SaleItems.Count, Is.EqualTo(testSale.SaleItems.Count));
+
+        Assert.That(saleAfter.SaleItems.Find(si => si.ProductId == testProduct2.Id), Is.Null);
+    }
+
 
     [Test]
     public async Task ReduceSaleItemQuantity_ValidRequest_ReturnsOk()
