@@ -60,47 +60,6 @@ public class SettlementsApiTests
     }
 
     [Test]
-    public async Task UpdateSaleWithSettlement_PaymentMethodChange_ReturnsConflict()
-    {
-        var (_, testSale, _) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Receivable);
-
-        var payloadCreateSettlement = new CreateSettlementRequest
-        {
-            SaleId = testSale.Id,
-            ExpenseId = null,
-            Amount = 99.75m,
-            PaymentMethod = PaymentMethod.Cash,
-            PaymentNote = "Test payment note for create settlement test (valid) for updatingsale payment method (invalid)",
-            Date = new DateTime(2026, 01, 01)
-        };
-
-        var responseCreateSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadCreateSettlement);
-        Assert.That(responseCreateSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responseCreateSettlement.StatusCode} instead.");
-
-        var settlement = await responseCreateSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
-        Assert.That(settlement, Is.Not.Null);
-        _createdSettlementIds.Add(settlement.Id);
-
-        var payload = new EditSaleRequest
-        {
-            SaleDate = testSale.SaleDate,
-            PaymentMethod = PaymentMethod.Cash,
-            PaymentNote = testSale.PaymentNote
-        };
-
-        var response = await _client.PutAsJsonAsync($"api/Sales/{testSale.Id}", payload);
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict), $"Expected 409 Conflict() status, but received {response.StatusCode} instead.");
-
-        var responseGetSale = await _client.GetAsync($"api/Sales/{testSale.Id}");
-        var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
-        Assert.That(sale, Is.Not.Null);
-        Assert.That(sale.Id, Is.EqualTo(testSale.Id));
-        Assert.That(sale.SaleDate, Is.EqualTo(testSale.SaleDate));
-        Assert.That(sale.PaymentMethod, Is.EqualTo(testSale.PaymentMethod));
-        Assert.That(sale.PaymentNote, Is.EqualTo(testSale.PaymentNote));
-    }
-
-    [Test]
     public async Task CreateSettlement_NonExistentSaleId_ReturnsBadRequest()
     {
         var payload = new CreateSettlementRequest
@@ -332,6 +291,94 @@ public class SettlementsApiTests
 
         var response = await _client.PostAsJsonAsync("api/Settlements", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
+    }
+
+    [Test]
+    public async Task UpdateSaleWithSettlement_PaymentMethodChange_ReturnsConflict()
+    {
+        var (_, testSale, _) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Receivable);
+
+        var payloadCreateSettlement = new CreateSettlementRequest
+        {
+            SaleId = testSale.Id,
+            ExpenseId = null,
+            Amount = 99.75m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test (valid) for updating sale payment method (invalid)",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var responseCreateSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadCreateSettlement);
+        Assert.That(responseCreateSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responseCreateSettlement.StatusCode} instead.");
+
+        var settlement = await responseCreateSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
+
+        var payload = new EditSaleRequest
+        {
+            SaleDate = new DateTime(2026, 02, 02),
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "test payment note for updating sale (invalid) with settlement payment method change",
+        };
+
+        var response = await _client.PutAsJsonAsync($"api/Sales/{testSale.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict), $"Expected 409 Conflict() status, but received {response.StatusCode} instead.");
+
+        var responseGetSale = await _client.GetAsync($"api/Sales/{testSale.Id}");
+        var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
+        Assert.That(sale, Is.Not.Null);
+        Assert.That(sale.Id, Is.EqualTo(testSale.Id));
+        Assert.That(sale.SaleDate, Is.EqualTo(testSale.SaleDate));
+        Assert.That(sale.PaymentMethod, Is.EqualTo(testSale.PaymentMethod));
+        Assert.That(sale.PaymentNote, Is.EqualTo(testSale.PaymentNote));
+    }
+
+    [Test]
+    public async Task UpdateExpenseWithSettlement_PaymentMethodChange_ReturnsConflict()
+    {
+        var (_, testExpense) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable);
+
+        var payloadCreateSettlement = new CreateSettlementRequest
+        {
+            SaleId = null,
+            ExpenseId = testExpense.Id,
+            Amount = 99.75m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test (valid) for updating expense payment method (invalid)",
+            Date = new DateTime(2026, 03, 03)
+        };
+
+        var responseCreateSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadCreateSettlement);
+        Assert.That(responseCreateSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responseCreateSettlement.StatusCode} instead.");
+
+        var settlement = await responseCreateSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
+
+        var payload = new UpdateExpenseRequest
+        {
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "test payment note for updating expense (invalid) with settlement payment method change",
+            Description = "test description for updating expense (invalid) with settlement payment method change",
+            Amount = testExpense.Amount,
+            Category = "test category",
+            Date = new DateTime(2026, 02, 02)
+        };
+        
+        var response = await _client.PutAsJsonAsync($"api/Expenses/{testExpense.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict), $"Expected 409 Conflict() status, but received {response.StatusCode} instead.");
+
+        var responseGetExpense = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
+        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
+        Assert.That(expense, Is.Not.Null);
+        Assert.That(expense.Id, Is.EqualTo(testExpense.Id));
+        Assert.That(expense.PaymentMethod, Is.EqualTo(testExpense.PaymentMethod));
+        Assert.That(expense.PaymentNote, Is.EqualTo(testExpense.PaymentNote));
+        Assert.That(expense.Description, Is.EqualTo(testExpense.Description));
+        Assert.That(expense.Amount, Is.EqualTo(testExpense.Amount));
+        Assert.That(expense.Category, Is.EqualTo(testExpense.Category));
+        Assert.That(expense.Date, Is.EqualTo(testExpense.Date));
     }
 
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
