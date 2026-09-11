@@ -92,15 +92,25 @@ public class ExpensesController : ControllerBase
             }
 
             var hasSettlementReferences = await _context.Settlements.AnyAsync(se => se.ExpenseId == expense.Id);
+            decimal alreadySettled = 0;
+            decimal outstandingBalance = 0;
+            if (hasSettlementReferences)
+            {
+                (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
+            }
             if (hasSettlementReferences && request.PaymentMethod != expense.PaymentMethod)
             {
                 return Conflict(new {message = "Cannot edit Payment Method on an expense linked to existing settlement record/s."});
+            }
+            if (hasSettlementReferences && request.Amount < alreadySettled)
+            {
+                return Conflict(new {message = "Cannot reduce Amount below the total already settled on this expense."});
             }
 
             expense.Edit(request.Date, request.Description, request.Amount, request.Category,request.PaymentMethod, request.PaymentNote); 
             await _context.SaveChangesAsync();
             
-            var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
+            (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
             var response = ExpenseResponse.FromExpense(expense, outstandingBalance, alreadySettled);
             return Ok(response);
         }
@@ -123,6 +133,11 @@ public class ExpensesController : ControllerBase
         if (hasDeliveryReferences)
         {
             return Conflict(new {message = "Cannot delete this expense due to existing delivery item records."});
+        }
+        var hasSettlementReferences = await _context.Settlements.AnyAsync(se => se.ExpenseId == expense.Id);
+        if (hasSettlementReferences)
+        {
+            return Conflict(new {message = "Cannot delete this expense due to existing settlement records."});
         }
 
         _context.Expenses.Remove(expense);
