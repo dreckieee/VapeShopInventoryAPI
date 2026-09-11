@@ -102,6 +102,22 @@ public class ExpensesApiTests
         Assert.That(expensesAfter, Is.Not.Null);
         Assert.That(expensesAfter.Any(e => e.Category == payload.Category), Is.False);
     }
+
+    [Test]
+    public async Task CreateExpense_NoSettlement_ReturnsCorrectComputedFields()
+    {
+        var (_, testExpense) = await CreateTestExpense(
+            paymentMethod: PaymentMethod.Payable,
+            paymentNote: "Testing Payable Payment Method",
+            description: "Test description for create expense test with no settlement + computed fields",
+            amount: 99.75m,
+            category: "Test Category for Expense Creation",
+            date: new DateTime(2026, 01, 01));
+
+        Assert.That(testExpense.PaymentMethod, Is.EqualTo(PaymentMethod.Payable));
+        Assert.That(testExpense.OutstandingBalance, Is.EqualTo(testExpense.Amount));
+        Assert.That(testExpense.AmountSettled, Is.EqualTo(0));
+    }
     
     [Test]
     public async Task GetExpense_WithExistingId_ReturnsOk()
