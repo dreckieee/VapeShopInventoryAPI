@@ -60,6 +60,47 @@ public class SettlementsApiTests
     }
 
     [Test]
+    public async Task UpdateSaleWithSettlement_PaymentMethodChange_ReturnsConflict()
+    {
+        var (_, testSale, _) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Receivable);
+
+        var payloadCreateSettlement = new CreateSettlementRequest
+        {
+            SaleId = testSale.Id,
+            ExpenseId = null,
+            Amount = 99.75m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test (valid) for updatingsale payment method (invalid)",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var responseCreateSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadCreateSettlement);
+        Assert.That(responseCreateSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responseCreateSettlement.StatusCode} instead.");
+
+        var settlement = await responseCreateSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
+
+        var payload = new EditSaleRequest
+        {
+            SaleDate = testSale.SaleDate,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = testSale.PaymentNote
+        };
+
+        var response = await _client.PutAsJsonAsync($"api/Sales/{testSale.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict), $"Expected 409 Conflict() status, but received {response.StatusCode} instead.");
+
+        var responseGetSale = await _client.GetAsync($"api/Sales/{testSale.Id}");
+        var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
+        Assert.That(sale, Is.Not.Null);
+        Assert.That(sale.Id, Is.EqualTo(testSale.Id));
+        Assert.That(sale.SaleDate, Is.EqualTo(testSale.SaleDate));
+        Assert.That(sale.PaymentMethod, Is.EqualTo(testSale.PaymentMethod));
+        Assert.That(sale.PaymentNote, Is.EqualTo(testSale.PaymentNote));
+    }
+
+    [Test]
     public async Task CreateSettlement_NonExistentSaleId_ReturnsBadRequest()
     {
         var payload = new CreateSettlementRequest
