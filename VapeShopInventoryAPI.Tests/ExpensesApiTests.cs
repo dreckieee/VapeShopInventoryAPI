@@ -125,7 +125,7 @@ public class ExpensesApiTests
         var (_, testExpense) = await CreateTestExpense(
             paymentMethod: PaymentMethod.Payable,
             paymentNote: "Testing Payable Payment Method",
-            description: "Test description for create expense test with no settlement + computed fields",
+            description: "Test description for create expense test with partial settlement + computed fields",
             amount: 99.75m,
             category: "Test Category for Expense Creation",
             date: new DateTime(2026, 01, 01));
@@ -150,6 +150,40 @@ public class ExpensesApiTests
         Assert.That(expenseAfter, Is.Not.Null);
         Assert.That(expenseAfter.PaymentMethod, Is.EqualTo(PaymentMethod.Payable));
         Assert.That(expenseAfter.OutstandingBalance, Is.EqualTo(testExpense.Amount - payload.Amount));
+        Assert.That(expenseAfter.AmountSettled, Is.EqualTo(payload.Amount));
+    }
+
+    [Test]
+    public async Task CreateExpense_FullSettlement_ReturnsCorrectComputedFields()
+    {
+        var (_, testExpense) = await CreateTestExpense(
+            paymentMethod: PaymentMethod.Payable,
+            paymentNote: "Testing Payable Payment Method",
+            description: "Test description for create expense test with full settlement + computed fields",
+            amount: 99.75m,
+            category: "Test Category for Expense Creation",
+            date: new DateTime(2026, 01, 01));
+
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = null,
+            ExpenseId = testExpense.Id,
+            Amount = testExpense.Amount,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create expense test (valid) full settlement for an existing expense",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var responseFullSettlement = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(responseFullSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responseFullSettlement.StatusCode} instead.");
+
+        var responseGetExpense = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
+        Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
+
+        var expenseAfter = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
+        Assert.That(expenseAfter, Is.Not.Null);
+        Assert.That(expenseAfter.PaymentMethod, Is.EqualTo(PaymentMethod.Payable));
+        Assert.That(expenseAfter.OutstandingBalance, Is.EqualTo(0));
         Assert.That(expenseAfter.AmountSettled, Is.EqualTo(payload.Amount));
     }
     
