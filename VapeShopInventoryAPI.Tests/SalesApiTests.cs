@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using NUnit.Framework.Internal;
 using VapeShopInventoryAPI.Api;
 using VapeShopInventoryAPI.Api.DTOs;
 
@@ -84,6 +85,37 @@ public class SalesApiTests
         Assert.That(sale.TotalAmount, Is.EqualTo(testSaleItem.Quantity * testSaleItem.UnitPriceAtSale));
         Assert.That(sale.OutstandingBalance, Is.EqualTo(testSaleItem.Quantity * testSaleItem.UnitPriceAtSale));
         Assert.That(sale.AmountSettled, Is.EqualTo(0));
+    }
+
+    [Test]
+    public async Task CreateSale_PartialSettlement_ReturnsCorrectComputedFields()
+    {
+        var (testProduct, testSale, testSaleItem) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Receivable);
+        
+        var responseCloseSale = await _client.PostAsync($"/api/Sales/{testSale.Id}/close", null);
+        Assert.That(responseCloseSale.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCloseSale.StatusCode}.");
+
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = testSale.Id,
+            ExpenseId = null,
+            Amount = (testSaleItem.Quantity * testSaleItem.UnitPriceAtSale) / 2,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create sale test (valid) partial settlement for an existing sale",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var responsePartialSettlement = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(responsePartialSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responsePartialSettlement.StatusCode} instead.");
+
+        var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+        
+        var sale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
+        Assert.That(sale, Is.Not.Null);
+        Assert.That(sale.TotalAmount, Is.EqualTo(testSaleItem.Quantity * testSaleItem.UnitPriceAtSale));
+        Assert.That(sale.OutstandingBalance, Is.EqualTo(sale.TotalAmount - payload.Amount));
+        Assert.That(sale.AmountSettled, Is.EqualTo(payload.Amount));
     }
 
     [Test]
