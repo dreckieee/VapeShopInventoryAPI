@@ -60,6 +60,37 @@ public class SettlementsApiTests
     }
 
     [Test]
+    public async Task CreateSettlement_DateEqualsSaleDate_ReturnsCreated()
+    {
+        var (_, testSale, _) = await CreateTestSaleWithItemAsync(saleDate: new DateTime(2026, 01, 01));
+
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = testSale.Id,
+            ExpenseId = null,
+            Amount = 99.75m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test (valid) settlement date is equal to sale date",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {response.StatusCode} instead.");
+
+        var settlement = await response.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
+
+        Assert.That(settlement.SaleId, Is.EqualTo(payload.SaleId));
+        Assert.That(settlement.ExpenseId, Is.EqualTo(payload.ExpenseId));
+        Assert.That(settlement.Amount, Is.EqualTo(payload.Amount));
+        Assert.That(settlement.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
+        Assert.That(settlement.PaymentNote, Is.EqualTo(payload.PaymentNote));
+        Assert.That(settlement.Date, Is.EqualTo(payload.Date));
+        Assert.That(settlement.Date, Is.EqualTo(testSale.SaleDate));
+    }
+
+    [Test]
     public async Task CreateSettlement_NonExistentSaleId_ReturnsBadRequest()
     {
         var payload = new CreateSettlementRequest
