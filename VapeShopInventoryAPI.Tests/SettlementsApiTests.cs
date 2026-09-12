@@ -200,6 +200,25 @@ public class SettlementsApiTests
     }
 
     [Test]
+    public async Task CreateSettlement_DateBeforeExpenseDate_ReturnsBadRequest()
+    {
+        var (_, testExpense) = await CreateTestExpenseAsync(date: new DateTime(2026, 01, 01));
+
+        var payload = new CreateSettlementRequest
+        {
+            SaleId = null,
+            ExpenseId = testExpense.Id,
+            Amount = 99.75m,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create settlement test (invalid) settlement date earlier than expense date",
+            Date = new DateTime(2025, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Settlements", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");  
+    }
+
+    [Test]
     public async Task CreateSettlement_NeitherFkSet_ReturnsBadRequest()
     {
         var payload = new CreateSettlementRequest
