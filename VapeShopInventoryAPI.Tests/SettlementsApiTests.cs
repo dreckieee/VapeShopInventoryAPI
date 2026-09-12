@@ -450,6 +450,52 @@ public class SettlementsApiTests
         Assert.That(expense.Date, Is.EqualTo(testExpense.Date));
     }
 
+    [Test]
+    public async Task UpdateExpense_DateAfterEarliestSettlement_ReturnsConflict()
+    {
+        var (_, testExpense) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable, date: new DateTime(2026, 01, 01));
+
+        var payloadSettlement = new CreateSettlementRequest
+        {
+            SaleId = null,
+            ExpenseId = testExpense.Id,
+            Amount = testExpense.Amount / 2,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create expense test (valid) with existing settlement update expense date earlier than settlement date",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var responsePartialSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadSettlement);
+        Assert.That(responsePartialSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responsePartialSettlement.StatusCode} instead.");
+        
+        var payload = new UpdateExpenseRequest
+        {
+            PaymentMethod = testExpense.PaymentMethod,
+            PaymentNote = "test payment note for update expense (invalid) date later than settlement date",
+            Description = "test description for update expense (invalid) date later than settlement date",
+            Amount = testExpense.Amount,
+            Category = "test category",
+            Date = new DateTime(2027, 01, 01)
+        };
+
+        var response = await _client.PutAsJsonAsync($"api/Expenses/{testExpense.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict), $"Expected 409 Conflict() status, but received {response.StatusCode} instead.");
+
+        var responseGetExpense = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
+        Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
+
+        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
+        Assert.That(expense, Is.Not.Null);
+        Assert.That(expense.Id, Is.EqualTo(testExpense.Id));
+        Assert.That(expense.PaymentMethod, Is.EqualTo(testExpense.PaymentMethod));
+        Assert.That(expense.PaymentNote, Is.EqualTo(testExpense.PaymentNote));
+        Assert.That(expense.Description, Is.EqualTo(testExpense.Description));
+        Assert.That(expense.Amount, Is.EqualTo(testExpense.Amount));
+        Assert.That(expense.Category, Is.EqualTo(testExpense.Category));
+        Assert.That(expense.Date, Is.EqualTo(testExpense.Date));
+        Assert.That(expense.CreatedAt, Is.EqualTo(testExpense.CreatedAt));
+    }
+
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
         string name = "Test Product", 
         string? sku = null, 

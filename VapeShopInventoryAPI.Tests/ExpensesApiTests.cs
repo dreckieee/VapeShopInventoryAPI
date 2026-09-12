@@ -106,7 +106,7 @@ public class ExpensesApiTests
     [Test]
     public async Task CreateExpense_NoSettlement_ReturnsCorrectComputedFields()
     {
-        var (_, testExpense) = await CreateTestExpense(
+        var (_, testExpense) = await CreateTestExpenseAsync(
             paymentMethod: PaymentMethod.Payable,
             paymentNote: "Testing Payable Payment Method",
             description: "Test description for create expense test with no settlement + computed fields",
@@ -122,7 +122,7 @@ public class ExpensesApiTests
     [Test]
     public async Task CreateExpense_PartialSettlement_ReturnsCorrectComputedFields()
     {
-        var (_, testExpense) = await CreateTestExpense(
+        var (_, testExpense) = await CreateTestExpenseAsync(
             paymentMethod: PaymentMethod.Payable,
             paymentNote: "Testing Payable Payment Method",
             description: "Test description for create expense test with partial settlement + computed fields",
@@ -156,7 +156,7 @@ public class ExpensesApiTests
     [Test]
     public async Task CreateExpense_FullSettlement_ReturnsCorrectComputedFields()
     {
-        var (_, testExpense) = await CreateTestExpense(
+        var (_, testExpense) = await CreateTestExpenseAsync(
             paymentMethod: PaymentMethod.Payable,
             paymentNote: "Testing Payable Payment Method",
             description: "Test description for create expense test with full settlement + computed fields",
@@ -190,7 +190,7 @@ public class ExpensesApiTests
     [Test]
     public async Task GetExpense_WithExistingId_ReturnsOk()
     {
-        var (_, testExpense) = await CreateTestExpense();
+        var (_, testExpense) = await CreateTestExpenseAsync();
 
         var response = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
@@ -217,10 +217,10 @@ public class ExpensesApiTests
     [Test]
     public async Task GetExpenses_FilterByYear_ReturnsOnlyMatchingYear()
     {
-        var (_, testExpense1) = await CreateTestExpense(paymentMethod: PaymentMethod.DigitalPayment, paymentNote: "payment note for test expense 1", description: "description for test expense 1", amount: 99.99m, category: "Test Expense 1 Category", date: new DateTime(2026, 01, 01));
-        var (_, testExpense2) = await CreateTestExpense(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 2", description: "description for test expense 2", amount: 199.99m, category: "Test Expense 2 Category", date: new DateTime(2025, 02, 02));
-        var (_, testExpense3) = await CreateTestExpense(paymentMethod: PaymentMethod.Payable, paymentNote: "payment note for test expense 3", description: "description for test expense 3", amount: 299.99m, category: "Test Expense 3 Category", date: new DateTime(2026, 03, 03));
-        var (_, testExpense4) = await CreateTestExpense(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 4", description: "description for test expense 4", amount: 399.99m, category: "Test Expense 4 Category", date: new DateTime(2024, 04, 04));
+        var (_, testExpense1) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.DigitalPayment, paymentNote: "payment note for test expense 1", description: "description for test expense 1", amount: 99.99m, category: "Test Expense 1 Category", date: new DateTime(2026, 01, 01));
+        var (_, testExpense2) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 2", description: "description for test expense 2", amount: 199.99m, category: "Test Expense 2 Category", date: new DateTime(2025, 02, 02));
+        var (_, testExpense3) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable, paymentNote: "payment note for test expense 3", description: "description for test expense 3", amount: 299.99m, category: "Test Expense 3 Category", date: new DateTime(2026, 03, 03));
+        var (_, testExpense4) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 4", description: "description for test expense 4", amount: 399.99m, category: "Test Expense 4 Category", date: new DateTime(2024, 04, 04));
 
         int year = 2026;
         var response = await _client.GetAsync($"api/Expenses?year={year}");
@@ -238,10 +238,10 @@ public class ExpensesApiTests
     [Test]
     public async Task GetExpenses_FilterByMonth_ReturnsOnlyMatchingMonth()
     {
-        var (_, testExpense1) = await CreateTestExpense(paymentMethod: PaymentMethod.DigitalPayment, paymentNote: "payment note for test expense 1", description: "description for test expense 1", amount: 99.99m, category: "Test Expense 1 Category", date: new DateTime(2026, 01, 01));
-        var (_, testExpense2) = await CreateTestExpense(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 2", description: "description for test expense 2", amount: 199.99m, category: "Test Expense 2 Category", date: new DateTime(2025, 02, 02));
-        var (_, testExpense3) = await CreateTestExpense(paymentMethod: PaymentMethod.Payable, paymentNote: "payment note for test expense 3", description: "description for test expense 3", amount: 299.99m, category: "Test Expense 3 Category", date: new DateTime(2024, 03, 03));
-        var (_, testExpense4) = await CreateTestExpense(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 4", description: "description for test expense 4", amount: 399.99m, category: "Test Expense 4 Category", date: new DateTime(2023, 01, 04));
+        var (_, testExpense1) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.DigitalPayment, paymentNote: "payment note for test expense 1", description: "description for test expense 1", amount: 99.99m, category: "Test Expense 1 Category", date: new DateTime(2026, 01, 01));
+        var (_, testExpense2) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 2", description: "description for test expense 2", amount: 199.99m, category: "Test Expense 2 Category", date: new DateTime(2025, 02, 02));
+        var (_, testExpense3) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable, paymentNote: "payment note for test expense 3", description: "description for test expense 3", amount: 299.99m, category: "Test Expense 3 Category", date: new DateTime(2024, 03, 03));
+        var (_, testExpense4) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 4", description: "description for test expense 4", amount: 399.99m, category: "Test Expense 4 Category", date: new DateTime(2023, 01, 04));
 
         int month = 1;
         var response = await _client.GetAsync($"api/Expenses?month={month}");
@@ -259,10 +259,10 @@ public class ExpensesApiTests
     [Test]
     public async Task GetExpenses_FilterByYearAndMonth_ReturnsComposedResult()
     {
-        var (_, testExpense1) = await CreateTestExpense(paymentMethod: PaymentMethod.DigitalPayment, paymentNote: "payment note for test expense 1", description: "description for test expense 1", amount: 99.99m, category: "Test Expense 1 Category", date: new DateTime(2026, 06, 01));
-        var (_, testExpense2) = await CreateTestExpense(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 2", description: "description for test expense 2", amount: 199.99m, category: "Test Expense 2 Category", date: new DateTime(2026, 09, 02));
-        var (_, testExpense3) = await CreateTestExpense(paymentMethod: PaymentMethod.Payable, paymentNote: "payment note for test expense 3", description: "description for test expense 3", amount: 299.99m, category: "Test Expense 3 Category", date: new DateTime(2023, 06, 03));
-        var (_, testExpense4) = await CreateTestExpense(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 4", description: "description for test expense 4", amount: 399.99m, category: "Test Expense 4 Category", date: new DateTime(2023, 09, 04));
+        var (_, testExpense1) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.DigitalPayment, paymentNote: "payment note for test expense 1", description: "description for test expense 1", amount: 99.99m, category: "Test Expense 1 Category", date: new DateTime(2026, 06, 01));
+        var (_, testExpense2) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 2", description: "description for test expense 2", amount: 199.99m, category: "Test Expense 2 Category", date: new DateTime(2026, 09, 02));
+        var (_, testExpense3) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable, paymentNote: "payment note for test expense 3", description: "description for test expense 3", amount: 299.99m, category: "Test Expense 3 Category", date: new DateTime(2023, 06, 03));
+        var (_, testExpense4) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, paymentNote: "payment note for test expense 4", description: "description for test expense 4", amount: 399.99m, category: "Test Expense 4 Category", date: new DateTime(2023, 09, 04));
 
         int year = 2026;
         int month = 6;
@@ -295,7 +295,7 @@ public class ExpensesApiTests
     [Test]
     public async Task UpdateExpense_WithValidData_ReturnsOk()
     {
-        var (_, testExpense) = await CreateTestExpense();
+        var (_, testExpense) = await CreateTestExpenseAsync();
 
         var payload = new UpdateExpenseRequest
         {
@@ -324,7 +324,7 @@ public class ExpensesApiTests
     [Test]
     public async Task UpdateExpense_WithInvalidData_ReturnsBadRequest()
     {
-        var (_, testExpense) = await CreateTestExpense();
+        var (_, testExpense) = await CreateTestExpenseAsync();
 
         var payload = new UpdateExpenseRequest
         {
@@ -357,7 +357,7 @@ public class ExpensesApiTests
     [Test]
     public async Task UpdateExpense_WithInvalidEnumPaymentMethod_ReturnsBadRequest()
     {
-        var (_, testExpense) = await CreateTestExpense();
+        var (_, testExpense) = await CreateTestExpenseAsync();
 
         var payload = new UpdateExpenseRequest
         {
@@ -449,7 +449,7 @@ public class ExpensesApiTests
     [Test]
     public async Task UpdateExpense_AmountBelowSettled_ReturnsConflict()
     {
-        var (_, testExpense) = await CreateTestExpense(paymentMethod: PaymentMethod.Payable);
+        var (_, testExpense) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable);
 
         var payloadSettlement = new CreateSettlementRequest
         {
@@ -493,9 +493,55 @@ public class ExpensesApiTests
     }
 
     [Test]
+    public async Task UpdateExpense_DateAfterEarliestSettlement_ReturnsConflict()
+    {
+        var (_, testExpense) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable, date: new DateTime(2026, 01, 01));
+
+        var payloadSettlement = new CreateSettlementRequest
+        {
+            SaleId = null,
+            ExpenseId = testExpense.Id,
+            Amount = testExpense.Amount / 2,
+            PaymentMethod = PaymentMethod.Cash,
+            PaymentNote = "Test payment note for create expense test (valid) with existing settlement update expense date earlier than settlement date",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var responsePartialSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadSettlement);
+        Assert.That(responsePartialSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responsePartialSettlement.StatusCode} instead.");
+        
+        var payload = new UpdateExpenseRequest
+        {
+            PaymentMethod = testExpense.PaymentMethod,
+            PaymentNote = "test payment note for update expense (invalid) date later than settlement date",
+            Description = "test description for update expense (invalid) date later than settlement date",
+            Amount = testExpense.Amount,
+            Category = "test category",
+            Date = new DateTime(2027, 01, 01)
+        };
+
+        var response = await _client.PutAsJsonAsync($"api/Expenses/{testExpense.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict), $"Expected 409 Conflict() status, but received {response.StatusCode} instead.");
+
+        var responseGetExpense = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
+        Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
+
+        var expense = await responseGetExpense.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
+        Assert.That(expense, Is.Not.Null);
+        Assert.That(expense.Id, Is.EqualTo(testExpense.Id));
+        Assert.That(expense.PaymentMethod, Is.EqualTo(testExpense.PaymentMethod));
+        Assert.That(expense.PaymentNote, Is.EqualTo(testExpense.PaymentNote));
+        Assert.That(expense.Description, Is.EqualTo(testExpense.Description));
+        Assert.That(expense.Amount, Is.EqualTo(testExpense.Amount));
+        Assert.That(expense.Category, Is.EqualTo(testExpense.Category));
+        Assert.That(expense.Date, Is.EqualTo(testExpense.Date));
+        Assert.That(expense.CreatedAt, Is.EqualTo(testExpense.CreatedAt));
+    }
+
+    [Test]
     public async Task DeleteExpense_WithValidId_ReturnsNoContent()
     {
-        var (_, testExpense) = await CreateTestExpense();
+        var (_, testExpense) = await CreateTestExpenseAsync();
 
         var response = await _client.DeleteAsync($"api/Expenses/{testExpense.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NoContent), $"Expected 204 No Content() status, but received {response.StatusCode} instead.");
@@ -543,7 +589,7 @@ public class ExpensesApiTests
         Assert.That(expense.CreatedAt, Is.EqualTo(restockResponse.Expense.CreatedAt));
     }
 
-    public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpense(
+    public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpenseAsync(
         PaymentMethod paymentMethod = PaymentMethod.Cash, 
         string? paymentNote = null, 
         string description = "Test expense description", 
