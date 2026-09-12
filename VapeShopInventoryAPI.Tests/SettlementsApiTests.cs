@@ -286,7 +286,7 @@ public class SettlementsApiTests
             Amount = 99.75m,
             PaymentMethod = PaymentMethod.Cash,
             PaymentNote = "Test payment note for create settlement test (invalid) future date",
-            Date = DateTime.Now.AddYears(100)
+            Date = DateTime.Now.AddYears(1000)
         };
 
         var response = await _client.PostAsJsonAsync("api/Settlements", payload);
@@ -430,7 +430,7 @@ public class SettlementsApiTests
             Description = description,
             Amount = amount,
             Category = category,
-            Date = date ?? DateTime.Now
+            Date = date ?? new DateTime(2026, 01, 01)
         };
 
         var response = await _client.PostAsJsonAsync("api/Expenses", payload);
@@ -455,7 +455,7 @@ public class SettlementsApiTests
         PaymentMethod paymentMethod = PaymentMethod.Receivable)
     {
         var payload = new { 
-        SaleDate = saleDate ?? DateTime.Now, 
+        SaleDate = saleDate ?? new DateTime(2026, 01, 01), 
         PaymentMethod = paymentMethod, 
         PaymentNote = paymentNote 
         };

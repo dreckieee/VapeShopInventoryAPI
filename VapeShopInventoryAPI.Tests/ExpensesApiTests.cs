@@ -558,8 +558,7 @@ public class ExpensesApiTests
             Description = description,
             Amount = amount,
             Category = category,
-            Date = date ?? DateTime.Now
-
+            Date = date ?? new DateTime(2026, 01, 01)
         };
 
         var response = await _client.PostAsJsonAsync("api/Expenses", payload);
@@ -621,7 +620,7 @@ public class ExpensesApiTests
     {
         var payload = new RestockRequest
         {
-            Date = date ?? DateTime.Now,
+            Date = date ?? new DateTime(2026, 01, 01),
             Description = description,
             Items = items,
             PaymentNote = paymentNote,

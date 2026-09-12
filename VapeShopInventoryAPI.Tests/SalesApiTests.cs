@@ -437,7 +437,7 @@ public class SalesApiTests
         PaymentMethod paymentMethod = PaymentMethod.Cash)
     {
         var payload = new { 
-        SaleDate = saleDate ?? DateTime.Now, 
+        SaleDate = saleDate ?? new DateTime(2026, 01, 01), 
         PaymentMethod = paymentMethod, 
         PaymentNote = paymentNote 
         };
