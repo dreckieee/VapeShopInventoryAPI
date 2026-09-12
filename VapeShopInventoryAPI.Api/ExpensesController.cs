@@ -106,6 +106,14 @@ public class ExpensesController : ControllerBase
             {
                 return Conflict(new {message = "Cannot reduce Amount below the total already settled on this expense."});
             }
+            if (hasSettlementReferences)
+            {
+                DateTime minDate = await _context.Settlements.Where(se => se.ExpenseId == expense.Id).MinAsync(se => se.Date);
+                if(minDate < request.Date)
+                {
+                    return Conflict(new {message = "Cannot edit Date to later than the earliest settlement."});
+                }
+            }
 
             expense.Edit(request.Date, request.Description, request.Amount, request.Category,request.PaymentMethod, request.PaymentNote); 
             await _context.SaveChangesAsync();
