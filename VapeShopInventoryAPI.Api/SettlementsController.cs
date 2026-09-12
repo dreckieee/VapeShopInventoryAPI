@@ -48,6 +48,10 @@ public class SettlementsController : ControllerBase
                 {
                     return BadRequest(new { message = "Found Sale's payment method is not receivable" });
                 }
+                if(sale.SaleDate > request.Date)
+                {
+                    return BadRequest(new { message = "Settlement date for the found Sale cannot be earlier than the Sale's date" });
+                }
                 var (outstandingBalance, _) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
                 if (request.Amount > outstandingBalance)
                 {
@@ -64,6 +68,10 @@ public class SettlementsController : ControllerBase
                 if(expense.PaymentMethod != PaymentMethod.Payable)
                 {
                     return BadRequest(new { message = "Found Expense's payment method is not payable" });
+                }
+                if(expense.Date > request.Date)
+                {
+                    return BadRequest(new { message = "Settlement date for the found Expense cannot be earlier than the Expense's date" });
                 }
                 var (outstandingBalance, _) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
                 if (request.Amount > outstandingBalance)
