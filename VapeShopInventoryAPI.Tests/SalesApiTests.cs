@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using NUnit.Framework.Internal;
 using VapeShopInventoryAPI.Api;
 using VapeShopInventoryAPI.Api.DTOs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace VapeShopInventoryAPI.Tests;
 
@@ -13,6 +14,7 @@ public class SalesApiTests
     private HttpClient _client = null!;
     private List<int> _createdProductIds = new();
     private List<int> _createdSaleIds = new();
+    private List<int> _createdSettlementIds = new ();
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
@@ -108,6 +110,10 @@ public class SalesApiTests
         var responsePartialSettlement = await _client.PostAsJsonAsync("api/Settlements", payload);
         Assert.That(responsePartialSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responsePartialSettlement.StatusCode} instead.");
 
+        var settlement = await responsePartialSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
+
         var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
         
@@ -138,6 +144,10 @@ public class SalesApiTests
 
         var responseFullSettlement = await _client.PostAsJsonAsync("api/Settlements", payload);
         Assert.That(responseFullSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responseFullSettlement.StatusCode} instead.");
+
+        var settlement = await responseFullSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
 
         var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
@@ -338,6 +348,23 @@ public class SalesApiTests
     [TearDown]
     public async Task DeleteTestSaleAndProduct()
     {
+        //Test Settlement Cleanup
+        if(_createdSettlementIds.Count > 0)
+        {
+            using var scope = _factory.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
+
+            foreach(int i in _createdSettlementIds)
+            {
+                var settlement = await context.Settlements.FindAsync(i);
+                if (settlement != null)
+                {
+                    context.Settlements.Remove(settlement);
+                }
+            }
+            await context.SaveChangesAsync();
+        }
+
         //Test Product Cleanup
         if(_createdProductIds.Count > 0)
         {
@@ -393,6 +420,7 @@ public class SalesApiTests
                 }
             } 
         }
+        _createdSettlementIds.Clear();
         _createdProductIds.Clear();
         _createdSaleIds.Clear();
     }
