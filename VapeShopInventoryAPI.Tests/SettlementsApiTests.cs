@@ -610,6 +610,36 @@ public class SettlementsApiTests
     }
 
     [Test]
+    public async Task UpdateExpenseNoSettlement_PaymentMethodUnchanged_ReturnsOk()
+    {
+        var (_, testExpense) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable, date: new DateTime(2026, 01, 01));
+
+        var payload = new UpdateExpenseRequest
+        {
+            PaymentMethod = testExpense.PaymentMethod,
+            PaymentNote = "test payment note for update expense (valid) without settlement same payment method",
+            Description = "test description for update expense (valid) without settlement same payment method",
+            Amount = testExpense.Amount + 1000m,
+            Category = "test category for expense without settlement payment method unchanged",
+            Date = new DateTime(2026, 02, 02)
+        };
+
+        var response = await _client.PutAsJsonAsync($"api/Expenses/{testExpense.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var expense = await response.Content.ReadFromJsonAsync<ExpenseResponse>(TestJsonOptions.Default);
+        Assert.That(expense, Is.Not.Null);
+        Assert.That(expense.Id, Is.EqualTo(testExpense.Id));
+        Assert.That(expense.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
+        Assert.That(expense.PaymentNote, Is.EqualTo(payload.PaymentNote));
+        Assert.That(expense.Description, Is.EqualTo(payload.Description));
+        Assert.That(expense.Amount, Is.EqualTo(payload.Amount));
+        Assert.That(expense.Category, Is.EqualTo(payload.Category));
+        Assert.That(expense.Date, Is.EqualTo(payload.Date));
+        Assert.That(expense.CreatedAt, Is.EqualTo(testExpense.CreatedAt));
+    }
+
+    [Test]
     public async Task UpdateExpense_DateAfterEarliestSettlement_ReturnsConflict()
     {
         var (_, testExpense) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable, date: new DateTime(2026, 01, 01));
