@@ -371,7 +371,7 @@ public class SettlementsApiTests
         {
             SaleId = testSale.Id,
             ExpenseId = null,
-            Amount = 99.75m,
+            Amount = testSale.TotalAmount,
             PaymentMethod = PaymentMethod.Cash,
             PaymentNote = "Test payment note for create settlement test (valid) for updating same sale payment method (valid)",
             Date = new DateTime(2026, 01, 01)
@@ -401,6 +401,30 @@ public class SettlementsApiTests
         Assert.That(sale.SaleDate, Is.EqualTo(testSale.SaleDate));
         Assert.That(sale.PaymentMethod, Is.EqualTo(testSale.PaymentMethod));
         Assert.That(sale.PaymentNote, Is.EqualTo(testSale.PaymentNote));
+    }
+
+    [Test]
+    public async Task UpdateSaleNoSettlement_PaymentMethodUnchanged_ReturnsOk()
+    {
+        var (_, testSale) = await CreateTestSaleAsync(paymentMethod: PaymentMethod.Receivable);
+
+        var payload = new EditSaleRequest
+        {
+            SaleDate = new DateTime(2026, 02, 02),
+            PaymentMethod = testSale.PaymentMethod,
+            PaymentNote = "test payment note for updating sale (valid) without settlement same payment method",
+        };
+
+        var response = await _client.PutAsJsonAsync($"api/Sales/{testSale.Id}", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var responseGetSale = await _client.GetAsync($"api/Sales/{testSale.Id}");
+        var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
+        Assert.That(sale, Is.Not.Null);
+        Assert.That(sale.Id, Is.EqualTo(testSale.Id));
+        Assert.That(sale.SaleDate, Is.EqualTo(payload.SaleDate));
+        Assert.That(sale.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
+        Assert.That(sale.PaymentNote, Is.EqualTo(payload.PaymentNote));
     }
 
     [Test]
