@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using VapeShopInventoryAPI.Api;
 using VapeShopInventoryAPI.Api.DTOs;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace VapeShopInventoryAPI.Tests;
 
@@ -11,6 +12,7 @@ public class ExpensesApiTests
     private HttpClient _client = null!;
     private List<int> _createdExpenseIds = new ();
     private List<int> _createdProductIds = new ();
+    private List<int> _createdSettlementIds = new ();
     private List<int> _restockedProductIds = new ();
     
 
@@ -143,6 +145,10 @@ public class ExpensesApiTests
         var responsePartialSettlement = await _client.PostAsJsonAsync("api/Settlements", payload);
         Assert.That(responsePartialSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responsePartialSettlement.StatusCode} instead.");
 
+        var settlement = await responsePartialSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
+
         var responseGetExpense = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
         Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
 
@@ -176,6 +182,10 @@ public class ExpensesApiTests
 
         var responseFullSettlement = await _client.PostAsJsonAsync("api/Settlements", payload);
         Assert.That(responseFullSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responseFullSettlement.StatusCode} instead.");
+
+        var settlement = await responseFullSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
 
         var responseGetExpense = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
         Assert.That(responseGetExpense.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetExpense.StatusCode} instead.");
@@ -463,6 +473,10 @@ public class ExpensesApiTests
 
         var responsePartialSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadSettlement);
         Assert.That(responsePartialSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responsePartialSettlement.StatusCode} instead.");
+
+        var settlement = await responsePartialSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
         
         var payload = new UpdateExpenseRequest
         {
@@ -646,6 +660,23 @@ public class ExpensesApiTests
     [TearDown]
     public async Task DeleteTestExpense()
     {
+        if(_createdSettlementIds.Count > 0)
+        {
+            using var scope = _factory.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
+
+            foreach(int i in _createdSettlementIds)
+            {
+                var settlement = await context.Settlements.FindAsync(i);
+                if (settlement != null)
+                {
+                    context.Settlements.Remove(settlement);
+                }
+            }
+            await context.SaveChangesAsync();
+        }
+        _createdSettlementIds.Clear();
+
         if(_createdExpenseIds.Count > 0)
         {
             foreach(int i in _createdExpenseIds)
