@@ -533,6 +533,10 @@ public class SettlementsApiTests
         var responsePartialSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadSettlement);
         Assert.That(responsePartialSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responsePartialSettlement.StatusCode} instead.");
         
+        var settlement = await responsePartialSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
+
         var payload = new UpdateExpenseRequest
         {
             PaymentMethod = testExpense.PaymentMethod,
@@ -575,6 +579,10 @@ public class SettlementsApiTests
 
         var responsePartialSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadSettlement);
         Assert.That(responsePartialSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responsePartialSettlement.StatusCode} instead.");
+
+        var settlement = await responsePartialSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
+        Assert.That(settlement, Is.Not.Null);
+        _createdSettlementIds.Add(settlement.Id);
         
         var payload = new UpdateExpenseRequest
         {
