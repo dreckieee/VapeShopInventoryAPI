@@ -215,6 +215,25 @@ public class CapitalTransactionsApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
     }
 
+    [Test]
+    public async Task GetCapitalTransaction_WithExistingId_ReturnsOk()
+    {
+        var (_, testCapitalTransaction) = await CreateTestCapitalTransactionAsync();
+
+        var response = await _client.GetAsync($"api/CapitalTransactions/{testCapitalTransaction.Id}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var capitalTransaction = await response.Content.ReadFromJsonAsync<CapitalTransactionResponse>(TestJsonOptions.Default);
+        Assert.That(capitalTransaction, Is.Not.Null);
+
+        Assert.That(capitalTransaction.Id, Is.EqualTo(testCapitalTransaction.Id));
+        Assert.That(capitalTransaction.Type, Is.EqualTo(testCapitalTransaction.Type));
+        Assert.That(capitalTransaction.Amount, Is.EqualTo(testCapitalTransaction.Amount));
+        Assert.That(capitalTransaction.PaymentMethod, Is.EqualTo(testCapitalTransaction.PaymentMethod));
+        Assert.That(capitalTransaction.Note, Is.EqualTo(testCapitalTransaction.Note));
+        Assert.That(capitalTransaction.Date, Is.EqualTo(testCapitalTransaction.Date));
+    }
+
     public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
         CapitalTransactionType type = CapitalTransactionType.Deposit, 
         decimal amount = 99.99m, 
