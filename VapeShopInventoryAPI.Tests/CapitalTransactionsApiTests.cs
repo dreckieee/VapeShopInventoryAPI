@@ -80,7 +80,7 @@ public class CapitalTransactionsApiTests
     }
 
     [Test]
-    public async Task CreateCapitalTransaction_DepositInvalidAmount_ReturnsBadRequest()
+    public async Task CreateCapitalTransaction_DepositInvalidNegativeAmount_ReturnsBadRequest()
     {
         
         var payload = new CreateCapitalTransactionRequest
@@ -89,6 +89,23 @@ public class CapitalTransactionsApiTests
             Amount = -99.99m,
             PaymentMethod = PaymentMethod.Cash,
             Note = "Test note for creating capital transaction (deposit) with invalid negative amount",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
+    }
+
+    [Test]
+    public async Task CreateCapitalTransaction_DepositInvalidZeroAmount_ReturnsBadRequest()
+    {
+        
+        var payload = new CreateCapitalTransactionRequest
+        {
+            Type = CapitalTransactionType.Deposit,
+            Amount = 0m,
+            PaymentMethod = PaymentMethod.Cash,
+            Note = "Test note for creating capital transaction (deposit) with invalid zero amount",
             Date = new DateTime(2026, 01, 01)
         };
 
