@@ -181,6 +181,23 @@ public class CapitalTransactionsApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
     }
 
+    [Test]
+    public async Task CreateCapitalTransaction_DepositInvalidDefaultDate_ReturnsBadRequest()
+    {
+        
+        var payload = new CreateCapitalTransactionRequest
+        {
+            Type = CapitalTransactionType.Deposit,
+            Amount = 99.99m,
+            PaymentMethod = PaymentMethod.Cash,
+            Note = "Test note for creating capital transaction (deposit) with invalid default date",
+            Date = default
+        };
+
+        var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
+    }
+
     public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
         CapitalTransactionType type = CapitalTransactionType.Deposit, 
         decimal amount = 99.99m, 
