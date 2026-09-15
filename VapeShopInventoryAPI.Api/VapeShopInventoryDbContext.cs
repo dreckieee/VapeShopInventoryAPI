@@ -8,6 +8,7 @@ public class VapeShopInventoryDbContext : DbContext
     public DbSet<SaleItem> SaleItems {get; private set;}
     public DbSet<DeliveryItem> DeliveryItems {get; private set;}
     public DbSet<Settlement> Settlements {get; private set;}
+    public DbSet<CapitalTransaction> CapitalTransactions {get; private set;}
     public VapeShopInventoryDbContext (DbContextOptions<VapeShopInventoryDbContext> options) : base (options){}
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
