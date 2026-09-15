@@ -234,6 +234,13 @@ public class CapitalTransactionsApiTests
         Assert.That(capitalTransaction.Date, Is.EqualTo(testCapitalTransaction.Date));
     }
 
+    [Test]
+    public async Task GetCapitalTransaction_WithNonExistingId_ReturnsNotFound()
+    {
+        var response = await _client.GetAsync($"api/CapitalTransactions/{int.MaxValue}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 Not Found() status, but received {response.StatusCode} instead.");
+    }
+
     public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
         CapitalTransactionType type = CapitalTransactionType.Deposit, 
         decimal amount = 99.99m, 
