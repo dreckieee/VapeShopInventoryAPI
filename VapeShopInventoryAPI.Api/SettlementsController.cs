@@ -15,6 +15,28 @@ public class SettlementsController : ControllerBase
         _logger = logger;
     }
 
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<SettlementResponse>>> GetSettlements([FromQuery] int? year, [FromQuery] int? month)
+    {
+        var query = _context.Settlements.AsQueryable();
+        if(year != null)
+        {
+            query = query.Where(settlement => settlement.Date.Year == year);
+        }
+        if(month != null)
+        {
+            query = query.Where(settlement => settlement.Date.Month == month);
+        }
+
+        var settlements = await query.ToListAsync();
+        var response = new List<SettlementResponse>();
+        foreach(Settlement settlement in settlements)
+        {
+            response.Add(SettlementResponse.FromSettlement(settlement));
+        }
+        return Ok(response);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<SettlementResponse>> GetSettlement(int id)
     {
