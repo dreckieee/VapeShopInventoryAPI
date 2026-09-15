@@ -305,6 +305,19 @@ public class CapitalTransactionsApiTests
         Assert.That(capitalTransactions.Any(ct => ct.Id == capitalTransaction4.Id), Is.True);
     }
 
+    [Test]
+    public async Task GetCapitalTransactions_FilterByNoMatch_ReturnsOkWithEmptyList()
+    {
+        int year = int.MaxValue;
+        int month = int.MaxValue;
+        var response = await _client.GetAsync($"api/CapitalTransactions?year={year}&month={month}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var capitalTransactions = await response.Content.ReadFromJsonAsync<List<CapitalTransactionResponse>>(TestJsonOptions.Default);
+        Assert.That(capitalTransactions, Is.Not.Null);
+        Assert.That(capitalTransactions.Count, Is.EqualTo(0));
+    }
+
     public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
         CapitalTransactionType type = CapitalTransactionType.Deposit, 
         decimal amount = 99.99m, 
