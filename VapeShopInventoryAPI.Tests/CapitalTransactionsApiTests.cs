@@ -26,7 +26,7 @@ public class CapitalTransactionsApiTests
     }
 
     [Test]
-    public async Task CreateCapitalTransaction_ValidData_ReturnsCreated()
+    public async Task CreateCapitalTransaction_DepositValidData_ReturnsCreated()
     {
         
         var payload = new CreateCapitalTransactionRequest
@@ -34,7 +34,7 @@ public class CapitalTransactionsApiTests
             Type = CapitalTransactionType.Deposit,
             Amount = 99.99m,
             PaymentMethod = PaymentMethod.Cash,
-            Note = "Test note for creating capital transaction with all valid data",
+            Note = "Test note for creating capital transaction (deposit) with all valid data",
             Date = new DateTime(2026, 01, 01)
         };
 
@@ -50,7 +50,34 @@ public class CapitalTransactionsApiTests
         Assert.That(capitalTransaction.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
         Assert.That(capitalTransaction.Note, Is.EqualTo(payload.Note));
         Assert.That(capitalTransaction.Date, Is.EqualTo(payload.Date));
-    }    
+    }
+
+    [Test]
+    public async Task CreateCapitalTransaction_WithdrawalValidData_ReturnsCreated()
+    {
+        
+        var payload = new CreateCapitalTransactionRequest
+        {
+            Type = CapitalTransactionType.Withdrawal,
+            Amount = 99.99m,
+            PaymentMethod = PaymentMethod.Cash,
+            Note = "Test note for creating capital transaction (withdrawal) with all valid data",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {response.StatusCode} instead.");
+
+        var capitalTransaction = await response.Content.ReadFromJsonAsync<CapitalTransactionResponse>(TestJsonOptions.Default);
+        Assert.That(capitalTransaction, Is.Not.Null);
+        _createdCapitalTransactionIds.Add(capitalTransaction.Id);
+
+        Assert.That(capitalTransaction.Type, Is.EqualTo(payload.Type));
+        Assert.That(capitalTransaction.Amount, Is.EqualTo(payload.Amount));
+        Assert.That(capitalTransaction.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
+        Assert.That(capitalTransaction.Note, Is.EqualTo(payload.Note));
+        Assert.That(capitalTransaction.Date, Is.EqualTo(payload.Date));
+    }
 
     public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
         CapitalTransactionType type = CapitalTransactionType.Deposit, 
