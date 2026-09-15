@@ -1,0 +1,109 @@
+using System.Net;
+using System.Net.Http.Json;
+using VapeShopInventoryAPI.Api;
+using VapeShopInventoryAPI.Api.DTOs;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace VapeShopInventoryAPI.Tests;
+
+public class CapitalTransactionsApiTests
+{
+    private CustomWebApplicationFactory _factory = null!;
+    private HttpClient _client = null!;
+    private List<int> _createdCapitalTransactionIds = new ();
+    [OneTimeSetUp]
+    public void OneTimeSetup()
+    {
+        _factory = new CustomWebApplicationFactory();
+        _client = _factory.CreateClient();
+    }
+
+    [OneTimeTearDown]
+    public void OneTimeTeardown()
+    {
+        _client.Dispose();
+        _factory.Dispose();
+    }
+
+    [Test]
+    public async Task CreateCapitalTransaction_ValidData_ReturnsCreated()
+    {
+        
+        var payload = new CreateCapitalTransactionRequest
+        {
+            Type = CapitalTransactionType.Deposit,
+            Amount = 99.99m,
+            PaymentMethod = PaymentMethod.Cash,
+            Note = "Test note for creating capital transaction with all valid data",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {response.StatusCode} instead.");
+
+        var capitalTransaction = await response.Content.ReadFromJsonAsync<CapitalTransactionResponse>(TestJsonOptions.Default);
+        Assert.That(capitalTransaction, Is.Not.Null);
+        _createdCapitalTransactionIds.Add(capitalTransaction.Id);
+
+        Assert.That(capitalTransaction.Type, Is.EqualTo(payload.Type));
+        Assert.That(capitalTransaction.Amount, Is.EqualTo(payload.Amount));
+        Assert.That(capitalTransaction.PaymentMethod, Is.EqualTo(payload.PaymentMethod));
+        Assert.That(capitalTransaction.Note, Is.EqualTo(payload.Note));
+        Assert.That(capitalTransaction.Date, Is.EqualTo(payload.Date));
+    }    
+
+    public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
+        CapitalTransactionType type = CapitalTransactionType.Deposit, 
+        decimal amount = 99.99m, 
+        PaymentMethod paymentMethod = PaymentMethod.Cash,
+        string? note = null,
+        DateTime? date = null)
+    {
+        var payload = new CreateCapitalTransactionRequest
+        {
+            Type = type,
+            Amount = amount,
+            PaymentMethod = paymentMethod,
+            Note = note,
+            Date = date ?? new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
+        if(response.StatusCode != HttpStatusCode.Created)
+        {
+            throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
+        }
+
+        var capitalTransaction = await response.Content.ReadFromJsonAsync<CapitalTransactionResponse>(TestJsonOptions.Default);
+        if (capitalTransaction == null)
+        {
+            throw new InvalidOperationException($"Failed to deserialize CapitalTransactionResponse after creating test capital transaction");
+        }
+
+        _createdCapitalTransactionIds.Add(capitalTransaction.Id);
+        return (response, capitalTransaction);
+    }
+
+
+    [TearDown]
+    public async Task DeleteTestCapitalTransaction()
+    {
+        //Test Capital Transaction Cleanup
+        if(_createdCapitalTransactionIds.Count > 0)
+        {
+            using var scope = _factory.Services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
+
+            foreach(int ct in _createdCapitalTransactionIds)
+            {
+                var capitalTransaction = await context.CapitalTransactions.FindAsync(ct);
+                if (capitalTransaction != null)
+                {
+                    context.CapitalTransactions.Remove(capitalTransaction);
+                }
+            }
+            await context.SaveChangesAsync();
+        }
+        _createdCapitalTransactionIds.Clear();
+    }
+}
