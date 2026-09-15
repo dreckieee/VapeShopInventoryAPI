@@ -241,6 +241,27 @@ public class CapitalTransactionsApiTests
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 Not Found() status, but received {response.StatusCode} instead.");
     }
 
+    [Test]
+    public async Task GetCapitalTransactions_FilterByYear_ReturnsOnlyMatchingYear()
+    {
+        var (_, capitalTransaction1) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 99.99m, paymentMethod: PaymentMethod.Cash, note: "test note for create capital transaction #1 helper filtering by year", date: new DateTime(2026, 04, 01));
+        var (_, capitalTransaction2) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Withdrawal, amount: 199.99m, paymentMethod: PaymentMethod.Cash, note: "test note for create capital transaction #2 helper filtering by year", date: new DateTime(2025, 02, 01));
+        var (_, capitalTransaction3) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 299.99m, paymentMethod: PaymentMethod.DigitalPayment, note: "test note for create capital transaction #3 helper filtering by year", date: new DateTime(2024, 02, 01));
+        var (_, capitalTransaction4) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Withdrawal, amount: 399.99m, paymentMethod: PaymentMethod.DigitalPayment, note: "test note for create capital transaction #4 helper filtering by year", date: new DateTime(2026, 02, 01));
+
+        int year = 2026;
+        var response = await _client.GetAsync($"api/CapitalTransactions?year={year}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var capitalTransactions = await response.Content.ReadFromJsonAsync<List<CapitalTransactionResponse>>(TestJsonOptions.Default);
+        Assert.That(capitalTransactions, Is.Not.Null);
+        Assert.That(capitalTransactions.All(ct => ct.Date.Year == year), Is.True);
+        Assert.That(capitalTransactions.Any(ct => ct.Id == capitalTransaction1.Id), Is.True);
+        Assert.That(capitalTransactions.Any(ct => ct.Id == capitalTransaction2.Id), Is.False);
+        Assert.That(capitalTransactions.Any(ct => ct.Id == capitalTransaction3.Id), Is.False);
+        Assert.That(capitalTransactions.Any(ct => ct.Id == capitalTransaction4.Id), Is.True);
+    }
+
     public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
         CapitalTransactionType type = CapitalTransactionType.Deposit, 
         decimal amount = 99.99m, 
