@@ -79,6 +79,23 @@ public class CapitalTransactionsApiTests
         Assert.That(capitalTransaction.Date, Is.EqualTo(payload.Date));
     }
 
+    [Test]
+    public async Task CreateCapitalTransaction_DepositInvalidAmount_ReturnsBadRequest()
+    {
+        
+        var payload = new CreateCapitalTransactionRequest
+        {
+            Type = CapitalTransactionType.Deposit,
+            Amount = -99.99m,
+            PaymentMethod = PaymentMethod.Cash,
+            Note = "Test note for creating capital transaction (deposit) with invalid negative amount",
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
+    }
+
     public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
         CapitalTransactionType type = CapitalTransactionType.Deposit, 
         decimal amount = 99.99m, 
