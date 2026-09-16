@@ -75,9 +75,24 @@ public class SalesApiTests
     }
 
     [Test]
-    public async Task CreateSale_NoSettlement_ReturnsCorrectComputedFields()
+    public async Task CreateSale_CashPaymentMethod_ReturnsFullAmountSettledAndZeroOutstanding()
     {
-        var (_, testSale, testSaleItem) = await CreateTestSaleWithItemAsync();
+        var (_, testSale, testSaleItem) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Cash);
+        
+        var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+        
+        var sale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
+        Assert.That(sale, Is.Not.Null);
+        Assert.That(sale.TotalAmount, Is.EqualTo(testSaleItem.Quantity * testSaleItem.UnitPriceAtSale));
+        Assert.That(sale.OutstandingBalance, Is.EqualTo(0));
+        Assert.That(sale.AmountSettled, Is.EqualTo(sale.TotalAmount));
+    }
+
+    [Test]
+    public async Task CreateSale_ReceivableWithNoSettlement_ReturnsFullOutstandingBalance()
+    {
+        var (_, testSale, testSaleItem) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Receivable);
         
         var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
