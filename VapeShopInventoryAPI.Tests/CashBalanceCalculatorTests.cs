@@ -32,6 +32,10 @@ public class CashBalanceCalculatorTests
     [Test]
     public async Task CalculateCashBalanceAsync_WithMixedTransactions_ReturnsCorrectBalances()
     {
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
+
+        var (cashOnHandBefore, digitalBalanceBefore, receivablesOutstandingBefore, payablesOutstandingBefore) = await CashBalanceCalculator.CalculateCashBalanceAsync(context);
         //cash
 
         //sale1 cash (cashonhand + 200)
@@ -73,16 +77,13 @@ public class CashBalanceCalculatorTests
         var (_, expense3) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.DigitalPayment, amount: 49);
 
         //deposit2 digitalpayment (digitalbalance + 499)
-        var (_, deposit2) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 499m, paymentMethod: PaymentMethod.DigitalPayment);
-
-        using var scope = _factory.Services.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
+        var (_, deposit2) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 499m, paymentMethod: PaymentMethod.DigitalPayment); 
 
         var (cashOnHand, digitalBalance, receivablesOutstanding, payablesOutstanding) = await CashBalanceCalculator.CalculateCashBalanceAsync(context);
-        Assert.That(cashOnHand, Is.EqualTo(780));
-        Assert.That(digitalBalance, Is.EqualTo(797));
-        Assert.That(receivablesOutstanding, Is.EqualTo(2));
-        Assert.That(payablesOutstanding, Is.EqualTo(1));
+        Assert.That(cashOnHand - cashOnHandBefore, Is.EqualTo(780));
+        Assert.That(digitalBalance - digitalBalanceBefore, Is.EqualTo(797));
+        Assert.That(receivablesOutstanding - receivablesOutstandingBefore, Is.EqualTo(2));
+        Assert.That(payablesOutstanding - payablesOutstandingBefore, Is.EqualTo(1));
     }
 
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
