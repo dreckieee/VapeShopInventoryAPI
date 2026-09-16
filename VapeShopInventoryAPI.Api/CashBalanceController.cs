@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using VapeShopInventoryAPI.Api;
 using VapeShopInventoryAPI.Api.DTOs;
 namespace VapeShopInventoryAPI.Api;

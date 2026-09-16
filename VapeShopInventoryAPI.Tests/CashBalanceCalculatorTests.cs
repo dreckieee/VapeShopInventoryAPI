@@ -86,6 +86,69 @@ public class CashBalanceCalculatorTests
         Assert.That(payablesOutstanding - payablesOutstandingBefore, Is.EqualTo(1));
     }
 
+    [Test]
+    public async Task GetCashBalance_WithMixedTransactions_ReturnsCorrectBalancesAndOk()
+    {
+        var responseBefore = await _client.GetAsync("api/CashBalance");
+        Assert.That(responseBefore.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseBefore.StatusCode} instead.");
+
+        var cashBalanceBefore = await responseBefore.Content.ReadFromJsonAsync<CashBalanceResponse>(TestJsonOptions.Default);
+        Assert.That(cashBalanceBefore, Is.Not.Null);
+        
+        //cash
+
+        //sale1 cash (cashonhand + 200)
+        var (product1, sale1, saleItem1) = await CreateTestSaleWithItemAsync(price: 100m, paymentMethod: PaymentMethod.Cash, saleItemQuantity: 2);
+        
+        //sale2 receivable (receivable + 150)
+        var (product2, sale2, saleItem2) = await CreateTestSaleWithItemAsync(price: 150m, paymentMethod: PaymentMethod.Receivable, saleItemQuantity: 1);
+
+        //sale2 cash settlement (cashonhand + 149, receivable - 149)
+        var (_, settlement1) = await CreateTestSettlementAsync(saleId: sale2.Id, paymentMethod: PaymentMethod.Cash, amount: 149m);
+
+        //expense1 cash (cashonhand - 50)
+        var (_, expense1) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, amount: 50);
+
+        //expense2 payable (payable + 11)
+        var (_, expense2) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable, amount: 11);
+
+        //expense2 cash settlement (cashonhand - 10, payable - 10)
+        var (_, settlement2) = await CreateTestSettlementAsync(expenseId: expense2.Id, paymentMethod: PaymentMethod.Cash, amount: 10m);
+
+        //deposit1 cash (cashonhand + 500)
+        var (_, deposit1) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 500m, paymentMethod: PaymentMethod.Cash);
+
+        //withdrawal1 cash (cashonhand - 9)
+        var (_, withdrawal1) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Withdrawal, amount: 9m);
+
+        //digital
+
+        //sale3 digitalpayment cash (digitalBalance + 198)
+        var (product3, sale3, saleItem3) = await CreateTestSaleWithItemAsync(price: 99.5m, paymentMethod: PaymentMethod.DigitalPayment, saleItemQuantity: 2);
+        
+        //sale4 receivable (receivable + 149)
+        var (product4, sale4, saleItem4) = await CreateTestSaleWithItemAsync(price: 149m, paymentMethod: PaymentMethod.Receivable, saleItemQuantity: 1);
+
+        //sale4 digitalpayment settlement (digitalBalance + 148, receivable - 148)
+        var (_, settlement3) = await CreateTestSettlementAsync(saleId: sale4.Id, paymentMethod: PaymentMethod.DigitalPayment, amount: 148m);
+
+        //expense3 digitalpayment (digitalBalance - 49)
+        var (_, expense3) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.DigitalPayment, amount: 49);
+
+        //deposit2 digitalpayment (digitalbalance + 499)
+        var (_, deposit2) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 499m, paymentMethod: PaymentMethod.DigitalPayment); 
+
+        var response = await _client.GetAsync("api/CashBalance");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var cashBalance = await response.Content.ReadFromJsonAsync<CashBalanceResponse>(TestJsonOptions.Default);
+        Assert.That(cashBalance, Is.Not.Null);
+        Assert.That(cashBalance.CashOnHand - cashBalanceBefore.CashOnHand, Is.EqualTo(780));
+        Assert.That(cashBalance.DigitalBalance - cashBalanceBefore.DigitalBalance, Is.EqualTo(797));
+        Assert.That(cashBalance.ReceivablesOutstanding - cashBalanceBefore.ReceivablesOutstanding, Is.EqualTo(2));
+        Assert.That(cashBalance.PayablesOutstanding - cashBalanceBefore.PayablesOutstanding, Is.EqualTo(1));
+    }
+
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
         string name = "Test Product", 
         string? sku = null, 
