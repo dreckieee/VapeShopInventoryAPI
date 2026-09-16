@@ -106,6 +106,26 @@ public class ExpensesApiTests
     }
 
     [Test]
+    public async Task CreateExpense_CashPaymentMethod_ReturnsFullAmountSettledAndZeroOutstanding()
+    {
+        var (_, testExpense) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash);
+
+        Assert.That(testExpense.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
+        Assert.That(testExpense.OutstandingBalance, Is.EqualTo(0));
+        Assert.That(testExpense.AmountSettled, Is.EqualTo(testExpense.Amount));
+    }
+
+    [Test]
+    public async Task CreateExpense_DigitalPaymentMethod_ReturnsFullAmountSettledAndZeroOutstanding()
+    {
+        var (_, testExpense) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.DigitalPayment);
+
+        Assert.That(testExpense.PaymentMethod, Is.EqualTo(PaymentMethod.DigitalPayment));
+        Assert.That(testExpense.OutstandingBalance, Is.EqualTo(0));
+        Assert.That(testExpense.AmountSettled, Is.EqualTo(testExpense.Amount));
+    }
+
+    [Test]
     public async Task CreateExpense_NoSettlement_ReturnsCorrectComputedFields()
     {
         var (_, testExpense) = await CreateTestExpenseAsync(
