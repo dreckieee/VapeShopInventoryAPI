@@ -17,7 +17,7 @@ public class SalesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<SaleResponse>>> GetSales ([FromQuery] int? year, [FromQuery] int? month, [FromQuery] bool? isClosed)
+    public async Task<ActionResult<IEnumerable<SaleResponse>>> GetSales ([FromQuery] int? year, [FromQuery] int? month, [FromQuery] bool? isClosed, [FromQuery] PaymentMethod? paymentMethod)
     {
         var query = _context.Sales.Include(s => s.SaleItems).AsQueryable();
         if (year != null)
@@ -31,6 +31,10 @@ public class SalesController : ControllerBase
         if (isClosed != null)
         {
             query = query.Where(s => s.IsClosed == isClosed);
+        }
+        if (paymentMethod != null)
+        {
+            query = query.Where(s => s.PaymentMethod == paymentMethod);
         }
         
         var sales = await query.ToListAsync();
