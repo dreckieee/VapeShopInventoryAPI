@@ -17,7 +17,7 @@ public class ExpensesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ExpenseResponse>>> GetExpenses([FromQuery] int? year, [FromQuery] int? month)
+    public async Task<ActionResult<IEnumerable<ExpenseResponse>>> GetExpenses([FromQuery] int? year, [FromQuery] int? month, [FromQuery] PaymentMethod? paymentMethod)
     {
         var query = _context.Expenses.AsQueryable();
         if(year != null)
@@ -27,6 +27,10 @@ public class ExpensesController : ControllerBase
         if(month != null)
         {
             query = query.Where(expense => expense.Date.Month == month);
+        }
+        if(paymentMethod != null)
+        {
+            query = query.Where(expense => expense.PaymentMethod == paymentMethod);
         }
 
         var expenses = await query.ToListAsync();
