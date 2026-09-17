@@ -254,6 +254,26 @@ public class SalesApiTests
         Assert.That(sales.Any(s => s.Id == testSale4.Id), Is.False);
     }
 
+    [Test]
+    public async Task GetSales_FilterByPaymentMethodWithNoMatchingSale_ExcludesAllSeededSales()
+    {
+        var (_, testSale1) = await CreateTestSaleAsync(saleDate: new DateTime(2026, 01, 01), paymentNote: "payment note for test sale 1", paymentMethod: PaymentMethod.Cash);
+        var (_, testSale2) = await CreateTestSaleAsync(saleDate: new DateTime(2025, 02, 02), paymentNote: "payment note for test sale 2", paymentMethod: PaymentMethod.DigitalPayment);
+        var (_, testSale3) = await CreateTestSaleAsync(saleDate: new DateTime(2026, 03, 03), paymentNote: "payment note for test sale 3", paymentMethod: PaymentMethod.DigitalPayment);
+        var (_, testSale4) = await CreateTestSaleAsync(saleDate: new DateTime(2024, 04, 04), paymentNote: "payment note for test sale 4", paymentMethod: PaymentMethod.Cash);
+
+        PaymentMethod paymentMethod = PaymentMethod.Receivable;
+        var response = await _client.GetAsync($"api/Sales?paymentMethod={paymentMethod}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var sales = await response.Content.ReadFromJsonAsync<List<SaleResponse>>(TestJsonOptions.Default);
+        Assert.That(sales, Is.Not.Null);
+        Assert.That(sales.Any(s => s.Id == testSale1.Id), Is.False);
+        Assert.That(sales.Any(s => s.Id == testSale2.Id), Is.False);
+        Assert.That(sales.Any(s => s.Id == testSale3.Id), Is.False);
+        Assert.That(sales.Any(s => s.Id == testSale4.Id), Is.False);
+    }
+
 
     [Test]
     public async Task EditSale_WithInvalidEnumPaymentMethod_ReturnsBadRequest()
