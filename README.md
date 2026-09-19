@@ -81,4 +81,4 @@ Part of my transition into remote software engineering (QA Automation â†’ SDET â
 Daily build-in-public log: [github.com/dreckieee/csharp](https://github.com/dreckieee/csharp)
 
 ## How to Run Locally
-`dotnet run`, then open `http://localhost:{port}/swagger` (check terminal output for the exact port).
+`dotnet run`, then open `http://localhost:{port}/swagger` (check terminal output for the exact port)
