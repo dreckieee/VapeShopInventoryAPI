@@ -35,18 +35,36 @@ public static class CashBalanceHistoryCalculator
     private static async Task<List<HistoryEntry>> GetExpenseEntriesAsync(VapeShopInventoryDbContext context, DateTime cutoffDate)
     {
         var expenseEntries = await context.Expenses
-        .Where(e => e.Date >= cutoffDate && (e.PaymentMethod == PaymentMethod.Cash || e.PaymentMethod == PaymentMethod.DigitalPayment))
-        .Select(e => new HistoryEntry
-        {
-            Date = e.Date,
-            SourceType = CashBalanceSourceType.Expense,
-            SourceId = e.Id,
-            PaymentMethod = e.PaymentMethod,
-            Amount = -e.Amount,
-            Description = e.PaymentNote
-        })
-        .ToListAsync();
+            .Where(e => e.Date >= cutoffDate && (e.PaymentMethod == PaymentMethod.Cash || e.PaymentMethod == PaymentMethod.DigitalPayment))
+            .Select(e => new HistoryEntry
+            {
+                Date = e.Date,
+                SourceType = CashBalanceSourceType.Expense,
+                SourceId = e.Id,
+                PaymentMethod = e.PaymentMethod,
+                Amount = -e.Amount,
+                Description = e.PaymentNote
+            })
+            .ToListAsync();
 
         return expenseEntries;
+    }
+    
+    private static async Task<List<HistoryEntry>> GetSettlementEntriesAsync(VapeShopInventoryDbContext context, DateTime cutoffDate)
+    {
+        var settlementEntries = await context.Settlements
+            .Where(se => se.Date >= cutoffDate)
+            .Select(se => new HistoryEntry
+            {
+                Date = se.Date,
+                SourceType = CashBalanceSourceType.Settlement,
+                SourceId = se.Id,
+                PaymentMethod = se.PaymentMethod,
+                Amount = se.SaleId != null ? se.Amount : -se.Amount,
+                Description = se.PaymentNote
+            })
+            .ToListAsync();
+
+        return settlementEntries;
     }
 }
