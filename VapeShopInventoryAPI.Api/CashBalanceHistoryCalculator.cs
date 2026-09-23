@@ -85,4 +85,6 @@ public static class CashBalanceHistoryCalculator
 
         return capitalTransactionEntries;
     }
+
+    //public method
 }
