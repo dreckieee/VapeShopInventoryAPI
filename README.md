@@ -80,5 +80,6 @@ Every `SaleResponse` includes computed `TotalAmount`, `AmountSettled`, and `Outs
 Part of my transition into remote software engineering (QA Automation → SDET → Full-Stack).
 Daily build-in-public log: [github.com/dreckieee/csharp](https://github.com/dreckieee/csharp)
 
+
 ## How to Run Locally
 `dotnet run`, then open `http://localhost:{port}/swagger` (check terminal output for the exact port)..
