@@ -23,4 +23,18 @@ public class CashBalanceController : ControllerBase
         
         return Ok(response);
     }
+
+    [HttpGet("history")]
+    public async Task<ActionResult<List<CashBalanceHistoryEntryResponse>>> GetCashBalanceHistory([FromQuery] int days)
+    {
+        try
+        {
+            var cashBalanceHistory = await CashBalanceHistoryCalculator.GetCashBalanceHistoryAsync(_context, days);
+            return Ok(cashBalanceHistory);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }
