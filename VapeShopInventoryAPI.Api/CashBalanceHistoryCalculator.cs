@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using VapeShopInventoryAPI.Api.DTOs;
 
 namespace VapeShopInventoryAPI.Api;
 
 public static class CashBalanceHistoryCalculator
 {
+    private const int MinDays = 1;
+    private const int MaxDays = 366;
+
     private record HistoryEntry
     {
         public required DateTime Date { get; init; }
@@ -49,7 +53,7 @@ public static class CashBalanceHistoryCalculator
 
         return expenseEntries;
     }
-    
+
     private static async Task<List<HistoryEntry>> GetSettlementEntriesAsync(VapeShopInventoryDbContext context, DateTime cutoffDate)
     {
         var settlementEntries = await context.Settlements
@@ -86,5 +90,57 @@ public static class CashBalanceHistoryCalculator
         return capitalTransactionEntries;
     }
 
-    //public method
+    public static async Task<List<CashBalanceHistoryEntryResponse>> GetCashBalanceHistoryAsync(VapeShopInventoryDbContext context, int days)
+    {
+        if (days < MinDays || days > MaxDays)
+        {
+            throw new ArgumentOutOfRangeException(nameof(days), $"Days for showing cash balance history entries should be between {MinDays} and {MaxDays}.");
+        }
+
+        DateTime cutoffDate = DateTime.Today.AddDays(-(days - 1));
+
+        var historyEntries = new List<HistoryEntry>();
+        var saleEntries = await GetSaleEntriesAsync(context, cutoffDate);
+        historyEntries.AddRange(saleEntries);
+        var expenseEntries = await GetExpenseEntriesAsync(context, cutoffDate);
+        historyEntries.AddRange(expenseEntries);
+        var settlementEntries = await GetSettlementEntriesAsync(context, cutoffDate);
+        historyEntries.AddRange(settlementEntries);
+        var capitalTransactionEntries = await GetCapitalTransactionEntriesAsync(context, cutoffDate);
+        historyEntries.AddRange(capitalTransactionEntries);
+
+        historyEntries = historyEntries
+            .OrderByDescending(he => he.Date)
+            .ThenBy(he => he.SourceType)
+            .ThenByDescending(he => he.SourceId)
+            .ToList();
+
+        var cashBalanceHistoryEntries = new List<CashBalanceHistoryEntryResponse>();
+        var (runningCashOnHand, runningDigitalBalance, _, _) = await CashBalanceCalculator.CalculateCashBalanceAsync(context);
+        foreach (HistoryEntry he in historyEntries)
+        {
+            var cashBalanceHistoryEntry = new CashBalanceHistoryEntryResponse
+            {
+                Date = he.Date,
+                SourceType = he.SourceType,
+                SourceId = he.SourceId,
+                PaymentMethod = he.PaymentMethod,
+                Amount = he.Amount,
+                RunningCashBalance = runningCashOnHand,
+                RunningDigitalBalance = runningDigitalBalance,
+                Description = he.Description
+            };
+            cashBalanceHistoryEntries.Add(cashBalanceHistoryEntry);
+            if (he.PaymentMethod == PaymentMethod.Cash)
+            {
+                runningCashOnHand -= he.Amount;
+            }
+            if (he.PaymentMethod == PaymentMethod.DigitalPayment)
+            {
+                runningDigitalBalance -= he.Amount;
+            }
+        }
+
+        return cashBalanceHistoryEntries;
+    }
 }
