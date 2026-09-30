@@ -16,7 +16,7 @@ public class CashBalanceHistoryApiTests
     private List<int> _createdSettlementIds = new ();
     private List<int> _createdCapitalTransactionIds = new ();
     private readonly DateTime _today = DateTime.Today;
-    
+
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
@@ -52,7 +52,7 @@ public class CashBalanceHistoryApiTests
     }
 
     [Test]
-    public async Task GetCashBalanceHistory_WithDays1AndMultipleTransactions_ReturnsCorrectSeededDataAndOk()
+    public async Task GetCashBalanceHistory_WithDays1AndMultipleCashTransactions_ReturnsCorrectSeededDataAndOk()
     {
         //sale1 cash 199.98
         var (_, sale1, _) = await CreateTestSaleWithItemAsync(price: 99.99m, paymentMethod: PaymentMethod.Cash, saleItemQuantity: 2, saleDate: _today);
@@ -61,10 +61,10 @@ public class CashBalanceHistoryApiTests
         var (_, expense1) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, amount: 49.99m, date: _today);
 
         //deposit1 cash 500.00
-        var (_, deposit1) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 500m, paymentMethod: PaymentMethod.Cash, date: _today);
+        var (_, deposit1) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 500.00m, paymentMethod: PaymentMethod.Cash, date: _today);
 
         //withdrawal1 cash 10.00
-        var (_, withdrawal1) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Withdrawal, paymentMethod: PaymentMethod.Cash, amount: 10m, date: _today);
+        var (_, withdrawal1) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Withdrawal, paymentMethod: PaymentMethod.Cash, amount: 10.00m, date: _today);
 
         var response = await _client.GetAsync("api/CashBalance/history?days=1");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
@@ -88,23 +88,58 @@ public class CashBalanceHistoryApiTests
             Assert.That(expenseRow.Amount, Is.EqualTo(-49.99m));
             Assert.That(depositRow.Amount, Is.EqualTo(500.00m));
             Assert.That(withdrawalRow.Amount, Is.EqualTo(-10.00m));
-        });
 
-        Assert.Multiple(() =>
-        {
             Assert.That(saleRow.Date, Is.EqualTo(_today));
             Assert.That(expenseRow.Date, Is.EqualTo(_today));
             Assert.That(depositRow.Date, Is.EqualTo(_today));
             Assert.That(withdrawalRow.Date, Is.EqualTo(_today));
-        });
 
-        Assert.Multiple(() =>
-        {
             Assert.That(saleRow.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
             Assert.That(expenseRow.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
             Assert.That(depositRow.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
             Assert.That(withdrawalRow.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
         });
+    }
+
+    [Test]
+    public async Task GetCashBalanceHistory_WithDays1AndSettlements_ReturnsCorrectSettlementsDataAndOk()
+    {
+        //sale1 receivable 160.00
+        var (_, sale1, _) = await CreateTestSaleWithItemAsync(price: 80.00m, paymentMethod: PaymentMethod.Receivable, saleItemQuantity: 2, saleDate: _today);
+
+        //expense1 payable 120.00
+        var (_, expense1) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable, amount: 120.00m, date: _today);
+        
+        //settlement1 sale cash 60.00
+        var (_, settlement1) = await CreateTestSettlementAsync(saleId: sale1.Id, paymentMethod: PaymentMethod.Cash, amount: 60.00m, date: _today);
+
+        //settlement2 expense cash 45.00
+        var (_, settlement2) = await CreateTestSettlementAsync(expenseId: expense1.Id, paymentMethod: PaymentMethod.Cash, amount: 45.00m, date: _today);
+
+        var response = await _client.GetAsync("api/CashBalance/history?days=1");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var cashBalanceHistory = await response.Content.ReadFromJsonAsync<List<CashBalanceHistoryEntryResponse>>(TestJsonOptions.Default);
+        Assert.That(cashBalanceHistory, Is.Not.Null);
+
+        Assert.That(cashBalanceHistory.Find(entry => entry.SourceId == sale1.Id && entry.SourceType == CashBalanceSourceType.Sale), Is.Null);
+        Assert.That(cashBalanceHistory.Find(entry => entry.SourceId == expense1.Id && entry.SourceType == CashBalanceSourceType.Expense), Is.Null);
+
+        var saleSettlementRow = cashBalanceHistory.Find(entry => entry.SourceId == settlement1.Id && entry.SourceType == CashBalanceSourceType.Settlement);
+        var expenseSettlementRow = cashBalanceHistory.Find(entry => entry.SourceId == settlement2.Id && entry.SourceType == CashBalanceSourceType.Settlement);
+
+        Assert.That(saleSettlementRow, Is.Not.Null);
+        Assert.That(expenseSettlementRow, Is.Not.Null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(saleSettlementRow.Amount, Is.EqualTo(60.00m));
+            Assert.That(expenseSettlementRow.Amount, Is.EqualTo(-45.00m));
+            Assert.That(saleSettlementRow.Date, Is.EqualTo(_today));
+            Assert.That(expenseSettlementRow.Date, Is.EqualTo(_today));
+            Assert.That(saleSettlementRow.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
+            Assert.That(expenseSettlementRow.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
+        }); 
     }
 
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
