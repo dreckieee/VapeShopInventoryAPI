@@ -142,6 +142,64 @@ public class CashBalanceHistoryApiTests
         }); 
     }
 
+    [Test]
+    public async Task GetCashBalanceHistory_WithMixedBucketsAndRecency_RunningBalancesFollowDeltaInvariantAndOk()
+    {
+        //sale1 digitalpayment 179.98
+        var (_, sale1, _) = await CreateTestSaleWithItemAsync(price: 89.99m, paymentMethod: PaymentMethod.DigitalPayment, saleItemQuantity: 2, saleDate: _today.AddDays(-1));
+
+        //expense1 cash 129.99
+        var (_, expense1) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, amount: 129.99m, date: _today.AddDays(-2));
+        
+        //sale2 cash 77.77
+        var (_, sale2, _) = await CreateTestSaleWithItemAsync(price: 77.77m, paymentMethod: PaymentMethod.Cash, saleItemQuantity: 1, saleDate: _today.AddDays(-1));
+
+        //expense2 digitalpayment 101.00
+        var (_, expense2) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.DigitalPayment, amount: 101.00m, date: _today.AddDays(-3));
+
+        //withdrawal1 cash 100.00
+        var (_, withdrawal1) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Withdrawal, paymentMethod: PaymentMethod.Cash, amount: 100.00m, date: _today.AddDays(-4));
+
+        var response = await _client.GetAsync("api/CashBalance/history?days=5");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var cashBalanceHistory = await response.Content.ReadFromJsonAsync<List<CashBalanceHistoryEntryResponse>>(TestJsonOptions.Default);
+        Assert.That(cashBalanceHistory, Is.Not.Null);
+
+        var sale1Row = cashBalanceHistory.Find(entry => entry.SourceId == sale1.Id && entry.SourceType == CashBalanceSourceType.Sale);
+        var sale2Row = cashBalanceHistory.Find(entry => entry.SourceId == sale2.Id && entry.SourceType == CashBalanceSourceType.Sale);
+        var expense1Row = cashBalanceHistory.Find(entry => entry.SourceId == expense1.Id && entry.SourceType == CashBalanceSourceType.Expense);
+        var expense2Row = cashBalanceHistory.Find(entry => entry.SourceId == expense2.Id && entry.SourceType == CashBalanceSourceType.Expense);
+        var withdrawal1Row = cashBalanceHistory.Find(entry => entry.SourceId == withdrawal1.Id && entry.SourceType == CashBalanceSourceType.CapitalTransaction);
+
+        Assert.That(sale1Row, Is.Not.Null);
+        Assert.That(sale2Row, Is.Not.Null);
+        Assert.That(expense1Row, Is.Not.Null);
+        Assert.That(expense2Row, Is.Not.Null);
+        Assert.That(withdrawal1Row, Is.Not.Null);
+
+        Assert.Multiple(() =>
+        {
+            for(int i = 0; i < cashBalanceHistory.Count - 1; i++)
+            {
+                var current = cashBalanceHistory[i];
+                var next = cashBalanceHistory[i+1];
+
+                Assert.That(
+                    current.RunningCashBalance - (
+                        current.PaymentMethod == PaymentMethod.Cash ? current.Amount : 0
+                        ), 
+                    Is.EqualTo(next.RunningCashBalance));
+
+                Assert.That(
+                    current.RunningDigitalBalance - (
+                        current.PaymentMethod == PaymentMethod.DigitalPayment ? current.Amount : 0
+                        ), 
+                    Is.EqualTo(next.RunningDigitalBalance));
+            }
+        });
+    }
+
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
         string name = "Test Product", 
         string? sku = null, 
