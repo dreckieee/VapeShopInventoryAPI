@@ -200,6 +200,38 @@ public class CashBalanceHistoryApiTests
         });
     }
 
+    [Test]
+    public async Task GetCashBalanceHistory_WithDays3_IncludesEarlyMorningRowOnOldestDayAndExcludesDayBefore()
+    {
+        int days = 3;
+        var oldestDay = _today.AddDays(-(days - 1));
+        var includedDate = oldestDay.AddMinutes(1);
+        var excludedDate = oldestDay.AddMinutes(-1);
+
+        var (_, expense1) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, amount: 129.99m, date: includedDate);
+        var (_, expense2) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, amount: 102.00m, date: excludedDate);
+
+        var response = await _client.GetAsync($"api/CashBalance/history?days={days}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var cashBalanceHistory = await response.Content.ReadFromJsonAsync<List<CashBalanceHistoryEntryResponse>>(TestJsonOptions.Default);
+        Assert.That(cashBalanceHistory, Is.Not.Null);
+
+        var expense1Row = cashBalanceHistory.Find(entry => entry.SourceId == expense1.Id && entry.SourceType == CashBalanceSourceType.Expense);
+        var expense2Row = cashBalanceHistory.Find(entry => entry.SourceId == expense2.Id && entry.SourceType == CashBalanceSourceType.Expense);
+
+        Assert.That(expense1Row, Is.Not.Null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(expense2Row, Is.Null);
+
+            Assert.That(expense1Row.Date, Is.EqualTo(includedDate));
+            Assert.That(expense1Row.Amount, Is.EqualTo(-129.99m));
+            Assert.That(expense1Row.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
+        });
+    }
+
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
         string name = "Test Product", 
         string? sku = null, 
