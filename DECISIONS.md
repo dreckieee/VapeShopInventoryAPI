@@ -292,3 +292,26 @@ No coding sessions — unplanned personal gap. Logged, not skipped, per the day-
 - `test: add sign, amount, date and payment method test for Cash Balance History`
 - `test: add settlement sign test for Cash Balance History` (also carries the Test 1 flat-block/number-style tidy-up — same file, same category)
 
+---
+# 8. Working rule change log
+
+## Working rule change (Day 132): README update cadence
+README is now updated once at session close (not per-push), covering all README-visible changes made that session.
+ 
+## Working rule change (Day 134): session-close draft order
+Session-close order is now: (1) social media posts, (2) README (if applicable), (3) Custom Instructions (if any working rule changed), (4) ACTIVE_PHASE.md, (5) KEY_DECISIONS.md last. All document drafts must be given as full, complete, copy-paste-ready text — never partial/excerpt updates.
+ 
+## Working rule change (Day 135): response DTO `required` scope corrected
+Response DTOs (populated via static `FromX` factory methods) now mark every property `required`, regardless of type. `CashBalanceResponse` (Day 144) follows this same rule from creation.
+ 
+## Working rule change (Day 156): repo access
+GitHub sync in the Claude project was dropped (token cost; pasting on request also forces closer reading of what is being asked for). Claude now names the exact files it needs, and they are pasted in full; pasted files may be stale after edits, so the current version is re-pasted before review. Added to Custom Instructions as a new 'Working rules — repo access' section Day 156.
+ 
+## Working rule change (Day 157): test date-handling exception
+Default test-helper dates remain a fixed `new DateTime(2026, 01, 01)` project-wide, EXCEPT `CashBalanceHistoryApiTests.cs` (and any future test file proving a `days`-relative-to-today window), which defaults to `DateTime.Today` instead — because the feature under test is explicitly defined relative to 'today,' so a fixed past literal can't exercise it. Same category of exception as the existing future-date-guard exception. Any test creating multiple related/dated entities in such a file must read `DateTime.Today` exactly once (a `private readonly DateTime _today` field) and share that single value across every helper call in the test, to avoid a midnight-boundary straddle. Added to Custom Instructions as a new 'Working rules — testing (date handling)' section Day 157.
+ 
+## Working rule change (Day 158): test assertion conventions
+Existence checks on a looked-up row are plain single asserts placed before the property asserts; independent property asserts go in ONE flat `Assert.Multiple`; expected values for seeded data are literals the test chose, not values read back from the API's own create responses; sign/branch tests get a mutation check before commit; failure messages stay on status-code asserts only. Added to Custom Instructions as a new 'Working rules — testing (assertions)' section Day 158. Full rationale in KEY_DECISIONS.md.
+ 
+## Working rule change (Day 158): token efficiency
+Usage-limit hits became frequent (session limit reached after only a few messages, worst at post-session doc drafts). Causes identified: the whole conversation is re-sent every message (the ~400-line test file was pasted ~5 times with ~60 lines of test output each), the always-loaded Project Knowledge files are large and growing (KEY_DECISIONS.md ~40 KB with exact-duplicate entries, ACTIVE_PHASE.md ~9 KB with Day 148–157 logs), and full-replacement doc drafts are very large outputs. New rules: paste only the changed method/test plus the `Test summary:` line and any failure block; one topic per conversation; document restructuring is its own no-coding session. Added to Custom Instructions as a new 'Working rules — token efficiency' section Day 158. The restructure itself is planned for Day 159 (see Next session).
