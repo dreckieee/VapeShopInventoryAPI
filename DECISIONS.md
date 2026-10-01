@@ -292,6 +292,19 @@ No coding sessions — unplanned personal gap. Logged, not skipped, per the day-
 - `test: add sign, amount, date and payment method test for Cash Balance History`
 - `test: add settlement sign test for Cash Balance History` (also carries the Test 1 flat-block/number-style tidy-up — same file, same category)
 
+## Day 159 (Oct 1)
+**Restructure day, no coding.** Cause: Project Knowledge files load on every message, so their size multiplied by turns per conversation drove the Day 158 usage-limit hits. Goal: smaller always-loaded files without losing any rule's reason.
+1. **KEY_DECISIONS.md shrunk.** Settlement, CapitalTransaction, and Cash Balance sections moved verbatim into DECISIONS.md (section 3) and replaced by one-line standing rules that keep each rule, when it applies, and a one-clause reason. 20 exact duplicates and 4 pointer-only entries removed from General working rules, each checked against a surviving copy first. The Cash Balance History section was left whole.
+2. **Three catches during the removal stress test.** (a) 'Test organization by causal origin' sat inside the Settlement section but governs every test file, so it was kept. (b) The History section depends on three rejected alternatives recorded in the moved sections (the `DigitalCash` naming, four public methods, a conditional DTO), so each one-liner keeps its reason. (c) Three 'see ... section' references would have dangled and were repointed.
+3. **Verified.** After the swap, 5 known-answer questions in a fresh conversation (the `days` guard location, why `CashBalance` has no year/month filter, the Day 145 production `500`, why `DigitalCash` was rejected, why `SettlementCalculator` skips the query for Cash/Digital) all passed.
+4. **DECISIONS.md rewritten.** Stale items corrected (restock now has tests, category filter deployed Day 106, PaymentMethod deployed Day 133, Restrict list includes the Settlement FKs); postmortems added for Day 138, 145 and 156; Day 148–158 devlog and the working rule change log appended.
+5. **ACTIVE_PHASE.md trimmed** to current state: old logs, duplicated rules, and the Day 145 deploy-session list moved out.
+6. **Custom Instructions unchanged.** The assertion and date-handling rules must stay there, since KEY_DECISIONS.md relies on them.
+Test suite unchanged at 105/105. Cash Balance History still not deployed.
+## Commits (Day 159)
+- docs: rewrite DECISIONS.md with shipped feature sections and updated history
+- docs: append Day 148-158 devlog and working rule change log to DECISIONS.md
+
 ---
 # 8. Working rule change log
 
