@@ -232,6 +232,32 @@ public class CashBalanceHistoryApiTests
         });
     }
 
+    [Test]
+    public async Task GetCashBalanceHistory_WithDays3_IncludesRowAtExactMidnightOfOldestDay()
+    {
+        int days = 3;
+        var oldestDay = _today.AddDays(-(days - 1));
+
+        var (_, expense) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, amount: 999.99m, date: oldestDay);
+
+        var response = await _client.GetAsync($"api/CashBalance/history?days={days}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var cashBalanceHistory = await response.Content.ReadFromJsonAsync<List<CashBalanceHistoryEntryResponse>>(TestJsonOptions.Default);
+        Assert.That(cashBalanceHistory, Is.Not.Null);
+
+        var expenseRow = cashBalanceHistory.Find(entry => entry.SourceId == expense.Id && entry.SourceType == CashBalanceSourceType.Expense);
+
+        Assert.That(expenseRow, Is.Not.Null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(expenseRow.Date, Is.EqualTo(oldestDay));
+            Assert.That(expenseRow.Amount, Is.EqualTo(-999.99m));
+            Assert.That(expenseRow.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
+        });
+    }
+
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
         string name = "Test Product", 
         string? sku = null, 
