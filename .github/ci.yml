@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - run: dotnet restore VapeShopInventoryAPI.slnx
+
+      - run: dotnet build VapeShopInventoryAPI.slnx --no-restore --configuration Release
+
+      - run: dotnet test VapeShopInventoryAPI.slnx --no-build --configuration Release
