@@ -156,6 +156,7 @@ A Day 149 conclusion ('no time of day') was wrong for real data: a production Sa
 
 ## Open items
 - Test coverage gap (Day 133): malformed enum *string* `PaymentMethod` input path not yet tested.
+- Test coverage gap (restock): duplicate-ProductId, invalid quantity/cost and empty-Items cases are untested (per the old README as of Day 160; re-verify before closing).
 - NETSDK1194 warning on solution-level publish (Day 145): `dotnet publish` at `.slnx` level builds the Tests project into the production output directory. Candidate fix: publish `.Api.csproj` directly. Cosmetic.
 - Optional `.editorconfig` + `dotnet format whitespace` (Day 156): undecided.
 - Model-binding error message polish (Day 133): standard ASP.NET behavior, not planned.
