@@ -1,0 +1,149 @@
+{
+  "info": {
+    "_postman_id": "dc9938a1-59b9-45b6-b001-53acbfcd2d8c",
+    "name": "VapeShopInventoryAPI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "59083938",
+    "_collection_link": "https://go.postman.co/collection/59083938-dc9938a1-59b9-45b6-b001-53acbfcd2d8c?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "GET Products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Products",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 201\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Response matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.name).to.eql(\"Postman Test Vape Juice 30ml\");\r\n});\r\n\r\npm.test(\"Response matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.price).to.eql(250);\r\n});\r\n\r\npm.test(\"Response matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.isLowStock).to.eql(false);\r\n});\r\n\r\npm.collectionVariables.set(\"productId\", pm.response.json().id);\r\npm.collectionVariables.set(\"productSku\", pm.response.json().sku);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 250.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "GET Products/{productId}",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Returns the requested product's id\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.id).to.eql(Number(pm.collectionVariables.get(\"productId\")));\r\n});\r\n\r\npm.test(\"Returns the requested product's name\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.name).to.eql(\"Postman Test Vape Juice 30ml\");\r\n});\r\n\r\npm.test(\"Returns the requested product's low stock level status\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.isLowStock).to.eql(false);\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products/{{productId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products",
+            "{{productId}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Post Products (duplicate Sku)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 409\", function () {\r\n    pm.response.to.have.status(409);\r\n});\r\n\r\npm.test(\"Returns the duplicate SKU error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.eql(\"A product with this SKU already exists.\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"{{productSku}}\",\r\n  \"price\": 250.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5208"
+    },
+    {
+      "key": "productId",
+      "value": ""
+    },
+    {
+      "key": "productSku",
+      "value": ""
+    }
+  ]
+}
