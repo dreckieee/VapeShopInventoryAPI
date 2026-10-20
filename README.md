@@ -72,4 +72,4 @@ GitHub Actions builds and runs the full suite on every push and pull request to 
 Runs as a systemd service on Ubuntu 24.04 (DigitalOcean, Singapore). Swagger is enabled in production for demos. There is no authentication, a deliberate scope choice for this portfolio project, so the live URL is not published. A live demo is available on request.
 
 ## About
-Part of my transition into remote software engineering (QA Automation, SDET, Full-Stack). Daily build-in-public log: [github.com/dreckieee/csharp](https://github.com/dreckieee/csharp)
+built while growing into software engineering, with a focus on QA and .NET. More of my work: [C# console apps](https://github.com/dreckieee/csharp), [Playwright + TypeScript tests (in progress)](https://github.com/dreckieee/toolshop-playwright-ts), [LinkedIn](https://linkedin.com/in/dreckieee).
