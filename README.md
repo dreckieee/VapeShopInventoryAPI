@@ -62,6 +62,8 @@ Sale and expense responses include computed `TotalAmount`, `AmountSettled` and `
 ## Testing
 108 NUnit tests using `WebApplicationFactory<Program>` against an isolated in-memory SQLite database. No separate server is needed.
 
+A Postman collection is in `postman/VapeShopInventoryAPI.postman_collection.json`; it targets the local API only (`http://localhost:5208`), so start the API first.
+
 ```
 dotnet test
 ```
