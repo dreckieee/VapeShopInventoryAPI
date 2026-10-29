@@ -78,11 +78,12 @@ A Postman collection for manual API checks is in `postman/VapeShopInventoryAPI.p
 4. Run the requests in this order:
    1. `POST Products` creates a product with a unique SKU and saves `productId` and `productSku` as collection variables.
    2. `GET Products/{productId}` reads that product back.
-   3. `Post Products (duplicate Sku)` sends the same SKU again.
+   3. `POST Products (duplicate Sku)` sends the same SKU again.
+   4. Four negative requests, `POST Products (...)`, follow. They are independent of the others.
 
 The order matters because steps 2 and 3 use the variables saved by step 1.
 
-What the checks cover: status codes (`201`, `200`, `409`), the returned name, price and `isLowStock`, the returned id, and the duplicate-SKU message.
+What the checks cover: status codes (`201`, `200`, `409`, `400`), the returned name, price and `isLowStock`, the returned id, and the duplicate-SKU message. The negative requests check that invalid product input returns `400`: negative stock, empty name, a missing required field, and a negative low-stock level.
 
 ## Live deployment
 Runs as a systemd service on Ubuntu 24.04 (DigitalOcean, Singapore). Swagger is enabled in production for demos. There is no authentication, a deliberate scope choice for this portfolio project, so the live URL is not published. A live demo is available on request.
