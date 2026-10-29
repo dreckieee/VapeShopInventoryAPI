@@ -33,7 +33,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test(\"Status is 201\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Response matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.name).to.eql(\"Postman Test Vape Juice 30ml\");\r\n});\r\n\r\npm.test(\"Response matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.price).to.eql(250);\r\n});\r\n\r\npm.test(\"Response matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.isLowStock).to.eql(false);\r\n});\r\n\r\npm.collectionVariables.set(\"productId\", pm.response.json().id);\r\npm.collectionVariables.set(\"productSku\", pm.response.json().sku);"
+              "pm.test(\"Status is 201\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Response name matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.name).to.eql(\"Postman Test Vape Juice 30ml\");\r\n});\r\n\r\npm.test(\"Response price matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.price).to.eql(250);\r\n});\r\n\r\npm.test(\"Response isLowStock correctly shows if stockQuantity is equal to or below lowStockLevel\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.isLowStock).to.eql(false);\r\n});\r\n\r\npm.collectionVariables.set(\"productId\", pm.response.json().id);\r\npm.collectionVariables.set(\"productSku\", pm.response.json().sku);"
             ]
           }
         }
@@ -94,7 +94,7 @@
       "response": []
     },
     {
-      "name": "Post Products (duplicate Sku)",
+      "name": "POST Products (duplicate Sku)",
       "event": [
         {
           "listen": "test",
@@ -112,6 +112,158 @@
         "body": {
           "mode": "raw",
           "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"{{productSku}}\",\r\n  \"price\": 250.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Products (negative stock)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Returns the negative stock error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.include(\"Stock cannot be negative.\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": -20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Products (empty name)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Returns the empty product name error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.include(\"Name cannot be empty\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Products (missing required name field)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Products (negative low-stock level)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Returns the negative low-stock level error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.include(\"A level of low stock cannot be negative.\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": -1,\r\n  \"category\": \"E-liquid\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
