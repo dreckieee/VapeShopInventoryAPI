@@ -27,6 +27,7 @@ ASP.NET Core Web API that runs the inventory, sales and cash tracking of a real 
 - Entity Framework Core + SQLite
 - NUnit + `WebApplicationFactory`
 - GitHub Actions (CI)
+- Postman (API checks)
 
 ## Run locally
 Requires the .NET 10 SDK.
@@ -62,16 +63,29 @@ Sale and expense responses include computed `TotalAmount`, `AmountSettled` and `
 ## Testing
 108 NUnit tests using `WebApplicationFactory<Program>` against an isolated in-memory SQLite database. No separate server is needed.
 
-A Postman collection is in `postman/VapeShopInventoryAPI.postman_collection.json`; it targets the local API only (`http://localhost:5208`), so start the API first.
-
 ```
 dotnet test
 ```
 
 GitHub Actions builds and runs the full suite on every push and pull request to `main`. Known coverage gaps are tracked in [DECISIONS.md](./DECISIONS.md).
 
+### Postman collection
+A Postman collection for manual API checks is in `postman/VapeShopInventoryAPI.postman_collection.json`. It targets the local API only, never the live server.
+
+1. Start the API (see [Run locally](#run-locally)).
+2. In Postman, choose Import and select the collection file.
+3. Check the collection variable `baseUrl`: it should be `http://localhost:5208`. If the terminal prints a different port, change `baseUrl` to match.
+4. Run the requests in this order:
+   1. `POST Products` creates a product with a unique SKU and saves `productId` and `productSku` as collection variables.
+   2. `GET Products/{productId}` reads that product back.
+   3. `Post Products (duplicate Sku)` sends the same SKU again.
+
+The order matters because steps 2 and 3 use the variables saved by step 1.
+
+What the checks cover: status codes (`201`, `200`, `409`), the returned name, price and `isLowStock`, the returned id, and the duplicate-SKU message.
+
 ## Live deployment
 Runs as a systemd service on Ubuntu 24.04 (DigitalOcean, Singapore). Swagger is enabled in production for demos. There is no authentication, a deliberate scope choice for this portfolio project, so the live URL is not published. A live demo is available on request.
 
 ## About
-built while growing into software engineering, with a focus on QA and .NET. More of my work: [C# console apps](https://github.com/dreckieee/csharp), [Playwright + TypeScript tests (in progress)](https://github.com/dreckieee/toolshop-playwright-ts), [LinkedIn](https://linkedin.com/in/dreckieee).
+Built while growing into software engineering, with a focus on QA and .NET. More of my work: [C# console apps](https://github.com/dreckieee/csharp), [Playwright + TypeScript tests (in progress)](https://github.com/dreckieee/toolshop-playwright-ts), [LinkedIn](https://linkedin.com/in/dreckieee).
