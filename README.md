@@ -89,4 +89,4 @@ What the checks cover: status codes (`201`, `200`, `409`, `400`), the returned n
 Runs as a systemd service on Ubuntu 24.04 (DigitalOcean, Singapore). Swagger is enabled in production for demos. There is no authentication, a deliberate scope choice for this portfolio project, so the live URL is not published. A live demo is available on request.
 
 ## About
-Built while growing into software engineering, with a focus on QA and .NET. More of my work: [C# console apps](https://github.com/dreckieee/csharp), [Playwright + TypeScript tests (in progress)](https://github.com/dreckieee/toolshop-playwright-ts), [LinkedIn](https://linkedin.com/in/dreckieee).
+Built while growing into software engineering, with a focus on QA and .NET. More of my work: [C# console apps](https://github.com/dreckieee/csharp), [Playwright + TypeScript tests (in progress)](https://github.com/dreckieee/toolshop-playwright-ts), [LinkedIn](https://linkedin.com/in/dreckieee)..
