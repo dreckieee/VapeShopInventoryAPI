@@ -69,7 +69,7 @@ dotnet test
 
 GitHub Actions builds and runs the full suite on every push and pull request to `main`. Known coverage gaps are tracked in [DECISIONS.md](./DECISIONS.md).
 
-### Postman collection
+### Postman collection (in progress)
 A Postman collection for manual API checks is in `postman/VapeShopInventoryAPI.postman_collection.json`. It targets the local API only, never the live server.
 
 1. Start the API (see [Run locally](#run-locally)).
