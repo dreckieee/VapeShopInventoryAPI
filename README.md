@@ -69,21 +69,13 @@ dotnet test
 
 GitHub Actions builds and runs the full suite on every push and pull request to `main`. Known coverage gaps are tracked in [DECISIONS.md](./DECISIONS.md).
 
-### Postman collection (in progress)
-A Postman collection for manual API checks is in `postman/VapeShopInventoryAPI.postman_collection.json`. It targets the local API only, never the live server.
+### Postman collection
+A Postman collection for manual API checks is in `postman/VapeShopInventoryAPI.postman_collection.json`. It targets the local API only (`http://localhost:5208`), never the live server.
 
-1. Start the API (see [Run locally](#run-locally)).
-2. In Postman, choose Import and select the collection file.
-3. Check the collection variable `baseUrl`: it should be `http://localhost:5208`. If the terminal prints a different port, change `baseUrl` to match.
-4. Run the requests in this order:
-   1. `POST Products` creates a product with a unique SKU and saves `productId` and `productSku` as collection variables.
-   2. `GET Products/{productId}` reads that product back.
-   3. `POST Products (duplicate Sku)` sends the same SKU again.
-   4. Four negative requests, `POST Products (...)`, follow. They are independent of the others.
+To run it: start the API (see [Run locally](#run-locally)), import the collection into Postman, then run each folder from its first request.
 
-The order matters because steps 2 and 3 use the variables saved by step 1.
-
-What the checks cover: status codes (`201`, `200`, `409`, `400`), the returned name, price and `isLowStock`, the returned id, and the duplicate-SKU message. The negative requests check that invalid product input returns `400`: negative stock, empty name, a missing required field, and a negative low-stock level.
+- **Product API**: create, read, duplicate-SKU and invalid-input checks (`201`, `200`, `409`, `400`).
+- **Cash flow end-to-end**: create a product, restock 20 units, sell and close a sale, then check that cash on hand changed by exactly 3000 (5000 sale minus 2000 restock).
 
 ## Live deployment
 Runs as a systemd service on Ubuntu 24.04 (DigitalOcean, Singapore). Swagger is enabled in production for demos. There is no authentication, a deliberate scope choice for this portfolio project, so the live URL is not published. A live demo is available on request.
