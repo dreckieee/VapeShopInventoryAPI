@@ -8,286 +8,551 @@
   },
   "item": [
     {
-      "name": "GET Products",
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/products",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "products"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "POST Products",
-      "event": [
+      "name": "Cash Flow End-to-End",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 201\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Response name matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.name).to.eql(\"Postman Test Vape Juice 30ml\");\r\n});\r\n\r\npm.test(\"Response price matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.price).to.eql(250);\r\n});\r\n\r\npm.test(\"Response isLowStock correctly shows if stockQuantity is equal to or below lowStockLevel\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.isLowStock).to.eql(false);\r\n});\r\n\r\npm.collectionVariables.set(\"productId\", pm.response.json().id);\r\npm.collectionVariables.set(\"productSku\", pm.response.json().sku);"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 250.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "name": "Cash Flow 1 - POST Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Product Id is returned\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.id).to.be.a(\"number\");\r\n});\r\n\r\nif (pm.response.code === 201) {\r\n    pm.collectionVariables.set(\"cashFlowProductId\", pm.response.json().id);\r\n}"
+                ]
+              }
             }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/products",
-          "host": [
-            "{{baseUrl}}"
           ],
-          "path": [
-            "api",
-            "products"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "GET Products/{productId}",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Returns the requested product's id\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.id).to.eql(Number(pm.collectionVariables.get(\"productId\")));\r\n});\r\n\r\npm.test(\"Returns the requested product's name\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.name).to.eql(\"Postman Test Vape Juice 30ml\");\r\n});\r\n\r\npm.test(\"Returns the requested product's low stock level status\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.isLowStock).to.eql(false);\r\n});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "header": [],
-        "url": {
-          "raw": "{{baseUrl}}/api/products/{{productId}}",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "products",
-            "{{productId}}"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "POST Products (duplicate Sku)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 409\", function () {\r\n    pm.response.to.have.status(409);\r\n});\r\n\r\npm.test(\"Returns the duplicate SKU error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.eql(\"A product with this SKU already exists.\");\r\n});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"{{productSku}}\",\r\n  \"price\": 250.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"CF-{{$randomUUID}}\",\r\n  \"price\": 250.00,\r\n  \"stockQuantity\": 0,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
             }
-          }
+          },
+          "response": []
         },
-        "url": {
-          "raw": "{{baseUrl}}/api/products",
-          "host": [
-            "{{baseUrl}}"
+        {
+          "name": "Cash Flow 2 - GET Cash Balance Before",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\nif (pm.response.code === 200) {\r\n    pm.collectionVariables.set(\"cashFlowCashBefore\", pm.response.json().cashOnHand);\r\n}"
+                ]
+              }
+            }
           ],
-          "path": [
-            "api",
-            "products"
-          ]
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cashbalance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cashbalance"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cash Flow 3 - POST Restock",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\nconst body = pm.response.json();\r\nconst productId = Number(pm.collectionVariables.get(\"cashFlowProductId\"));\r\nconst product = body.updatedProducts.find(p => p.id === productId);\r\n\r\npm.test(\"Expense total amount is 2000\", function () {\r\n    pm.expect(body.expense.amount).to.eql(2000); // 20 quantity * 100 unit cost = 2000\r\n});\r\n\r\npm.test(\"Product exists\", function () {\r\n    pm.expect(product).to.not.be.undefined;\r\n});\r\n\r\npm.test(\"Stock quantity is 20\", function () {\r\n    pm.expect(product?.stockQuantity).to.eql(20); // restocked 20 onto a product that started at 0\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"date\": \"2026-10-30\",\r\n  \"paymentMethod\": \"Cash\",\r\n  \"paymentNote\": \"Cash Flow Test Payment Note for Restock\",\r\n  \"description\": \"Cash Flow Test Description for Restock\",\r\n  \"items\": [\r\n    {\r\n      \"productId\": {{cashFlowProductId}},\r\n      \"quantity\": 20,\r\n      \"unitCost\": 100\r\n    }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/restock",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "restock"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cash Flow 4 - POST Sales",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Returned Sale Id is a number\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.id).to.be.a(\"number\");\r\n});\r\n\r\nif (pm.response.code === 201) {\r\n    pm.collectionVariables.set(\"cashFlowSaleId\", pm.response.json().id);\r\n}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"saleDate\": \"2026-10-30\",\r\n  \"paymentMethod\": \"Cash\",\r\n  \"paymentNote\": \"Cash Flow Test Payment Note for creating Sale\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sales"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cash Flow 5 - POST Sale Items",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\nconst body = pm.response.json();\r\nconst productId = Number(pm.collectionVariables.get(\"cashFlowProductId\"));\r\nconst saleItem = body.saleItems.find(si => si.productId === productId);\r\n\r\npm.test(\"Sale Total amount is 5000\", function () {\r\n    pm.expect(body.totalAmount).to.eql(5000); //20 quantity * 250 unitPrice = 5000\r\n});\r\n\r\npm.test(\"Sale Item exists\", function () {\r\n    pm.expect(saleItem).to.not.be.undefined;\r\n});\r\n\r\npm.test(\"Sale Item quantity is 20\", function () {\r\n    pm.expect(saleItem?.quantity).to.eql(20); // body sends quantity 20\r\n});\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"productId\": {{cashFlowProductId}},\r\n  \"quantity\": 20,\r\n  \"unitPriceAtSale\": 250\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/saleitems/{{cashFlowSaleId}}/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "saleitems",
+                "{{cashFlowSaleId}}",
+                "items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cash Flow 6 - POST Close Sale",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\nconst body = pm.response.json();\r\n\r\npm.test(\"Sale property isClosed is true\", function () {\r\n    pm.expect(body.isClosed).to.eql(true);\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sales/{{cashFlowSaleId}}/close",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sales",
+                "{{cashFlowSaleId}}",
+                "close"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Cash Flow 7 - GET Cash Balance After",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\nconst body = pm.response.json();\r\nconst cashFlowCashBefore = Number(pm.collectionVariables.get(\"cashFlowCashBefore\"));\r\n\r\npm.test(\"Cash before value was captured\", function () {\r\n    pm.expect(Number.isFinite(cashFlowCashBefore)).to.eql(true);\r\n});\r\n\r\npm.test(\"Cash on hand increased by 3000\", function () {\r\n    pm.expect(body.cashOnHand - cashFlowCashBefore).to.eql(3000); // sale 20 x 250 = 5000, minus restock 20 x 100 = 2000\r\n});\r\n\r\n"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cashbalance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cashbalance"
+              ]
+            }
+          },
+          "response": []
         }
-      },
-      "response": []
+      ]
     },
     {
-      "name": "POST Products (negative stock)",
-      "event": [
+      "name": "Product API",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Returns the negative stock error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.include(\"Stock cannot be negative.\");\r\n});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": -20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "name": "GET Products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
             }
-          }
+          },
+          "response": []
         },
-        "url": {
-          "raw": "{{baseUrl}}/api/products",
-          "host": [
-            "{{baseUrl}}"
-          ],
-          "path": [
-            "api",
-            "products"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "POST Products (empty name)",
-      "event": [
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Returns the empty product name error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.include(\"Name cannot be empty\");\r\n});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"name\": \"\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "name": "POST Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Response name matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.name).to.eql(\"Postman Test Vape Juice 30ml\");\r\n});\r\n\r\npm.test(\"Response price matches what was sent\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.price).to.eql(250);\r\n});\r\n\r\npm.test(\"Response isLowStock correctly shows if stockQuantity is equal to or below lowStockLevel\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.isLowStock).to.eql(false);\r\n});\r\n\r\npm.collectionVariables.set(\"productId\", pm.response.json().id);\r\npm.collectionVariables.set(\"productSku\", pm.response.json().sku);"
+                ]
+              }
             }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/products",
-          "host": [
-            "{{baseUrl}}"
           ],
-          "path": [
-            "api",
-            "products"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "POST Products (missing required name field)",
-      "event": [
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 250.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "name": "GET Products/{productId}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Returns the requested product's id\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.id).to.eql(Number(pm.collectionVariables.get(\"productId\")));\r\n});\r\n\r\npm.test(\"Returns the requested product's name\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.name).to.eql(\"Postman Test Vape Juice 30ml\");\r\n});\r\n\r\npm.test(\"Returns the requested product's low stock level status\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.isLowStock).to.eql(false);\r\n});"
+                ]
+              }
             }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/products",
-          "host": [
-            "{{baseUrl}}"
           ],
-          "path": [
-            "api",
-            "products"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "POST Products (negative low-stock level)",
-      "event": [
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products",
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": []
+        },
         {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Returns the negative low-stock level error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.include(\"A level of low stock cannot be negative.\");\r\n});"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": -1,\r\n  \"category\": \"E-liquid\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
+          "name": "POST Products (duplicate Sku)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", function () {\r\n    pm.response.to.have.status(409);\r\n});\r\n\r\npm.test(\"Returns the duplicate SKU error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.eql(\"A product with this SKU already exists.\");\r\n});"
+                ]
+              }
             }
-          }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/api/products",
-          "host": [
-            "{{baseUrl}}"
           ],
-          "path": [
-            "api",
-            "products"
-          ]
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"{{productSku}}\",\r\n  \"price\": 250.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Products (negative stock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Returns the negative stock error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.include(\"Stock cannot be negative.\");\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": -20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Products (empty name)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Returns the empty product name error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.include(\"Name cannot be empty\");\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Products (missing required name field)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": 5,\r\n  \"category\": \"E-liquid\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Products (negative low-stock level)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", function () {\r\n    pm.response.to.have.status(400);\r\n});\r\n\r\npm.test(\"Returns the negative low-stock level error message\", function () {\r\n    const body = pm.response.json();\r\n    pm.expect(body.message).to.include(\"A level of low stock cannot be negative.\");\r\n});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Postman Test Vape Juice 30ml\",\r\n  \"sku\": \"PM-{{$randomUUID}}\",\r\n  \"price\": 255.00,\r\n  \"stockQuantity\": 20,\r\n  \"lowStockLevel\": -1,\r\n  \"category\": \"E-liquid\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "products"
+              ]
+            }
+          },
+          "response": []
         }
-      },
-      "response": []
+      ]
     }
   ],
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:5208"
+    },
+    {
+      "key": "cashFlowCashBefore",
+      "value": ""
+    },
+    {
+      "key": "cashFlowProductId",
+      "value": ""
+    },
+    {
+      "key": "cashFlowSaleId",
+      "value": ""
     },
     {
       "key": "productId",
