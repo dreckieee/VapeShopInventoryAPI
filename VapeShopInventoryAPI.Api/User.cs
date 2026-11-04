@@ -1,9 +1,12 @@
+using System.Text.RegularExpressions;
 namespace VapeShopInventoryAPI.Api;
 
 public class User
 {
     private const int MaxUsernameLength = 30;
-    
+    private const int MinUsernameLength = 3;
+    private static readonly Regex UsernamePattern = new(@"^[a-z0-9][a-z0-9._-]*\z");
+
     public int Id { get; private set; }
     public string Username { get; private set; }
     public string PasswordHash { get; private set; }
@@ -12,7 +15,7 @@ public class User
     public User (string username, string passwordHash, UserRole role)
     {
         GuardUser(username, passwordHash, role);
-        Username = username.Trim().ToLowerInvariant();
+        Username = NormalizeUsername(username);
         PasswordHash = passwordHash;
         Role = role;
     }
@@ -26,9 +29,18 @@ public class User
         {
             throw new ArgumentException("Username cannot be empty", nameof(username));
         }
-        if (username.Trim().Length > MaxUsernameLength)
+        username = NormalizeUsername(username);
+        if (username.Length > MaxUsernameLength )
         {
             throw new ArgumentException($"Username cannot be longer than {MaxUsernameLength} characters.", nameof(username));
+        }
+        if (username.Length < MinUsernameLength )
+        {
+            throw new ArgumentException($"Username cannot be shorter than {MinUsernameLength} characters.", nameof(username));
+        }
+        if (!UsernamePattern.IsMatch(username))
+        {
+            throw new ArgumentException("Username must start with an alphanumeric character and may only contain letters, digits, _, -, and .", nameof(username));
         }
         if (passwordHash == null)
         {
@@ -43,5 +55,9 @@ public class User
             string userRoles = string.Join(", ", Enum.GetNames<UserRole>());
             throw new ArgumentOutOfRangeException(nameof(role), $"Role provided for user is incorrect. Choose between: {userRoles}");
         }
+    }
+    private static string NormalizeUsername(string username)
+    {
+        return username.Trim().ToLowerInvariant();
     }
 }
