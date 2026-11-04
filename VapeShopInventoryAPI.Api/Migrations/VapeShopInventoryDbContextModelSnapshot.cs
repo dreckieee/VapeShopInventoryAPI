@@ -246,6 +246,32 @@ namespace VapeShopInventoryAPI.Api.Migrations
                     b.ToTable("Settlements");
                 });
 
+            modelBuilder.Entity("VapeShopInventoryAPI.Api.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+                });
+
             modelBuilder.Entity("VapeShopInventoryAPI.Api.DeliveryItem", b =>
                 {
                     b.HasOne("VapeShopInventoryAPI.Api.Expense", null)
