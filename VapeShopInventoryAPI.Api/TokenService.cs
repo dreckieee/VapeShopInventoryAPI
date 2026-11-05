@@ -14,10 +14,11 @@ public sealed class TokenService
         _settings = settings;
     }
 
-    public string CreateToken(User user)
+    public (string Token, DateTime ExpiresAt) CreateToken(User user)
     {
         ArgumentNullException.ThrowIfNull(user);
-        
+
+        var expiresAt = DateTime.UtcNow.AddMinutes(TokenLifetimeMinutes);
         var descriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(new[]
@@ -28,11 +29,11 @@ public sealed class TokenService
             }),
             Issuer = _settings.Issuer,
             Audience = _settings.Audience,
-            Expires = DateTime.UtcNow.AddMinutes(TokenLifetimeMinutes),
+            Expires = expiresAt,
             SigningCredentials = new SigningCredentials(
                 _settings.CreateSigningKey(), SecurityAlgorithms.HmacSha256)
         };
 
-        return new JsonWebTokenHandler().CreateToken(descriptor);
+        return (new JsonWebTokenHandler().CreateToken(descriptor), expiresAt);
     }
 }
