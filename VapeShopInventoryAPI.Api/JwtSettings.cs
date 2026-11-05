@@ -1,3 +1,6 @@
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+
 namespace VapeShopInventoryAPI.Api;
 
 public sealed class JwtSettings
@@ -20,11 +23,18 @@ public sealed class JwtSettings
                 $"Jwt:SigningKey must be at least {MinSigningKeyLength} characters.");
         }
 
-        return new JwtSettings { 
-            SigningKey = signingKey, 
-            Issuer = issuer, 
-            Audience = audience 
+        return new JwtSettings 
+        { 
+            SigningKey = signingKey,
+            Issuer = issuer,
+            Audience = audience
         };
+    }
+
+    public SymmetricSecurityKey CreateSigningKey()
+    {
+        byte[] signingKeyBytes = Encoding.UTF8.GetBytes(SigningKey);
+        return new SymmetricSecurityKey(signingKeyBytes);
     }
 
     private static string ReadRequired(IConfiguration configuration, string settingName)
