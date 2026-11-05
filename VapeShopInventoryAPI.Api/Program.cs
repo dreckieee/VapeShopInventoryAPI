@@ -18,6 +18,7 @@ builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddSingleton(serviceProvider =>
     JwtSettings.FromConfiguration(
         serviceProvider.GetRequiredService<IConfiguration>()));
+builder.Services.AddSingleton<TokenService>();
 
 var app = builder.Build();
 
