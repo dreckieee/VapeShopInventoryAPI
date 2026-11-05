@@ -56,7 +56,7 @@ public class User
             throw new ArgumentOutOfRangeException(nameof(role), $"Role provided for user is incorrect. Choose between: {userRoles}");
         }
     }
-    private static string NormalizeUsername(string username)
+    public static string NormalizeUsername(string username)
     {
         return username.Trim().ToLowerInvariant();
     }
