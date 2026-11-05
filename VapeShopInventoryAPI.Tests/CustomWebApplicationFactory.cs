@@ -16,6 +16,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         builder.UseSetting("Auth:OwnerUsername", "test-owner-username");
         builder.UseSetting("Auth:OwnerPassword", "test-owner-password");
 
+        builder.UseSetting("Jwt:SigningKey", "test-json-web-token-signing-key-setting");
+
         builder.ConfigureServices(services =>
         {
            
