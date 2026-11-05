@@ -15,8 +15,13 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddSingleton(serviceProvider =>
+    JwtSettings.FromConfiguration(
+        serviceProvider.GetRequiredService<IConfiguration>()));
 
 var app = builder.Build();
+
+app.Services.GetRequiredService<JwtSettings>(); // resolve once so a bad Jwt setting stops startup
 
 using (var scope = app.Services.CreateScope())
 {
