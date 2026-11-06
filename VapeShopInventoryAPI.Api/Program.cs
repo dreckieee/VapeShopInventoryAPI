@@ -52,6 +52,9 @@ using (var scope = app.Services.CreateScope())
     await UserSeeder.SeedAsync(context, app.Configuration, hasher);
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
