@@ -23,6 +23,7 @@ builder.Services.AddSingleton(serviceProvider =>
 builder.Services.AddSingleton<TokenService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+const int ClockSkewMinutes = 1;
 builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme).Configure<JwtSettings>((options, settings) =>
 {
     options.MapInboundClaims = false;
@@ -35,6 +36,7 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
         ValidateAudience = true,
         ValidAudience = settings.Audience,
         ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromMinutes(ClockSkewMinutes),
         ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 },
         NameClaimType = "name",
         RoleClaimType = "role",
