@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using VapeShopInventoryAPI.Api.DTOs;
 using AppUser = VapeShopInventoryAPI.Api.User;
@@ -11,6 +12,7 @@ namespace VapeShopInventoryAPI.Api;
 public class AuthController : ControllerBase
 {
     private const string InvalidCredentialsMessage = "Invalid username or password.";
+    private const string InvalidTokenClaimsMessage = "Token is missing required claims.";
 
     private readonly VapeShopInventoryDbContext _context;
     private readonly IPasswordHasher<AppUser> _hasher;
@@ -49,5 +51,25 @@ public class AuthController : ControllerBase
         var (token, expiresAt) = _tokenService.CreateToken(user);
 
         return Ok(new LoginResponse { Token = token, ExpiresAt = expiresAt });
+    }
+
+    [Authorize]
+    [HttpGet("me")]
+    public ActionResult<CurrentUserResponse> GetCurrentUser()
+    {
+        var idClaim = User.FindFirst("sub")?.Value;
+        var usernameClaim = User.FindFirst("name")?.Value;
+        var roleClaim = User.FindFirst("role")?.Value;
+
+        if (!int.TryParse(idClaim, out var id) || usernameClaim == null || roleClaim == null)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = InvalidTokenClaimsMessage });
+        }
+        return Ok(new CurrentUserResponse
+        {
+            Id = id,
+            Username = usernameClaim,
+            Role = roleClaim
+        });
     }
 }
