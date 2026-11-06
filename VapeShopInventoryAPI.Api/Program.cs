@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using VapeShopInventoryAPI.Api;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +21,25 @@ builder.Services.AddSingleton(serviceProvider =>
     JwtSettings.FromConfiguration(
         serviceProvider.GetRequiredService<IConfiguration>()));
 builder.Services.AddSingleton<TokenService>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme).Configure<JwtSettings>((options, settings) =>
+{
+    options.MapInboundClaims = false;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = settings.CreateSigningKey(),
+        ValidateIssuer = true,
+        ValidIssuer = settings.Issuer,
+        ValidateAudience = true,
+        ValidAudience = settings.Audience,
+        ValidateLifetime = true,
+        ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 },
+        NameClaimType = "name",
+        RoleClaimType = "role",
+    };
+});
 
 var app = builder.Build();
 
