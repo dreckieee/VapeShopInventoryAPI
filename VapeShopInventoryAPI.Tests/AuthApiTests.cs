@@ -62,4 +62,13 @@ public class AuthApiTests
             Assert.That(currentUser.Role, Is.EqualTo("Cashier"));
         });
     }
+
+    [Test]
+    public void CreateCashierClient_CalledAgain_DoesNotThrow()
+    {
+        Assert.DoesNotThrow(() =>
+        {
+            using var client = _factory.CreateCashierClient();
+        });
+    }
 }
