@@ -20,7 +20,7 @@ public class ExpensesApiTests
     public void OneTimeSetup()
     {
         _factory = new CustomWebApplicationFactory();
-        _client = _factory.CreateClient();
+        _client = _factory.CreateOwnerClient();
     }
 
     [OneTimeTearDown]
