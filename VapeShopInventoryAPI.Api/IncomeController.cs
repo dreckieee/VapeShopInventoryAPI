@@ -22,13 +22,13 @@ public class IncomeController : ControllerBase
         var querySales = _context.Sales.Where(sale => sale.IsClosed).AsQueryable();
         var queryExpenses = _context.Expenses.AsQueryable();
 
-        if(year != null)
+        if (year != null)
         {
             querySales = querySales.Where(sale => sale.SaleDate.Year == year);
             queryExpenses = queryExpenses.Where(expense => expense.Date.Year == year);
         }
 
-        if(month != null)
+        if (month != null)
         {
             querySales = querySales.Where(sale => sale.SaleDate.Month == month);
             queryExpenses = queryExpenses.Where(expense => expense.Date.Month == month);
@@ -37,7 +37,7 @@ public class IncomeController : ControllerBase
         var totalSales = await querySales.SelectMany(sale => sale.SaleItems).SumAsync(saleItem => saleItem.Quantity * saleItem.UnitPriceAtSale);
         var totalExpenses = await queryExpenses.SumAsync(expense => expense.Amount);
         var response = IncomeResponse.FromSalesExpenses(year, month, totalSales, totalExpenses);
-        
+
         return Ok(response);
     }
 }

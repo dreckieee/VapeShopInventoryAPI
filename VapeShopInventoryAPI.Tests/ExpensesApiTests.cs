@@ -10,11 +10,11 @@ public class ExpensesApiTests
 {
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
-    private List<int> _createdExpenseIds = new ();
-    private List<int> _createdProductIds = new ();
-    private List<int> _createdSettlementIds = new ();
-    private List<int> _restockedProductIds = new ();
-    
+    private List<int> _createdExpenseIds = new();
+    private List<int> _createdProductIds = new();
+    private List<int> _createdSettlementIds = new();
+    private List<int> _restockedProductIds = new();
+
 
     [OneTimeSetUp]
     public void OneTimeSetup()
@@ -57,7 +57,7 @@ public class ExpensesApiTests
         Assert.That(expense.Category, Is.EqualTo(payload.Category));
         Assert.That(expense.Date, Is.EqualTo(payload.Date));
     }
-    
+
     [Test]
     public async Task CreateExpense_WithInvalidData_ReturnsBadRequest()
     {
@@ -80,7 +80,7 @@ public class ExpensesApiTests
         var responseExpensesAfter = await _client.GetAsync("api/Expenses");
         var expensesAfter = await responseExpensesAfter.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expensesBefore?.Count, Is.EqualTo(expensesAfter?.Count));
-        
+
     }
 
     [Test]
@@ -216,7 +216,7 @@ public class ExpensesApiTests
         Assert.That(expenseAfter.OutstandingBalance, Is.EqualTo(0));
         Assert.That(expenseAfter.AmountSettled, Is.EqualTo(payload.Amount));
     }
-    
+
     [Test]
     public async Task GetExpense_WithExistingId_ReturnsOk()
     {
@@ -413,7 +413,7 @@ public class ExpensesApiTests
         Assert.That(expense.Date, Is.EqualTo(payload.Date));
         Assert.That(expense.CreatedAt, Is.EqualTo(testExpense.CreatedAt));
     }
-    
+
     [Test]
     public async Task UpdateExpense_WithInvalidData_ReturnsBadRequest()
     {
@@ -507,8 +507,8 @@ public class ExpensesApiTests
         DateTime testDate = new DateTime(2026, 01, 01);
         string? testPaymentNote = "test restock payment note";
         PaymentMethod testPaymentMethod = PaymentMethod.Cash;
-        var items = new List<RestockItemRequest> { new RestockItemRequest {ProductId = product.Id, Quantity = testQuantity, UnitCost = testUnitCost} };
-        
+        var items = new List<RestockItemRequest> { new RestockItemRequest { ProductId = product.Id, Quantity = testQuantity, UnitCost = testUnitCost } };
+
         var (_, restockResponse) = await RestockTestProducts(items, date: testDate, paymentNote: testPaymentNote, paymentMethod: testPaymentMethod);
 
         var payload = new UpdateExpenseRequest
@@ -560,7 +560,7 @@ public class ExpensesApiTests
         var settlement = await responsePartialSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
         Assert.That(settlement, Is.Not.Null);
         _createdSettlementIds.Add(settlement.Id);
-        
+
         var payload = new UpdateExpenseRequest
         {
             PaymentMethod = testExpense.PaymentMethod,
@@ -599,14 +599,14 @@ public class ExpensesApiTests
 
         var responseGet = await _client.GetAsync($"api/Expenses/{testExpense.Id}");
         Assert.That(responseGet.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 Not Found() status, but received {responseGet.StatusCode} instead.");
-    }   
+    }
 
     [Test]
     public async Task DeleteExpense_WithNonExistentId_ReturnsNotFound()
     {
         var response = await _client.DeleteAsync($"api/Expenses/{int.MaxValue}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 Not Found() status, but received {response.StatusCode} instead.");
-    }   
+    }
 
     [Test]
     public async Task DeleteExpense_WithRestockReference_ReturnsConflict()
@@ -618,8 +618,8 @@ public class ExpensesApiTests
         DateTime testDate = new DateTime(2026, 01, 01);
         string? testPaymentNote = "test restock payment note";
         PaymentMethod testPaymentMethod = PaymentMethod.Cash;
-        var items = new List<RestockItemRequest> { new RestockItemRequest {ProductId = product.Id, Quantity = testQuantity, UnitCost = testUnitCost} };
-        
+        var items = new List<RestockItemRequest> { new RestockItemRequest { ProductId = product.Id, Quantity = testQuantity, UnitCost = testUnitCost } };
+
         var (_, restockResponse) = await RestockTestProducts(items, date: testDate, paymentNote: testPaymentNote, paymentMethod: testPaymentMethod);
 
         var response = await _client.DeleteAsync($"api/Expenses/{restockResponse.Expense.Id}");
@@ -641,10 +641,10 @@ public class ExpensesApiTests
     }
 
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpenseAsync(
-        PaymentMethod paymentMethod = PaymentMethod.Cash, 
-        string? paymentNote = null, 
-        string description = "Test expense description", 
-        decimal amount = 99.99m, 
+        PaymentMethod paymentMethod = PaymentMethod.Cash,
+        string? paymentNote = null,
+        string description = "Test expense description",
+        decimal amount = 99.99m,
         string category = "Test Expense Category",
         DateTime? date = null)
     {
@@ -659,7 +659,7 @@ public class ExpensesApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Expenses", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -675,11 +675,11 @@ public class ExpensesApiTests
     }
 
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProduct(
-        string name = "Test Product", 
-        string? sku = null, 
-        decimal price = 99.99m, 
-        int stockQuantity = 10, 
-        int lowStockLevel = 3, 
+        string name = "Test Product",
+        string? sku = null,
+        decimal price = 99.99m,
+        int stockQuantity = 10,
+        int lowStockLevel = 3,
         string category = "Test")
     {
         var payload = new
@@ -708,11 +708,11 @@ public class ExpensesApiTests
         return (response, product);
     }
 
-    public async Task<(HttpResponseMessage Response, RestockResponse Restock)> RestockTestProducts (
-        List<RestockItemRequest> items, 
-        DateTime? date = null, 
-        string description = "Default restock test description", 
-        string? paymentNote = null, 
+    public async Task<(HttpResponseMessage Response, RestockResponse Restock)> RestockTestProducts(
+        List<RestockItemRequest> items,
+        DateTime? date = null,
+        string description = "Default restock test description",
+        string? paymentNote = null,
         PaymentMethod paymentMethod = PaymentMethod.Cash)
     {
         var payload = new RestockRequest
@@ -725,11 +725,11 @@ public class ExpensesApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Restock", payload);
-        if(response.StatusCode != HttpStatusCode.OK)
+        if (response.StatusCode != HttpStatusCode.OK)
         {
             throw new InvalidOperationException($"Expecting 200 Ok() status, but received {response.StatusCode}");
         }
-        
+
         var restockResponse = await response.Content.ReadFromJsonAsync<RestockResponse>(TestJsonOptions.Default);
         if (restockResponse == null)
         {
@@ -743,12 +743,12 @@ public class ExpensesApiTests
     [TearDown]
     public async Task DeleteTestExpense()
     {
-        if(_createdSettlementIds.Count > 0)
+        if (_createdSettlementIds.Count > 0)
         {
             using var scope = _factory.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
 
-            foreach(int i in _createdSettlementIds)
+            foreach (int i in _createdSettlementIds)
             {
                 var settlement = await context.Settlements.FindAsync(i);
                 if (settlement != null)
@@ -760,41 +760,41 @@ public class ExpensesApiTests
         }
         _createdSettlementIds.Clear();
 
-        if(_createdExpenseIds.Count > 0)
+        if (_createdExpenseIds.Count > 0)
         {
-            foreach(int i in _createdExpenseIds)
+            foreach (int i in _createdExpenseIds)
             {
                 var response = await _client.DeleteAsync($"api/Expenses/{i}");
                 if (response.StatusCode == HttpStatusCode.Conflict)
                 {
                     TestContext.Progress.WriteLine($"Skipped expense cleanup: expense {i} has existing reference (to a delivery item or delivery items) - deletion blocked by design (audit trail preserved).");
                 }
-                else if(response.StatusCode == HttpStatusCode.NotFound)
+                else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
                     TestContext.Progress.WriteLine($"Expense with an Id of {i} cannot be found -- already deleted or does not exist.");
                 }
                 else if (response.StatusCode != HttpStatusCode.NoContent)
-                { 
+                {
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting an expense with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                 }
             }
         }
         _createdExpenseIds.Clear();
 
-        if(_createdProductIds.Count > 0)
+        if (_createdProductIds.Count > 0)
         {
-            foreach(int i in _createdProductIds)
+            foreach (int i in _createdProductIds)
             {
-                if(_restockedProductIds.Contains(i))
+                if (_restockedProductIds.Contains(i))
                 {
                     TestContext.Progress.WriteLine($"Skipped product cleanup: product with id {i} has references to a delivery item/expense — deletion blocked by design (audit trail preserved).");
-                    
+
                 }
                 else
                 {
                     var response = await _client.DeleteAsync($"api/Products/{i}");
                     if (response.StatusCode != HttpStatusCode.NoContent)
-                    { 
+                    {
                         TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                     }
                 }

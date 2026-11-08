@@ -1,4 +1,5 @@
 namespace VapeShopInventoryAPI.Api;
+
 public enum CashBalanceSourceType
 {
     Sale,

@@ -1,15 +1,16 @@
 namespace VapeShopInventoryAPI.Api;
+
 public class CapitalTransaction
 {
-    public int Id {get; private set;}
-    public CapitalTransactionType Type {get; private set;}
-    public decimal Amount {get; private set;}
-    public PaymentMethod PaymentMethod {get; private set;}
-    public string? Note {get; private set;}
-    public DateTime Date {get; private set;}
-    public DateTime CreatedAt {get; private set;}
-   
-    public CapitalTransaction (CapitalTransactionType type, decimal amount, PaymentMethod paymentMethod, string? note, DateTime date)
+    public int Id { get; private set; }
+    public CapitalTransactionType Type { get; private set; }
+    public decimal Amount { get; private set; }
+    public PaymentMethod PaymentMethod { get; private set; }
+    public string? Note { get; private set; }
+    public DateTime Date { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+
+    public CapitalTransaction(CapitalTransactionType type, decimal amount, PaymentMethod paymentMethod, string? note, DateTime date)
     {
         GuardCapitalTransaction(type, amount, paymentMethod, date);
         Type = type;

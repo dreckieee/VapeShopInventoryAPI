@@ -1,4 +1,5 @@
 namespace VapeShopInventoryAPI.Api.DTOs;
+
 public record RestockResponse
 {
     public required ExpenseResponse Expense { get; init; }

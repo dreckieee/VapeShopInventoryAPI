@@ -10,7 +10,7 @@ public class CapitalTransactionsApiTests
 {
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
-    private List<int> _createdCapitalTransactionIds = new ();
+    private List<int> _createdCapitalTransactionIds = new();
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
@@ -28,7 +28,7 @@ public class CapitalTransactionsApiTests
     [Test]
     public async Task CreateCapitalTransaction_DepositValidData_ReturnsCreated()
     {
-        
+
         var payload = new CreateCapitalTransactionRequest
         {
             Type = CapitalTransactionType.Deposit,
@@ -55,7 +55,7 @@ public class CapitalTransactionsApiTests
     [Test]
     public async Task CreateCapitalTransaction_WithdrawalValidData_ReturnsCreated()
     {
-        
+
         var payload = new CreateCapitalTransactionRequest
         {
             Type = CapitalTransactionType.Withdrawal,
@@ -82,7 +82,7 @@ public class CapitalTransactionsApiTests
     [Test]
     public async Task CreateCapitalTransaction_DepositInvalidNegativeAmount_ReturnsBadRequest()
     {
-        
+
         var payload = new CreateCapitalTransactionRequest
         {
             Type = CapitalTransactionType.Deposit,
@@ -99,7 +99,7 @@ public class CapitalTransactionsApiTests
     [Test]
     public async Task CreateCapitalTransaction_DepositInvalidZeroAmount_ReturnsBadRequest()
     {
-        
+
         var payload = new CreateCapitalTransactionRequest
         {
             Type = CapitalTransactionType.Deposit,
@@ -116,7 +116,7 @@ public class CapitalTransactionsApiTests
     [Test]
     public async Task CreateCapitalTransaction_DepositInvalidReceivablePaymentMethod_ReturnsBadRequest()
     {
-        
+
         var payload = new CreateCapitalTransactionRequest
         {
             Type = CapitalTransactionType.Deposit,
@@ -133,7 +133,7 @@ public class CapitalTransactionsApiTests
     [Test]
     public async Task CreateCapitalTransaction_DepositInvalidPayablePaymentMethod_ReturnsBadRequest()
     {
-        
+
         var payload = new CreateCapitalTransactionRequest
         {
             Type = CapitalTransactionType.Deposit,
@@ -150,7 +150,7 @@ public class CapitalTransactionsApiTests
     [Test]
     public async Task CreateCapitalTransaction_DepositInvalidUndefinedPaymentMethod_ReturnsBadRequest()
     {
-        
+
         var payload = new CreateCapitalTransactionRequest
         {
             Type = CapitalTransactionType.Deposit,
@@ -167,7 +167,7 @@ public class CapitalTransactionsApiTests
     [Test]
     public async Task CreateCapitalTransaction_InvalidUndefinedType_ReturnsBadRequest()
     {
-        
+
         var payload = new CreateCapitalTransactionRequest
         {
             Type = (CapitalTransactionType)999,
@@ -184,7 +184,7 @@ public class CapitalTransactionsApiTests
     [Test]
     public async Task CreateCapitalTransaction_DepositInvalidDefaultDate_ReturnsBadRequest()
     {
-        
+
         var payload = new CreateCapitalTransactionRequest
         {
             Type = CapitalTransactionType.Deposit,
@@ -201,7 +201,7 @@ public class CapitalTransactionsApiTests
     [Test]
     public async Task CreateCapitalTransaction_DepositInvalidFutureDate_ReturnsBadRequest()
     {
-        
+
         var payload = new CreateCapitalTransactionRequest
         {
             Type = CapitalTransactionType.Deposit,
@@ -339,8 +339,8 @@ public class CapitalTransactionsApiTests
     }
 
     public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
-        CapitalTransactionType type = CapitalTransactionType.Deposit, 
-        decimal amount = 99.99m, 
+        CapitalTransactionType type = CapitalTransactionType.Deposit,
+        decimal amount = 99.99m,
         PaymentMethod paymentMethod = PaymentMethod.Cash,
         string? note = null,
         DateTime? date = null)
@@ -355,7 +355,7 @@ public class CapitalTransactionsApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -375,12 +375,12 @@ public class CapitalTransactionsApiTests
     public async Task DeleteTestCapitalTransaction()
     {
         //Test Capital Transaction Cleanup
-        if(_createdCapitalTransactionIds.Count > 0)
+        if (_createdCapitalTransactionIds.Count > 0)
         {
             using var scope = _factory.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
 
-            foreach(int ct in _createdCapitalTransactionIds)
+            foreach (int ct in _createdCapitalTransactionIds)
             {
                 var capitalTransaction = await context.CapitalTransactions.FindAsync(ct);
                 if (capitalTransaction != null)

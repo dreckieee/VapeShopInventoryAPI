@@ -1,20 +1,21 @@
 using VapeShopInventoryAPI.Api.Exceptions;
 namespace VapeShopInventoryAPI.Api;
+
 public class Sale
 {
-    public int Id {get; private set;}
-    public DateTime SaleDate {get; private set;}
-    public DateTime CreatedAt {get; private set;}
-    public PaymentMethod PaymentMethod {get; private set;}
-    public string? PaymentNote {get; private set;}
+    public int Id { get; private set; }
+    public DateTime SaleDate { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+    public PaymentMethod PaymentMethod { get; private set; }
+    public string? PaymentNote { get; private set; }
     private readonly List<SaleItem> _saleItems = new();
     public IReadOnlyList<SaleItem> SaleItems => _saleItems;
-    public bool IsClosed {get; private set;} = false;
-    public int TransactionCount {get; private set;} = 0;
-    public int ReductionFrequency {get; private set;} = 0;
-    public int TotalQuantityReduction {get; private set;} = 0;
-    public decimal TotalAmount => _saleItems.Sum(si => si.Quantity * si.UnitPriceAtSale); 
-    public Sale (DateTime saleDate, PaymentMethod paymentMethod, string? paymentNote)
+    public bool IsClosed { get; private set; } = false;
+    public int TransactionCount { get; private set; } = 0;
+    public int ReductionFrequency { get; private set; } = 0;
+    public int TotalQuantityReduction { get; private set; } = 0;
+    public decimal TotalAmount => _saleItems.Sum(si => si.Quantity * si.UnitPriceAtSale);
+    public Sale(DateTime saleDate, PaymentMethod paymentMethod, string? paymentNote)
     {
         GuardSale(saleDate, paymentMethod);
         SaleDate = saleDate;
@@ -23,7 +24,7 @@ public class Sale
         PaymentNote = paymentNote;
     }
 
-    public void AddSaleItem (SaleItem saleItem)
+    public void AddSaleItem(SaleItem saleItem)
     {
         GuardClosedSale();
         if (saleItem == null)
@@ -37,13 +38,13 @@ public class Sale
         }
         else
         {
-            TransactionCount ++;
+            TransactionCount++;
             saleItem.AssignTransactionNumber(TransactionCount);
             _saleItems.Add(saleItem);
         }
     }
-    
-    public void RemoveSaleItem (SaleItem saleItem)
+
+    public void RemoveSaleItem(SaleItem saleItem)
     {
         GuardClosedSale();
         if (saleItem == null)
@@ -78,7 +79,7 @@ public class Sale
             throw new KeyNotFoundException("No match found for the provided Id of item which to reduce quantity from.");
         }
         saleItemToReduceQuantity.ReduceQuantity(amount);
-        ReductionFrequency ++;
+        ReductionFrequency++;
         TotalQuantityReduction += amount;
         if (saleItemToReduceQuantity.Quantity == 0)
         {
@@ -89,18 +90,18 @@ public class Sale
     {
         GuardClosedSale();
     }
-    public void CloseSale ()
+    public void CloseSale()
     {
         GuardClosedSale();
         if (_saleItems.Count == 0)
         {
             throw new InvalidOperationException("You cannot close an empty sale. Add items to the sale first.");
         }
-        
+
         var shortages = new List<StockShortage>();
         foreach (SaleItem si in _saleItems)
         {
-            if(si.Quantity > si.Product.StockQuantity)
+            if (si.Quantity > si.Product.StockQuantity)
             {
                 var shortage = new StockShortage(si.Product.Id, si.Product.Name, si.Quantity, si.Product.StockQuantity);
                 shortages.Add(shortage);
@@ -110,7 +111,7 @@ public class Sale
         {
             throw new InsufficientStockException(shortages);
         }
-        foreach(SaleItem si in _saleItems)
+        foreach (SaleItem si in _saleItems)
         {
             si.Product.ReduceStock(si.Quantity);
         }

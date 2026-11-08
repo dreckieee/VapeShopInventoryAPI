@@ -23,8 +23,8 @@ public sealed class JwtSettings
                 $"Jwt:SigningKey must be at least {MinSigningKeyLength} characters.");
         }
 
-        return new JwtSettings 
-        { 
+        return new JwtSettings
+        {
             SigningKey = signingKey,
             Issuer = issuer,
             Audience = audience

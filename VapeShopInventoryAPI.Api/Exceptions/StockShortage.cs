@@ -1,4 +1,5 @@
 namespace VapeShopInventoryAPI.Api.Exceptions;
+
 public class StockShortage
 {
     public int ProductId { get; }

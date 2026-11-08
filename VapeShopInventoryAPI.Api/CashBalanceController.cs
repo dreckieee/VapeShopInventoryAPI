@@ -20,7 +20,7 @@ public class CashBalanceController : ControllerBase
     {
         var (cashOnHand, digitalBalance, receivablesOutstanding, payablesOutstanding) = await CashBalanceCalculator.CalculateCashBalanceAsync(_context);
         var response = CashBalanceResponse.CreateCashBalance(cashOnHand, digitalBalance, receivablesOutstanding, payablesOutstanding);
-        
+
         return Ok(response);
     }
 

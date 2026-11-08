@@ -19,7 +19,7 @@ public class SaleItemsController : ControllerBase
     [HttpPost("{saleId}/items")]
     public async Task<ActionResult<SaleResponse>> AddSaleItem(int saleId, [FromBody] AddSaleItemRequest request)
     {
-        
+
         var sale = await _context.Sales.Include(s => s.SaleItems).FirstOrDefaultAsync(s => s.Id == saleId);
         if (sale == null)
         {
@@ -32,11 +32,11 @@ public class SaleItemsController : ControllerBase
         }
         if (product.StockQuantity < request.Quantity)
         {
-            return Conflict(new {message = "Stock quantity is not enough for the request quantity."});
+            return Conflict(new { message = "Stock quantity is not enough for the request quantity." });
         }
         try
         {
-            var saleItem = new SaleItem(request.ProductId, request.Quantity, request.UnitPriceAtSale);    
+            var saleItem = new SaleItem(request.ProductId, request.Quantity, request.UnitPriceAtSale);
             sale.AddSaleItem(saleItem);
             await _context.SaveChangesAsync();
         }
@@ -51,7 +51,7 @@ public class SaleItemsController : ControllerBase
 
         var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
         var saleResponse = SaleResponse.FromSale(sale, outstandingBalance, alreadySettled);
-        return Ok(saleResponse);       
+        return Ok(saleResponse);
     }
 
     [HttpPatch("{saleId}/items/{itemId}/reduce")]
@@ -86,7 +86,7 @@ public class SaleItemsController : ControllerBase
         }
         var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
         var saleResponse = SaleResponse.FromSale(sale, outstandingBalance, alreadySettled);
-        return Ok(saleResponse);       
+        return Ok(saleResponse);
     }
 
 }

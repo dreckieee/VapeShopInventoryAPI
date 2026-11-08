@@ -4,7 +4,7 @@ using VapeShopInventoryAPI.Api.DTOs;
 
 namespace VapeShopInventoryAPI.Tests;
 
-public class ProductsApiTests 
+public class ProductsApiTests
 {
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
@@ -27,14 +27,14 @@ public class ProductsApiTests
     [Test]
     public async Task GetProducts_ReturnsSuccessAndNonEmptyList()
     {
-        string validName = "TestGetProducts"; 
-        string validSku = "0a0a1b"; 
+        string validName = "TestGetProducts";
+        string validSku = "0a0a1b";
         decimal validPrice = 99.99m;
         int validStockQuantity = 9;
         int validLowStockLevel = 1;
         string validCategory = "Test";
 
-        var (_, product) = await CreateTestProduct(validName,validSku,validPrice,validStockQuantity,validLowStockLevel, validCategory);
+        var (_, product) = await CreateTestProduct(validName, validSku, validPrice, validStockQuantity, validLowStockLevel, validCategory);
         Assert.That(product, Is.Not.Null);
 
         var response = await _client.GetAsync("/api/Products");
@@ -54,9 +54,9 @@ public class ProductsApiTests
 
     [Test]
     public async Task CreateProduct_ValidProduct_ReturnsCreated()
-    {        
-        string validName = "TestCreateValidProduct"; 
-        string validSku = "0a0a2b"; 
+    {
+        string validName = "TestCreateValidProduct";
+        string validSku = "0a0a2b";
         decimal validPrice = 99.99m;
         int validStockQuantity = 9;
         int validLowStockLevel = 1;
@@ -64,7 +64,7 @@ public class ProductsApiTests
 
         var (response, product) = await CreateTestProduct(validName, validSku, validPrice, validStockQuantity, validLowStockLevel, validCategory);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {response.StatusCode}");
-        
+
         Assert.That(product, Is.Not.Null);
         Assert.That(product.Name, Is.EqualTo(validName));
         Assert.That(product.Sku, Is.EqualTo(validSku));
@@ -185,9 +185,9 @@ public class ProductsApiTests
     [TearDown]
     public async Task DeleteTestProduct()
     {
-        if(_createdProductIds.Count > 0)
+        if (_createdProductIds.Count > 0)
         {
-            foreach(int i in _createdProductIds)
+            foreach (int i in _createdProductIds)
             {
                 var response = await _client.DeleteAsync($"api/Products/{i}");
                 if (response.StatusCode == HttpStatusCode.Conflict)
@@ -199,7 +199,7 @@ public class ProductsApiTests
                     TestContext.Progress.WriteLine($"Product with an Id of {i} cannot be found -- already deleted or does not exist.");
                 }
                 else if (response.StatusCode != HttpStatusCode.NoContent)
-                { 
+                {
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}.");
                 }
             }

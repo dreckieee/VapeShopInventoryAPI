@@ -1,15 +1,16 @@
 namespace VapeShopInventoryAPI.Api;
+
 public class SaleItem
 {
-    public int SaleId {get; private set;}
-    public Sale Sale {get; private set;} = null!;
-    public Product Product {get; private set;} = null!;
-    public int Id {get; private set;}
-    public int ProductId {get; private set;}
-    public int Quantity {get; private set;}
-    public decimal UnitPriceAtSale {get; private set;}
-    public int TransactionNumber {get; private set;}
-    public SaleItem (int productId, int quantity, decimal unitPriceAtSale)
+    public int SaleId { get; private set; }
+    public Sale Sale { get; private set; } = null!;
+    public Product Product { get; private set; } = null!;
+    public int Id { get; private set; }
+    public int ProductId { get; private set; }
+    public int Quantity { get; private set; }
+    public decimal UnitPriceAtSale { get; private set; }
+    public int TransactionNumber { get; private set; }
+    public SaleItem(int productId, int quantity, decimal unitPriceAtSale)
     {
         GuardSaleItem(productId, quantity, unitPriceAtSale);
         ProductId = productId;
@@ -45,14 +46,14 @@ public class SaleItem
         if (unitPriceAtSale <= 0)
         {
             throw new ArgumentException("Unit Price cannot be zero(0) or below.", nameof(unitPriceAtSale));
-        }   
-    }   
-    public void CombineQuantity (int quantity)
+        }
+    }
+    public void CombineQuantity(int quantity)
     {
         GuardSaleItemQuantity(quantity);
         Quantity += quantity;
     }
-    public void AssignTransactionNumber (int transactionNumber)
+    public void AssignTransactionNumber(int transactionNumber)
     {
         if (transactionNumber <= 0)
         {
@@ -60,7 +61,7 @@ public class SaleItem
         }
         TransactionNumber = transactionNumber;
     }
-    public void ReduceQuantity (int amount)
+    public void ReduceQuantity(int amount)
     {
         GuardSaleItemQuantity(amount);
         if (amount > Quantity)

@@ -10,11 +10,11 @@ public class CashBalanceCalculatorTests
 {
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
-    private List<int> _createdProductIds = new ();
-    private List<int> _createdExpenseIds = new ();
-    private List<int> _createdSaleIds = new ();
-    private List<int> _createdSettlementIds = new ();
-    private List<int> _createdCapitalTransactionIds = new ();
+    private List<int> _createdProductIds = new();
+    private List<int> _createdExpenseIds = new();
+    private List<int> _createdSaleIds = new();
+    private List<int> _createdSettlementIds = new();
+    private List<int> _createdCapitalTransactionIds = new();
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
@@ -28,7 +28,7 @@ public class CashBalanceCalculatorTests
         _client.Dispose();
         _factory.Dispose();
     }
-    
+
     [Test]
     public async Task CalculateCashBalanceAsync_WithMixedTransactions_ReturnsCorrectBalances()
     {
@@ -40,7 +40,7 @@ public class CashBalanceCalculatorTests
 
         //sale1 cash (cashonhand + 200)
         var (product1, sale1, saleItem1) = await CreateTestSaleWithItemAsync(price: 100m, paymentMethod: PaymentMethod.Cash, saleItemQuantity: 2);
-        
+
         //sale2 receivable (receivable + 150)
         var (product2, sale2, saleItem2) = await CreateTestSaleWithItemAsync(price: 150m, paymentMethod: PaymentMethod.Receivable, saleItemQuantity: 1);
 
@@ -66,7 +66,7 @@ public class CashBalanceCalculatorTests
 
         //sale3 digitalpayment cash (digitalBalance + 198)
         var (product3, sale3, saleItem3) = await CreateTestSaleWithItemAsync(price: 99.5m, paymentMethod: PaymentMethod.DigitalPayment, saleItemQuantity: 2);
-        
+
         //sale4 receivable (receivable + 149)
         var (product4, sale4, saleItem4) = await CreateTestSaleWithItemAsync(price: 149m, paymentMethod: PaymentMethod.Receivable, saleItemQuantity: 1);
 
@@ -77,7 +77,7 @@ public class CashBalanceCalculatorTests
         var (_, expense3) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.DigitalPayment, amount: 49);
 
         //deposit2 digitalpayment (digitalbalance + 499)
-        var (_, deposit2) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 499m, paymentMethod: PaymentMethod.DigitalPayment); 
+        var (_, deposit2) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 499m, paymentMethod: PaymentMethod.DigitalPayment);
 
         var (cashOnHand, digitalBalance, receivablesOutstanding, payablesOutstanding) = await CashBalanceCalculator.CalculateCashBalanceAsync(context);
         Assert.That(cashOnHand - cashOnHandBefore, Is.EqualTo(780));
@@ -94,12 +94,12 @@ public class CashBalanceCalculatorTests
 
         var cashBalanceBefore = await responseBefore.Content.ReadFromJsonAsync<CashBalanceResponse>(TestJsonOptions.Default);
         Assert.That(cashBalanceBefore, Is.Not.Null);
-        
+
         //cash
 
         //sale1 cash (cashonhand + 200)
         var (product1, sale1, saleItem1) = await CreateTestSaleWithItemAsync(price: 100m, paymentMethod: PaymentMethod.Cash, saleItemQuantity: 2);
-        
+
         //sale2 receivable (receivable + 150)
         var (product2, sale2, saleItem2) = await CreateTestSaleWithItemAsync(price: 150m, paymentMethod: PaymentMethod.Receivable, saleItemQuantity: 1);
 
@@ -125,7 +125,7 @@ public class CashBalanceCalculatorTests
 
         //sale3 digitalpayment cash (digitalBalance + 198)
         var (product3, sale3, saleItem3) = await CreateTestSaleWithItemAsync(price: 99.5m, paymentMethod: PaymentMethod.DigitalPayment, saleItemQuantity: 2);
-        
+
         //sale4 receivable (receivable + 149)
         var (product4, sale4, saleItem4) = await CreateTestSaleWithItemAsync(price: 149m, paymentMethod: PaymentMethod.Receivable, saleItemQuantity: 1);
 
@@ -136,7 +136,7 @@ public class CashBalanceCalculatorTests
         var (_, expense3) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.DigitalPayment, amount: 49);
 
         //deposit2 digitalpayment (digitalbalance + 499)
-        var (_, deposit2) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 499m, paymentMethod: PaymentMethod.DigitalPayment); 
+        var (_, deposit2) = await CreateTestCapitalTransactionAsync(type: CapitalTransactionType.Deposit, amount: 499m, paymentMethod: PaymentMethod.DigitalPayment);
 
         var response = await _client.GetAsync("api/CashBalance");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
@@ -150,11 +150,11 @@ public class CashBalanceCalculatorTests
     }
 
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
-        string name = "Test Product", 
-        string? sku = null, 
-        decimal price = 99.75m, 
-        int stockQuantity = 10, 
-        int lowStockLevel = 3, 
+        string name = "Test Product",
+        string? sku = null,
+        decimal price = 99.75m,
+        int stockQuantity = 10,
+        int lowStockLevel = 3,
         string category = "Test")
     {
         var payload = new
@@ -184,10 +184,10 @@ public class CashBalanceCalculatorTests
     }
 
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpenseAsync(
-        PaymentMethod paymentMethod = PaymentMethod.Payable, 
-        string? paymentNote = null, 
-        string description = "Test expense description", 
-        decimal amount = 99.99m, 
+        PaymentMethod paymentMethod = PaymentMethod.Payable,
+        string? paymentNote = null,
+        string description = "Test expense description",
+        decimal amount = 99.99m,
         string category = "Test Expense Category",
         DateTime? date = null)
     {
@@ -202,7 +202,7 @@ public class CashBalanceCalculatorTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Expenses", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -218,8 +218,8 @@ public class CashBalanceCalculatorTests
     }
 
     public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
-        CapitalTransactionType type = CapitalTransactionType.Deposit, 
-        decimal amount = 99.99m, 
+        CapitalTransactionType type = CapitalTransactionType.Deposit,
+        decimal amount = 99.99m,
         PaymentMethod paymentMethod = PaymentMethod.Cash,
         string? note = null,
         DateTime? date = null)
@@ -234,7 +234,7 @@ public class CashBalanceCalculatorTests
         };
 
         var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -249,19 +249,20 @@ public class CashBalanceCalculatorTests
         return (response, capitalTransaction);
     }
 
-    private async Task <(HttpResponseMessage Response, SaleResponse Sale)> CreateTestSaleAsync(
-        DateTime? saleDate = null, 
-        string? paymentNote = null, 
+    private async Task<(HttpResponseMessage Response, SaleResponse Sale)> CreateTestSaleAsync(
+        DateTime? saleDate = null,
+        string? paymentNote = null,
         PaymentMethod paymentMethod = PaymentMethod.Receivable)
     {
-        var payload = new { 
-        SaleDate = saleDate ?? new DateTime(2026, 01, 01), 
-        PaymentMethod = paymentMethod, 
-        PaymentNote = paymentNote 
+        var payload = new
+        {
+            SaleDate = saleDate ?? new DateTime(2026, 01, 01),
+            PaymentMethod = paymentMethod,
+            PaymentNote = paymentNote
         };
-        
+
         var response = await _client.PostAsJsonAsync("/api/Sales", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -277,31 +278,31 @@ public class CashBalanceCalculatorTests
     }
 
     private async Task<(ProductResponse Product, SaleResponse Sale, SaleItemResponse SaleItem)> CreateTestSaleWithItemAsync(
-        string name = "Test Product", 
-        string? sku = null, 
-        decimal price = 99.75m, 
-        int stockQuantity = 10, 
-        int lowStockLevel = 3, 
+        string name = "Test Product",
+        string? sku = null,
+        decimal price = 99.75m,
+        int stockQuantity = 10,
+        int lowStockLevel = 3,
         string category = "Test",
 
-        DateTime? saleDate = null, 
-        string? paymentNote = null, 
+        DateTime? saleDate = null,
+        string? paymentNote = null,
         PaymentMethod paymentMethod = PaymentMethod.Receivable,
-        
+
         int saleItemQuantity = 1)
     {
         var (_, product) = await CreateTestProductAsync(name, sku, price, stockQuantity, lowStockLevel, category);
         var (_, sale) = await CreateTestSaleAsync(saleDate, paymentNote, paymentMethod);
 
-        var payload = new 
-        { 
-            ProductId = product!.Id, 
-            Quantity = saleItemQuantity, 
-            UnitPriceAtSale = product.Price 
+        var payload = new
+        {
+            ProductId = product!.Id,
+            Quantity = saleItemQuantity,
+            UnitPriceAtSale = product.Price
         };
 
         var response = await _client.PostAsJsonAsync($"/api/SaleItems/{sale!.Id}/items", payload);
-        if(response.StatusCode != HttpStatusCode.OK)
+        if (response.StatusCode != HttpStatusCode.OK)
         {
             throw new InvalidOperationException($"Expected 200 Ok() status, but received {response.StatusCode}");
         }
@@ -321,9 +322,9 @@ public class CashBalanceCalculatorTests
         {
             throw new InvalidOperationException($"Failure in finding added sale item");
         }
-        
+
         var responseCloseSale = await _client.PostAsync($"/api/Sales/{updatedSale.Id}/close", null);
-        if(responseCloseSale.StatusCode != HttpStatusCode.OK)
+        if (responseCloseSale.StatusCode != HttpStatusCode.OK)
         {
             throw new Exception($"Expected 200 Ok() status, but received {responseCloseSale.StatusCode}");
         }
@@ -368,7 +369,7 @@ public class CashBalanceCalculatorTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Settlements", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -387,12 +388,12 @@ public class CashBalanceCalculatorTests
     public async Task DeleteTestExpenseSaleProductSettlement()
     {
         //Test Settlement Cleanup
-        if(_createdSettlementIds.Count > 0)
+        if (_createdSettlementIds.Count > 0)
         {
             using var scope = _factory.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
 
-            foreach(int i in _createdSettlementIds)
+            foreach (int i in _createdSettlementIds)
             {
                 var settlement = await context.Settlements.FindAsync(i);
                 if (settlement != null)
@@ -404,30 +405,30 @@ public class CashBalanceCalculatorTests
         }
 
         //Test Expense Cleanup
-        if(_createdExpenseIds.Count > 0)
+        if (_createdExpenseIds.Count > 0)
         {
-            foreach(int i in _createdExpenseIds)
+            foreach (int i in _createdExpenseIds)
             {
                 var response = await _client.DeleteAsync($"api/Expenses/{i}");
                 if (response.StatusCode == HttpStatusCode.Conflict)
                 {
                     TestContext.Progress.WriteLine($"Skipped expense cleanup: expense {i} has existing reference (to a delivery item or delivery items) - deletion blocked by design (audit trail preserved).");
                 }
-                else if(response.StatusCode == HttpStatusCode.NotFound)
+                else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
                     TestContext.Progress.WriteLine($"Expense with an Id of {i} cannot be found -- already deleted or does not exist.");
                 }
                 else if (response.StatusCode != HttpStatusCode.NoContent)
-                { 
+                {
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting an expense with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                 }
             }
         }
 
         //Test Product Cleanup
-        if(_createdProductIds.Count > 0)
+        if (_createdProductIds.Count > 0)
         {
-            foreach(int i in _createdProductIds)
+            foreach (int i in _createdProductIds)
             {
                 var response = await _client.DeleteAsync($"api/Products/{i}");
                 if (response.StatusCode == HttpStatusCode.Conflict)
@@ -439,24 +440,24 @@ public class CashBalanceCalculatorTests
                     TestContext.Progress.WriteLine($"Product with an Id of {i} cannot be found -- already deleted or does not exist.");
                 }
                 else if (response.StatusCode != HttpStatusCode.NoContent)
-                { 
+                {
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                 }
             }
         }
 
         //Test Sale Cleanup
-        if(_createdSaleIds.Count > 0)
+        if (_createdSaleIds.Count > 0)
         {
-            foreach(int i in _createdSaleIds)
+            foreach (int i in _createdSaleIds)
             {
                 var responseGetSale = await _client.GetAsync($"/api/Sales/{i}");
-                if(responseGetSale.StatusCode == HttpStatusCode.NotFound)
+                if (responseGetSale.StatusCode == HttpStatusCode.NotFound)
                 {
                     TestContext.Progress.WriteLine($"Sale with an Id of {i} cannot be found -- already deleted or does not exist.");
                     continue;
                 }
-                
+
                 try
                 {
                     var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
@@ -467,7 +468,7 @@ public class CashBalanceCalculatorTests
                     else
                     {
                         var response = await _client.PutAsync($"/api/Sales/{i}/cancel", null);
-                        if(response.StatusCode != HttpStatusCode.NoContent)
+                        if (response.StatusCode != HttpStatusCode.NoContent)
                         {
                             throw new Exception($"Expected 204 NoContent() status, but received {response.StatusCode}");
                         }
@@ -477,15 +478,15 @@ public class CashBalanceCalculatorTests
                 {
                     TestContext.Progress.WriteLine($"Warning: Failure in cancelling a sale with an Id of {i}: {ex.Message}");
                 }
-            } 
+            }
         }
         //Test Capital Transaction Cleanup
-        if(_createdCapitalTransactionIds.Count > 0)
+        if (_createdCapitalTransactionIds.Count > 0)
         {
             using var scope = _factory.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
 
-            foreach(int ct in _createdCapitalTransactionIds)
+            foreach (int ct in _createdCapitalTransactionIds)
             {
                 var capitalTransaction = await context.CapitalTransactions.FindAsync(ct);
                 if (capitalTransaction != null)

@@ -33,8 +33,8 @@ public class RestockApiTests
         DateTime testDate = new DateTime(2026, 01, 01);
         string? testPaymentNote = "test payment note";
         PaymentMethod testPaymentMethod = PaymentMethod.Cash;
-        var items = new List<RestockItemRequest> { new RestockItemRequest {ProductId = product.Id, Quantity = testQuantity, UnitCost = testUnitCost} };
-        
+        var items = new List<RestockItemRequest> { new RestockItemRequest { ProductId = product.Id, Quantity = testQuantity, UnitCost = testUnitCost } };
+
         var (responseMessage, restockResponse) = await RestockTestProducts(items, date: testDate, paymentNote: testPaymentNote, paymentMethod: testPaymentMethod);
         Assert.That(responseMessage.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseMessage.StatusCode}");
         Assert.That(restockResponse, Is.Not.Null);
@@ -66,7 +66,7 @@ public class RestockApiTests
     [Test]
     public async Task CreateRestock_ValidMultipleRestockRequest_ReturnsOk()
     {
-        
+
         var (_, productA) = await CreateTestProduct(name: "Test Product A", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
         var (_, productB) = await CreateTestProduct(name: "Test Product B", price: 299.99m, stockQuantity: 20, lowStockLevel: 6, category: "Test");
         var (_, productC) = await CreateTestProduct(name: "Test Product C", price: 399.99m, stockQuantity: 30, lowStockLevel: 9, category: "Test");
@@ -81,9 +81,9 @@ public class RestockApiTests
         DateTime testDate = new DateTime(2026, 01, 01);
         string? testPaymentNote = "test payment note";
         PaymentMethod testPaymentMethod = PaymentMethod.Cash;
-        var items = new List<RestockItemRequest> 
-        { 
-            new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
+        var items = new List<RestockItemRequest>
+        {
+            new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA},
             new RestockItemRequest {ProductId = productB.Id, Quantity = testQuantityB, UnitCost = testUnitCostB},
             new RestockItemRequest {ProductId = productC.Id, Quantity = testQuantityC, UnitCost = testUnitCostC}
         };
@@ -117,10 +117,10 @@ public class RestockApiTests
 
             var updatedProduct = restockResponse.UpdatedProducts.Find(p => p.Id == productId);
             Assert.That(updatedProduct, Is.Not.Null);
-            
+
             var originalProduct = createdProducts.Find(p => p.Id == updatedProduct.Id);
             Assert.That(originalProduct, Is.Not.Null);
-            
+
             Assert.That(updatedProduct.StockQuantity, Is.EqualTo(totalQuantity + originalProduct.StockQuantity));
             Assert.That(updatedProduct.Name, Is.EqualTo(originalProduct.Name));
             Assert.That(updatedProduct.Sku, Is.EqualTo(originalProduct.Sku));
@@ -157,7 +157,7 @@ public class RestockApiTests
             Description = "Default restock test description",
             Items = new List<RestockItemRequest>
             {
-                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
+                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA},
                 new RestockItemRequest {ProductId = productB.Id, Quantity = testQuantityB, UnitCost = testUnitCostB},
                 new RestockItemRequest {ProductId = productC.Id, Quantity = testQuantityC, UnitCost = testUnitCostC},
                 new RestockItemRequest {ProductId = testInvalidId, Quantity = 1, UnitCost = 1m}
@@ -173,7 +173,7 @@ public class RestockApiTests
         var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expensesB?.Count, Is.EqualTo(expensesA?.Count));
 
-        foreach(ProductResponse pr in createdProducts)
+        foreach (ProductResponse pr in createdProducts)
         {
             var responseGetProduct = await _client.GetAsync($"api/Products/{pr.Id}");
             Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseGetProduct.StatusCode}");
@@ -187,14 +187,14 @@ public class RestockApiTests
             Assert.That(responseProduct.LowStockLevel, Is.EqualTo(pr.LowStockLevel));
             Assert.That(responseProduct.Category, Is.EqualTo(pr.Category));
             Assert.That(responseProduct.CreatedAt, Is.EqualTo(pr.CreatedAt));
-        }  
+        }
     }
 
     [Test]
     public async Task CreateRestock_DuplicateProductIdDifferentUnitCost_ReturnsOk()
     {
         var (_, productA) = await CreateTestProduct(name: "Test Product A", price: 199.99m, stockQuantity: 10, lowStockLevel: 3, category: "Test");
-    
+
         int testQuantityA = 11;
         int testQuantityB = 22;
         decimal testUnitCostA = 149.99m;
@@ -206,7 +206,7 @@ public class RestockApiTests
             Description = "Default restock test description",
             Items = new List<RestockItemRequest>
             {
-                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
+                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA},
                 new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityB, UnitCost = testUnitCostB}
             },
             PaymentNote = "test payment note",
@@ -273,7 +273,7 @@ public class RestockApiTests
             Description = "Default restock test description",
             Items = new List<RestockItemRequest>
             {
-                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
+                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA},
                 new RestockItemRequest {ProductId = productB.Id, Quantity = testQuantityB, UnitCost = testUnitCostB}
             },
             PaymentNote = "test payment note",
@@ -287,7 +287,7 @@ public class RestockApiTests
         var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expensesB?.Count, Is.EqualTo(expensesA?.Count));
 
-        foreach(ProductResponse pr in createdProducts)
+        foreach (ProductResponse pr in createdProducts)
         {
             var responseGetProduct = await _client.GetAsync($"api/Products/{pr.Id}");
             Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseGetProduct.StatusCode}");
@@ -301,7 +301,7 @@ public class RestockApiTests
             Assert.That(responseProduct.LowStockLevel, Is.EqualTo(pr.LowStockLevel));
             Assert.That(responseProduct.Category, Is.EqualTo(pr.Category));
             Assert.That(responseProduct.CreatedAt, Is.EqualTo(pr.CreatedAt));
-        }  
+        }
     }
 
     [Test]
@@ -325,7 +325,7 @@ public class RestockApiTests
             Description = "Default restock test description",
             Items = new List<RestockItemRequest>
             {
-                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA}, 
+                new RestockItemRequest {ProductId = productA.Id, Quantity = testQuantityA, UnitCost = testUnitCostA},
                 new RestockItemRequest {ProductId = productB.Id, Quantity = testQuantityB, UnitCost = testUnitCostB}
             },
             PaymentNote = "test payment note",
@@ -339,7 +339,7 @@ public class RestockApiTests
         var expensesB = await responseGetExpensesB.Content.ReadFromJsonAsync<List<ExpenseResponse>>(TestJsonOptions.Default);
         Assert.That(expensesB?.Count, Is.EqualTo(expensesA?.Count));
 
-        foreach(ProductResponse pr in createdProducts)
+        foreach (ProductResponse pr in createdProducts)
         {
             var responseGetProduct = await _client.GetAsync($"api/Products/{pr.Id}");
             Assert.That(responseGetProduct.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expecting 200 Ok() status, but received {responseGetProduct.StatusCode}");
@@ -353,7 +353,7 @@ public class RestockApiTests
             Assert.That(responseProduct.LowStockLevel, Is.EqualTo(pr.LowStockLevel));
             Assert.That(responseProduct.Category, Is.EqualTo(pr.Category));
             Assert.That(responseProduct.CreatedAt, Is.EqualTo(pr.CreatedAt));
-        }  
+        }
     }
 
     [Test]
@@ -382,20 +382,20 @@ public class RestockApiTests
     [TearDown]
     public async Task DeleteTestProduct()
     {
-        if(_createdProductIds.Count > 0)
+        if (_createdProductIds.Count > 0)
         {
-            foreach(int i in _createdProductIds)
+            foreach (int i in _createdProductIds)
             {
-                if(_restockedProductIds.Contains(i))
+                if (_restockedProductIds.Contains(i))
                 {
                     TestContext.Progress.WriteLine($"Skipped product cleanup: product with id {i} has references to a delivery item/expense — deletion blocked by design (audit trail preserved).");
-                    
+
                 }
                 else
                 {
                     var response = await _client.DeleteAsync($"api/Products/{i}");
                     if (response.StatusCode != HttpStatusCode.NoContent)
-                    { 
+                    {
                         TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                     }
                 }
@@ -432,7 +432,7 @@ public class RestockApiTests
         return (response, product);
     }
 
-    public async Task<(HttpResponseMessage Response, RestockResponse Restock)> RestockTestProducts (List<RestockItemRequest> items, DateTime? date = null, string description = "Default restock test description", string? paymentNote = null, PaymentMethod paymentMethod = 0)
+    public async Task<(HttpResponseMessage Response, RestockResponse Restock)> RestockTestProducts(List<RestockItemRequest> items, DateTime? date = null, string description = "Default restock test description", string? paymentNote = null, PaymentMethod paymentMethod = 0)
     {
         var payload = new RestockRequest
         {
@@ -444,11 +444,11 @@ public class RestockApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Restock", payload);
-        if(response.StatusCode != HttpStatusCode.OK)
+        if (response.StatusCode != HttpStatusCode.OK)
         {
             throw new InvalidOperationException($"Expecting 200 Ok() status, but received {response.StatusCode}");
         }
-        
+
         var restockResponse = await response.Content.ReadFromJsonAsync<RestockResponse>(TestJsonOptions.Default);
         if (restockResponse == null)
         {

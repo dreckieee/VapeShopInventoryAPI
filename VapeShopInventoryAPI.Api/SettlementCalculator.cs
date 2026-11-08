@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 namespace VapeShopInventoryAPI.Api;
+
 public static class SettlementCalculator
 {
-    public static async Task <(decimal OutstandingBalance, decimal AlreadySettled)> CalculateSaleBalanceAsync (VapeShopInventoryDbContext context, Sale sale)
+    public static async Task<(decimal OutstandingBalance, decimal AlreadySettled)> CalculateSaleBalanceAsync(VapeShopInventoryDbContext context, Sale sale)
     {
-        if(sale.PaymentMethod == PaymentMethod.Cash || sale.PaymentMethod == PaymentMethod.DigitalPayment)
+        if (sale.PaymentMethod == PaymentMethod.Cash || sale.PaymentMethod == PaymentMethod.DigitalPayment)
         {
             return (0m, sale.TotalAmount);
         }
@@ -12,9 +13,9 @@ public static class SettlementCalculator
         decimal outstandingBalance = sale.TotalAmount - alreadySettled;
         return (outstandingBalance, alreadySettled);
     }
-    public static async Task <(decimal OutstandingBalance, decimal AlreadySettled)> CalculateExpenseBalanceAsync (VapeShopInventoryDbContext context, Expense expense)
+    public static async Task<(decimal OutstandingBalance, decimal AlreadySettled)> CalculateExpenseBalanceAsync(VapeShopInventoryDbContext context, Expense expense)
     {
-        if(expense.PaymentMethod == PaymentMethod.Cash || expense.PaymentMethod == PaymentMethod.DigitalPayment)
+        if (expense.PaymentMethod == PaymentMethod.Cash || expense.PaymentMethod == PaymentMethod.DigitalPayment)
         {
             return (0m, expense.Amount);
         }

@@ -10,11 +10,11 @@ public class CashBalanceHistoryApiTests
 {
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
-    private List<int> _createdProductIds = new ();
-    private List<int> _createdExpenseIds = new ();
-    private List<int> _createdSaleIds = new ();
-    private List<int> _createdSettlementIds = new ();
-    private List<int> _createdCapitalTransactionIds = new ();
+    private List<int> _createdProductIds = new();
+    private List<int> _createdExpenseIds = new();
+    private List<int> _createdSaleIds = new();
+    private List<int> _createdSettlementIds = new();
+    private List<int> _createdCapitalTransactionIds = new();
     private readonly DateTime _today = DateTime.Today;
 
     [OneTimeSetUp]
@@ -30,7 +30,7 @@ public class CashBalanceHistoryApiTests
         _client.Dispose();
         _factory.Dispose();
     }
-    
+
     [Test]
     public async Task GetCashBalanceHistory_WithDays1_TopRowMatchesCurrentCashBalance()
     {
@@ -39,7 +39,7 @@ public class CashBalanceHistoryApiTests
         var responseGetCashBalance = await _client.GetAsync("api/CashBalance");
         Assert.That(responseGetCashBalance.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetCashBalance.StatusCode} instead.");
 
-        var cashBalance = await responseGetCashBalance.Content.ReadFromJsonAsync<CashBalanceResponse>(TestJsonOptions.Default);        
+        var cashBalance = await responseGetCashBalance.Content.ReadFromJsonAsync<CashBalanceResponse>(TestJsonOptions.Default);
         Assert.That(cashBalance, Is.Not.Null);
 
         var response = await _client.GetAsync("api/CashBalance/history?days=1");
@@ -109,7 +109,7 @@ public class CashBalanceHistoryApiTests
 
         //expense1 payable 120.00
         var (_, expense1) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Payable, amount: 120.00m, date: _today);
-        
+
         //settlement1 sale cash 60.00
         var (_, settlement1) = await CreateTestSettlementAsync(saleId: sale1.Id, paymentMethod: PaymentMethod.Cash, amount: 60.00m, date: _today);
 
@@ -139,7 +139,7 @@ public class CashBalanceHistoryApiTests
             Assert.That(expenseSettlementRow.Date, Is.EqualTo(_today));
             Assert.That(saleSettlementRow.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
             Assert.That(expenseSettlementRow.PaymentMethod, Is.EqualTo(PaymentMethod.Cash));
-        }); 
+        });
     }
 
     [Test]
@@ -150,7 +150,7 @@ public class CashBalanceHistoryApiTests
 
         //expense1 cash 129.99
         var (_, expense1) = await CreateTestExpenseAsync(paymentMethod: PaymentMethod.Cash, amount: 129.99m, date: _today.AddDays(-2));
-        
+
         //sale2 cash 77.77
         var (_, sale2, _) = await CreateTestSaleWithItemAsync(price: 77.77m, paymentMethod: PaymentMethod.Cash, saleItemQuantity: 1, saleDate: _today.AddDays(-1));
 
@@ -180,21 +180,21 @@ public class CashBalanceHistoryApiTests
 
         Assert.Multiple(() =>
         {
-            for(int i = 0; i < cashBalanceHistory.Count - 1; i++)
+            for (int i = 0; i < cashBalanceHistory.Count - 1; i++)
             {
                 var current = cashBalanceHistory[i];
-                var next = cashBalanceHistory[i+1];
+                var next = cashBalanceHistory[i + 1];
 
                 Assert.That(
                     current.RunningCashBalance - (
                         current.PaymentMethod == PaymentMethod.Cash ? current.Amount : 0
-                        ), 
+                        ),
                     Is.EqualTo(next.RunningCashBalance));
 
                 Assert.That(
                     current.RunningDigitalBalance - (
                         current.PaymentMethod == PaymentMethod.DigitalPayment ? current.Amount : 0
-                        ), 
+                        ),
                     Is.EqualTo(next.RunningDigitalBalance));
             }
         });
@@ -259,11 +259,11 @@ public class CashBalanceHistoryApiTests
     }
 
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
-        string name = "Test Product", 
-        string? sku = null, 
-        decimal price = 99.75m, 
-        int stockQuantity = 10, 
-        int lowStockLevel = 3, 
+        string name = "Test Product",
+        string? sku = null,
+        decimal price = 99.75m,
+        int stockQuantity = 10,
+        int lowStockLevel = 3,
         string category = "Test")
     {
         var payload = new
@@ -293,10 +293,10 @@ public class CashBalanceHistoryApiTests
     }
 
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpenseAsync(
-        PaymentMethod paymentMethod = PaymentMethod.Payable, 
-        string? paymentNote = null, 
-        string description = "Test expense description", 
-        decimal amount = 99.99m, 
+        PaymentMethod paymentMethod = PaymentMethod.Payable,
+        string? paymentNote = null,
+        string description = "Test expense description",
+        decimal amount = 99.99m,
         string category = "Test Expense Category",
         DateTime? date = null)
     {
@@ -311,7 +311,7 @@ public class CashBalanceHistoryApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Expenses", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -327,8 +327,8 @@ public class CashBalanceHistoryApiTests
     }
 
     public async Task<(HttpResponseMessage Response, CapitalTransactionResponse CapitalTransaction)> CreateTestCapitalTransactionAsync(
-        CapitalTransactionType type = CapitalTransactionType.Deposit, 
-        decimal amount = 99.99m, 
+        CapitalTransactionType type = CapitalTransactionType.Deposit,
+        decimal amount = 99.99m,
         PaymentMethod paymentMethod = PaymentMethod.Cash,
         string? note = null,
         DateTime? date = null)
@@ -343,7 +343,7 @@ public class CashBalanceHistoryApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -358,19 +358,20 @@ public class CashBalanceHistoryApiTests
         return (response, capitalTransaction);
     }
 
-    private async Task <(HttpResponseMessage Response, SaleResponse Sale)> CreateTestSaleAsync(
-        DateTime? saleDate = null, 
-        string? paymentNote = null, 
+    private async Task<(HttpResponseMessage Response, SaleResponse Sale)> CreateTestSaleAsync(
+        DateTime? saleDate = null,
+        string? paymentNote = null,
         PaymentMethod paymentMethod = PaymentMethod.Receivable)
     {
-        var payload = new { 
-        SaleDate = saleDate ?? _today, 
-        PaymentMethod = paymentMethod, 
-        PaymentNote = paymentNote 
+        var payload = new
+        {
+            SaleDate = saleDate ?? _today,
+            PaymentMethod = paymentMethod,
+            PaymentNote = paymentNote
         };
-        
+
         var response = await _client.PostAsJsonAsync("/api/Sales", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -386,31 +387,31 @@ public class CashBalanceHistoryApiTests
     }
 
     private async Task<(ProductResponse Product, SaleResponse Sale, SaleItemResponse SaleItem)> CreateTestSaleWithItemAsync(
-        string name = "Test Product", 
-        string? sku = null, 
-        decimal price = 99.75m, 
-        int stockQuantity = 10, 
-        int lowStockLevel = 3, 
+        string name = "Test Product",
+        string? sku = null,
+        decimal price = 99.75m,
+        int stockQuantity = 10,
+        int lowStockLevel = 3,
         string category = "Test",
 
-        DateTime? saleDate = null, 
-        string? paymentNote = null, 
+        DateTime? saleDate = null,
+        string? paymentNote = null,
         PaymentMethod paymentMethod = PaymentMethod.Receivable,
-        
+
         int saleItemQuantity = 1)
     {
         var (_, product) = await CreateTestProductAsync(name, sku, price, stockQuantity, lowStockLevel, category);
         var (_, sale) = await CreateTestSaleAsync(saleDate, paymentNote, paymentMethod);
 
-        var payload = new 
-        { 
-            ProductId = product!.Id, 
-            Quantity = saleItemQuantity, 
-            UnitPriceAtSale = product.Price 
+        var payload = new
+        {
+            ProductId = product!.Id,
+            Quantity = saleItemQuantity,
+            UnitPriceAtSale = product.Price
         };
 
         var response = await _client.PostAsJsonAsync($"/api/SaleItems/{sale!.Id}/items", payload);
-        if(response.StatusCode != HttpStatusCode.OK)
+        if (response.StatusCode != HttpStatusCode.OK)
         {
             throw new InvalidOperationException($"Expected 200 Ok() status, but received {response.StatusCode}");
         }
@@ -430,9 +431,9 @@ public class CashBalanceHistoryApiTests
         {
             throw new InvalidOperationException($"Failure in finding added sale item");
         }
-        
+
         var responseCloseSale = await _client.PostAsync($"/api/Sales/{updatedSale.Id}/close", null);
-        if(responseCloseSale.StatusCode != HttpStatusCode.OK)
+        if (responseCloseSale.StatusCode != HttpStatusCode.OK)
         {
             throw new Exception($"Expected 200 Ok() status, but received {responseCloseSale.StatusCode}");
         }
@@ -477,7 +478,7 @@ public class CashBalanceHistoryApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Settlements", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -496,12 +497,12 @@ public class CashBalanceHistoryApiTests
     public async Task DeleteTestExpenseSaleProductSettlement()
     {
         //Test Settlement Cleanup
-        if(_createdSettlementIds.Count > 0)
+        if (_createdSettlementIds.Count > 0)
         {
             using var scope = _factory.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
 
-            foreach(int i in _createdSettlementIds)
+            foreach (int i in _createdSettlementIds)
             {
                 var settlement = await context.Settlements.FindAsync(i);
                 if (settlement != null)
@@ -513,30 +514,30 @@ public class CashBalanceHistoryApiTests
         }
 
         //Test Expense Cleanup
-        if(_createdExpenseIds.Count > 0)
+        if (_createdExpenseIds.Count > 0)
         {
-            foreach(int i in _createdExpenseIds)
+            foreach (int i in _createdExpenseIds)
             {
                 var response = await _client.DeleteAsync($"api/Expenses/{i}");
                 if (response.StatusCode == HttpStatusCode.Conflict)
                 {
                     TestContext.Progress.WriteLine($"Skipped expense cleanup: expense {i} has existing reference (to a delivery item or delivery items) - deletion blocked by design (audit trail preserved).");
                 }
-                else if(response.StatusCode == HttpStatusCode.NotFound)
+                else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
                     TestContext.Progress.WriteLine($"Expense with an Id of {i} cannot be found -- already deleted or does not exist.");
                 }
                 else if (response.StatusCode != HttpStatusCode.NoContent)
-                { 
+                {
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting an expense with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                 }
             }
         }
 
         //Test Product Cleanup
-        if(_createdProductIds.Count > 0)
+        if (_createdProductIds.Count > 0)
         {
-            foreach(int i in _createdProductIds)
+            foreach (int i in _createdProductIds)
             {
                 var response = await _client.DeleteAsync($"api/Products/{i}");
                 if (response.StatusCode == HttpStatusCode.Conflict)
@@ -548,24 +549,24 @@ public class CashBalanceHistoryApiTests
                     TestContext.Progress.WriteLine($"Product with an Id of {i} cannot be found -- already deleted or does not exist.");
                 }
                 else if (response.StatusCode != HttpStatusCode.NoContent)
-                { 
+                {
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                 }
             }
         }
 
         //Test Sale Cleanup
-        if(_createdSaleIds.Count > 0)
+        if (_createdSaleIds.Count > 0)
         {
-            foreach(int i in _createdSaleIds)
+            foreach (int i in _createdSaleIds)
             {
                 var responseGetSale = await _client.GetAsync($"/api/Sales/{i}");
-                if(responseGetSale.StatusCode == HttpStatusCode.NotFound)
+                if (responseGetSale.StatusCode == HttpStatusCode.NotFound)
                 {
                     TestContext.Progress.WriteLine($"Sale with an Id of {i} cannot be found -- already deleted or does not exist.");
                     continue;
                 }
-                
+
                 try
                 {
                     var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
@@ -576,7 +577,7 @@ public class CashBalanceHistoryApiTests
                     else
                     {
                         var response = await _client.PutAsync($"/api/Sales/{i}/cancel", null);
-                        if(response.StatusCode != HttpStatusCode.NoContent)
+                        if (response.StatusCode != HttpStatusCode.NoContent)
                         {
                             throw new Exception($"Expected 204 NoContent() status, but received {response.StatusCode}");
                         }
@@ -586,15 +587,15 @@ public class CashBalanceHistoryApiTests
                 {
                     TestContext.Progress.WriteLine($"Warning: Failure in cancelling a sale with an Id of {i}: {ex.Message}");
                 }
-            } 
+            }
         }
         //Test Capital Transaction Cleanup
-        if(_createdCapitalTransactionIds.Count > 0)
+        if (_createdCapitalTransactionIds.Count > 0)
         {
             using var scope = _factory.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
 
-            foreach(int ct in _createdCapitalTransactionIds)
+            foreach (int ct in _createdCapitalTransactionIds)
             {
                 var capitalTransaction = await context.CapitalTransactions.FindAsync(ct);
                 if (capitalTransaction != null)

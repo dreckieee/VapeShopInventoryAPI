@@ -1,16 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 namespace VapeShopInventoryAPI.Api;
+
 public class VapeShopInventoryDbContext : DbContext
 {
-    public DbSet<Product> Products {get; private set;}
-    public DbSet<Expense> Expenses {get; private set;}
-    public DbSet<Sale> Sales {get; private set;}
-    public DbSet<SaleItem> SaleItems {get; private set;}
-    public DbSet<DeliveryItem> DeliveryItems {get; private set;}
-    public DbSet<Settlement> Settlements {get; private set;}
-    public DbSet<CapitalTransaction> CapitalTransactions {get; private set;}
-    public DbSet<User> Users {get; private set;}
-    public VapeShopInventoryDbContext (DbContextOptions<VapeShopInventoryDbContext> options) : base (options){}
+    public DbSet<Product> Products { get; private set; }
+    public DbSet<Expense> Expenses { get; private set; }
+    public DbSet<Sale> Sales { get; private set; }
+    public DbSet<SaleItem> SaleItems { get; private set; }
+    public DbSet<DeliveryItem> DeliveryItems { get; private set; }
+    public DbSet<Settlement> Settlements { get; private set; }
+    public DbSet<CapitalTransaction> CapitalTransactions { get; private set; }
+    public DbSet<User> Users { get; private set; }
+    public VapeShopInventoryDbContext(DbContextOptions<VapeShopInventoryDbContext> options) : base(options) { }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -34,7 +35,7 @@ public class VapeShopInventoryDbContext : DbContext
         modelBuilder.Entity<Sale>()
             .Navigation(s => s.SaleItems)
             .UsePropertyAccessMode(PropertyAccessMode.Field);
-            
+
         modelBuilder.Entity<DeliveryItem>()
             .HasOne<Expense>()
             .WithMany()
