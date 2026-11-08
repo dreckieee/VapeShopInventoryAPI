@@ -1,4 +1,3 @@
-using VapeShopInventoryAPI.Api;
 namespace VapeShopInventoryAPI.Api.DTOs;
 
 public record SaleResponse
@@ -16,6 +15,7 @@ public record SaleResponse
     public required decimal TotalAmount { get; init; }
     public required decimal OutstandingBalance { get; init; }
     public required decimal AmountSettled { get; init; }
+
     public static SaleResponse FromSale(Sale sale, decimal outstandingBalance, decimal amountSettled)
     {
         var saleItems = sale.SaleItems.Select(item => SaleItemResponse.FromSaleItem(item)).ToList();
@@ -37,5 +37,4 @@ public record SaleResponse
             AmountSettled = amountSettled
         };
     }
-
 }
