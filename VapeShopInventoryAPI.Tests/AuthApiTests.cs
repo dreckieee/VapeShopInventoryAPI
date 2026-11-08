@@ -71,4 +71,11 @@ public class AuthApiTests
             using var client = _factory.CreateCashierClient();
         });
     }
+
+    [Test]
+    public async Task GetCurrentUser_Anonymous_ReturnsUnauthorized()
+    {
+        var response = await _client.GetAsync("api/Auth/me");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), $"Expected 401 status, but received {response.StatusCode} instead.");
+    }
 }
