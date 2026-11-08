@@ -15,7 +15,7 @@ public class RestockApiTests
     public void OneTimeSetUp()
     {
         _factory = new CustomWebApplicationFactory();
-        _client = _factory.CreateClient();
+        _client = _factory.CreateOwnerClient();
     }
     [OneTimeTearDown]
     public void OneTimeTearDown()
