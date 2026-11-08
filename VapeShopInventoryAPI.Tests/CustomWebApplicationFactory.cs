@@ -29,7 +29,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-           
+
             var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<VapeShopInventoryDbContext>));
             if (descriptor != null)
             {
@@ -38,8 +38,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
             _connection.Open();
 
-            
-            services.AddDbContext<VapeShopInventoryDbContext>(options => {options.UseSqlite(_connection);}); 
+
+            services.AddDbContext<VapeShopInventoryDbContext>(options => { options.UseSqlite(_connection); });
 
             var serviceProvider = services.BuildServiceProvider();
             using (var scope = serviceProvider.CreateScope())
@@ -102,7 +102,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
         return client;
     }
-    
+
     protected override void Dispose(bool disposing)
     {
         if (disposing)

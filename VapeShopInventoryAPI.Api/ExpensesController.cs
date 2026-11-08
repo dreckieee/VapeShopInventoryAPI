@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
 using VapeShopInventoryAPI.Api.DTOs;
 namespace VapeShopInventoryAPI.Api;
+
 [ApiController]
 [Route("api/[controller]")]
 
@@ -10,7 +11,7 @@ public class ExpensesController : ControllerBase
 {
     private readonly VapeShopInventoryDbContext _context;
     private readonly ILogger<ExpensesController> _logger;
-    public ExpensesController (VapeShopInventoryDbContext context, ILogger<ExpensesController> logger)
+    public ExpensesController(VapeShopInventoryDbContext context, ILogger<ExpensesController> logger)
     {
         _context = context;
         _logger = logger;
@@ -20,22 +21,22 @@ public class ExpensesController : ControllerBase
     public async Task<ActionResult<IEnumerable<ExpenseResponse>>> GetExpenses([FromQuery] int? year, [FromQuery] int? month, [FromQuery] PaymentMethod? paymentMethod)
     {
         var query = _context.Expenses.AsQueryable();
-        if(year != null)
+        if (year != null)
         {
             query = query.Where(expense => expense.Date.Year == year);
         }
-        if(month != null)
+        if (month != null)
         {
             query = query.Where(expense => expense.Date.Month == month);
         }
-        if(paymentMethod != null)
+        if (paymentMethod != null)
         {
             query = query.Where(expense => expense.PaymentMethod == paymentMethod);
         }
 
         var expenses = await query.ToListAsync();
         var response = new List<ExpenseResponse>();
-        foreach(Expense expense in expenses)
+        foreach (Expense expense in expenses)
         {
             var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
             response.Add(ExpenseResponse.FromExpense(expense, outstandingBalance, alreadySettled));
@@ -47,7 +48,7 @@ public class ExpensesController : ControllerBase
     public async Task<ActionResult<ExpenseResponse>> GetExpense(int id)
     {
         var expense = await _context.Expenses.FindAsync(id);
-        if(expense == null)
+        if (expense == null)
         {
             return NotFound();
         }
@@ -71,13 +72,13 @@ public class ExpensesController : ControllerBase
             var response = ExpenseResponse.FromExpense(expense, outstandingBalance, alreadySettled);
             return CreatedAtAction(nameof(GetExpense), new { id = expense.Id }, response);
         }
-        catch(ArgumentException ex)
+        catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
         }
     }
 
-        
+
     [HttpPut("{id}")]
     public async Task<ActionResult<ExpenseResponse>> UpdateExpense(int id, [FromBody] UpdateExpenseRequest request)
     {
@@ -92,7 +93,7 @@ public class ExpensesController : ControllerBase
             var hasDeliveryReferences = await _context.DeliveryItems.AnyAsync(di => di.ExpenseId == expense.Id);
             if (hasDeliveryReferences && (expense.Amount != request.Amount || expense.Category != request.Category))
             {
-                return Conflict(new {message = "Cannot edit Amount or Category on an expense linked to existing delivery item record/s."});
+                return Conflict(new { message = "Cannot edit Amount or Category on an expense linked to existing delivery item record/s." });
             }
 
             var hasSettlementReferences = await _context.Settlements.AnyAsync(se => se.ExpenseId == expense.Id);
@@ -104,31 +105,31 @@ public class ExpensesController : ControllerBase
             }
             if (hasSettlementReferences && request.PaymentMethod != expense.PaymentMethod)
             {
-                return Conflict(new {message = "Cannot edit Payment Method on an expense linked to existing settlement record/s."});
+                return Conflict(new { message = "Cannot edit Payment Method on an expense linked to existing settlement record/s." });
             }
             if (hasSettlementReferences && request.Amount < alreadySettled)
             {
-                return Conflict(new {message = "Cannot reduce Amount below the total already settled on this expense."});
+                return Conflict(new { message = "Cannot reduce Amount below the total already settled on this expense." });
             }
             if (hasSettlementReferences)
             {
                 DateTime minDate = await _context.Settlements.Where(se => se.ExpenseId == expense.Id).MinAsync(se => se.Date);
-                if(minDate < request.Date)
+                if (minDate < request.Date)
                 {
-                    return Conflict(new {message = "Cannot edit Date to later than the earliest settlement."});
+                    return Conflict(new { message = "Cannot edit Date to later than the earliest settlement." });
                 }
             }
 
-            expense.Edit(request.Date, request.Description, request.Amount, request.Category,request.PaymentMethod, request.PaymentNote); 
+            expense.Edit(request.Date, request.Description, request.Amount, request.Category, request.PaymentMethod, request.PaymentNote);
             await _context.SaveChangesAsync();
-            
+
             (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateExpenseBalanceAsync(_context, expense);
             var response = ExpenseResponse.FromExpense(expense, outstandingBalance, alreadySettled);
             return Ok(response);
         }
-        catch(ArgumentException ex)
+        catch (ArgumentException ex)
         {
-            return BadRequest(new { message = ex.Message});
+            return BadRequest(new { message = ex.Message });
         }
     }
 
@@ -144,12 +145,12 @@ public class ExpensesController : ControllerBase
         var hasDeliveryReferences = await _context.DeliveryItems.AnyAsync(di => di.ExpenseId == expense.Id);
         if (hasDeliveryReferences)
         {
-            return Conflict(new {message = "Cannot delete this expense due to existing delivery item records."});
+            return Conflict(new { message = "Cannot delete this expense due to existing delivery item records." });
         }
         var hasSettlementReferences = await _context.Settlements.AnyAsync(se => se.ExpenseId == expense.Id);
         if (hasSettlementReferences)
         {
-            return Conflict(new {message = "Cannot delete this expense due to existing settlement records."});
+            return Conflict(new { message = "Cannot delete this expense due to existing settlement records." });
         }
 
         _context.Expenses.Remove(expense);

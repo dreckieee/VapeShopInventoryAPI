@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 namespace VapeShopInventoryAPI.Api;
+
 using VapeShopInventoryAPI.Api.DTOs;
 
 [ApiController]
@@ -18,17 +19,17 @@ public class RestockController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<RestockResponse>> Restock ([FromBody] RestockRequest request)
+    public async Task<ActionResult<RestockResponse>> Restock([FromBody] RestockRequest request)
     {
         try
         {
-            if(request.Items.Count == 0)
+            if (request.Items.Count == 0)
             {
                 throw new ArgumentException("Restock request must include at least one item.", nameof(request));
             }
 
             var products = new List<Product>();
-            foreach(RestockItemRequest ri in request.Items)
+            foreach (RestockItemRequest ri in request.Items)
             {
                 var product = await _context.Products.FindAsync(ri.ProductId);
                 if (product == null)
@@ -57,7 +58,7 @@ public class RestockController : ControllerBase
             {
                 var product = products.Find(p => p.Id == ri.ProductId);
                 product!.Restock(ri.Quantity);
-                var deliveryItem = new DeliveryItem(expense.Id, product!.Id, ri.Quantity, ri.UnitCost);    
+                var deliveryItem = new DeliveryItem(expense.Id, product!.Id, ri.Quantity, ri.UnitCost);
                 _context.DeliveryItems.Add(deliveryItem);
                 deliveryItems.Add(deliveryItem);
             }

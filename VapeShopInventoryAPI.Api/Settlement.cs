@@ -1,13 +1,14 @@
 namespace VapeShopInventoryAPI.Api;
+
 public class Settlement
 {
-    public int Id {get; private set;}
-    public int? SaleId {get; private set;}
-    public int? ExpenseId {get; private set;}
-    public decimal Amount {get; private set;}
-    public PaymentMethod PaymentMethod {get; private set;}
-    public string? PaymentNote {get; private set;}
-    public DateTime Date {get; private set;}
+    public int Id { get; private set; }
+    public int? SaleId { get; private set; }
+    public int? ExpenseId { get; private set; }
+    public decimal Amount { get; private set; }
+    public PaymentMethod PaymentMethod { get; private set; }
+    public string? PaymentNote { get; private set; }
+    public DateTime Date { get; private set; }
     public Settlement(int? saleId, int? expenseId, decimal amount, PaymentMethod paymentMethod, string? paymentNote, DateTime date)
     {
         GuardSettlement(saleId, expenseId, amount, paymentMethod, date);

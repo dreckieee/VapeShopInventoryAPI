@@ -17,7 +17,7 @@ public class SalesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<SaleResponse>>> GetSales ([FromQuery] int? year, [FromQuery] int? month, [FromQuery] bool? isClosed, [FromQuery] PaymentMethod? paymentMethod)
+    public async Task<ActionResult<IEnumerable<SaleResponse>>> GetSales([FromQuery] int? year, [FromQuery] int? month, [FromQuery] bool? isClosed, [FromQuery] PaymentMethod? paymentMethod)
     {
         var query = _context.Sales.Include(s => s.SaleItems).AsQueryable();
         if (year != null)
@@ -36,10 +36,10 @@ public class SalesController : ControllerBase
         {
             query = query.Where(s => s.PaymentMethod == paymentMethod);
         }
-        
+
         var sales = await query.ToListAsync();
         var response = new List<SaleResponse>();
-        foreach(Sale sale in sales)
+        foreach (Sale sale in sales)
         {
             var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
             response.Add(SaleResponse.FromSale(sale, outstandingBalance, alreadySettled));
@@ -73,7 +73,7 @@ public class SalesController : ControllerBase
             var saleResponse = SaleResponse.FromSale(sale, outstandingBalance, alreadySettled);
             return CreatedAtAction(nameof(GetSale), new { id = sale.Id }, saleResponse);
         }
-        catch(ArgumentException ex)
+        catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
         }
@@ -106,11 +106,12 @@ public class SalesController : ControllerBase
         }
         catch (InsufficientStockException ex)
         {
-            var shortages = ex.Shortages.Select(shortage => new StockShortageResponse{
+            var shortages = ex.Shortages.Select(shortage => new StockShortageResponse
+            {
                 ProductId = shortage.ProductId,
                 ProductName = shortage.ProductName,
                 RequestedQuantity = shortage.RequestedQuantity,
-                AvailableQuantity = shortage.AvailableQuantity 
+                AvailableQuantity = shortage.AvailableQuantity
             }).ToList();
 
             return Conflict(shortages);
@@ -128,7 +129,7 @@ public class SalesController : ControllerBase
         var hasSettlementReferences = await _context.Settlements.AnyAsync(se => se.SaleId == sale.Id);
         if (hasSettlementReferences && request.PaymentMethod != sale.PaymentMethod)
         {
-            return Conflict(new {message = "Cannot edit Payment Method on a sale linked to existing settlement record/s."});
+            return Conflict(new { message = "Cannot edit Payment Method on a sale linked to existing settlement record/s." });
         }
         try
         {
@@ -146,11 +147,11 @@ public class SalesController : ControllerBase
 
         var (outstandingBalance, alreadySettled) = await SettlementCalculator.CalculateSaleBalanceAsync(_context, sale);
         var saleResponse = SaleResponse.FromSale(sale, outstandingBalance, alreadySettled);
-        return Ok(saleResponse);  
+        return Ok(saleResponse);
     }
 
     [HttpPut("{id}/cancel")]
-    public async Task<IActionResult> CancelSale (int id)
+    public async Task<IActionResult> CancelSale(int id)
     {
         var sale = await _context.Sales.FindAsync(id);
         if (sale == null)

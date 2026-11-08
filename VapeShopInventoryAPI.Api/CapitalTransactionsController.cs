@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VapeShopInventoryAPI.Api.DTOs;
 namespace VapeShopInventoryAPI.Api;
+
 [ApiController]
 [Route("api/[controller]")]
 public class CapitalTransactionsController : ControllerBase
@@ -18,18 +19,18 @@ public class CapitalTransactionsController : ControllerBase
     public async Task<ActionResult<IEnumerable<CapitalTransactionResponse>>> GetCapitalTransactions([FromQuery] int? year, [FromQuery] int? month)
     {
         var query = _context.CapitalTransactions.AsQueryable();
-        if(year != null)
+        if (year != null)
         {
             query = query.Where(capitalTransaction => capitalTransaction.Date.Year == year);
         }
-        if(month != null)
+        if (month != null)
         {
             query = query.Where(capitalTransaction => capitalTransaction.Date.Month == month);
         }
 
         var capitalTransactions = await query.ToListAsync();
         var response = new List<CapitalTransactionResponse>();
-        foreach(CapitalTransaction capitalTransaction in capitalTransactions)
+        foreach (CapitalTransaction capitalTransaction in capitalTransactions)
         {
             response.Add(CapitalTransactionResponse.FromCapitalTransaction(capitalTransaction));
         }
@@ -40,11 +41,11 @@ public class CapitalTransactionsController : ControllerBase
     public async Task<ActionResult<CapitalTransactionResponse>> GetCapitalTransaction(int id)
     {
         var capitalTransaction = await _context.CapitalTransactions.FindAsync(id);
-        if(capitalTransaction == null)
+        if (capitalTransaction == null)
         {
             return NotFound();
         }
-        
+
         var response = CapitalTransactionResponse.FromCapitalTransaction(capitalTransaction);
         return Ok(response);
     }
@@ -62,7 +63,7 @@ public class CapitalTransactionsController : ControllerBase
             var response = CapitalTransactionResponse.FromCapitalTransaction(capitalTransaction);
             return CreatedAtAction(nameof(GetCapitalTransaction), new { id = capitalTransaction.Id }, response);
         }
-        catch(ArgumentException ex)
+        catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
         }

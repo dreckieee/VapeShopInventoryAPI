@@ -12,10 +12,10 @@ public class SettlementsApiTests
 {
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
-    private List<int> _createdProductIds = new ();
-    private List<int> _createdExpenseIds = new ();
-    private List<int> _createdSaleIds = new ();
-    private List<int> _createdSettlementIds = new ();
+    private List<int> _createdProductIds = new();
+    private List<int> _createdExpenseIds = new();
+    private List<int> _createdSaleIds = new();
+    private List<int> _createdSettlementIds = new();
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
@@ -161,7 +161,7 @@ public class SettlementsApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Settlements", payload);
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");  
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
     }
 
     [Test]
@@ -246,7 +246,7 @@ public class SettlementsApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Settlements", payload);
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");  
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 Bad Request() status, but received {response.StatusCode} instead.");
     }
 
     [Test]
@@ -499,7 +499,7 @@ public class SettlementsApiTests
             Category = "test category",
             Date = new DateTime(2026, 02, 02)
         };
-        
+
         var response = await _client.PutAsJsonAsync($"api/Expenses/{testExpense.Id}", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Conflict), $"Expected 409 Conflict() status, but received {response.StatusCode} instead.");
 
@@ -532,7 +532,7 @@ public class SettlementsApiTests
 
         var responsePartialSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadSettlement);
         Assert.That(responsePartialSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responsePartialSettlement.StatusCode} instead.");
-        
+
         var settlement = await responsePartialSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
         Assert.That(settlement, Is.Not.Null);
         _createdSettlementIds.Add(settlement.Id);
@@ -579,7 +579,7 @@ public class SettlementsApiTests
 
         var responsePartialSettlement = await _client.PostAsJsonAsync("api/Settlements", payloadSettlement);
         Assert.That(responsePartialSettlement.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created() status, but received {responsePartialSettlement.StatusCode} instead.");
-        
+
         var settlement = await responsePartialSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
         Assert.That(settlement, Is.Not.Null);
         _createdSettlementIds.Add(settlement.Id);
@@ -660,7 +660,7 @@ public class SettlementsApiTests
         var settlement = await responsePartialSettlement.Content.ReadFromJsonAsync<SettlementResponse>(TestJsonOptions.Default);
         Assert.That(settlement, Is.Not.Null);
         _createdSettlementIds.Add(settlement.Id);
-        
+
         var payload = new UpdateExpenseRequest
         {
             PaymentMethod = testExpense.PaymentMethod,
@@ -690,11 +690,11 @@ public class SettlementsApiTests
     }
 
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
-        string name = "Test Product", 
-        string? sku = null, 
-        decimal price = 99.75m, 
-        int stockQuantity = 10, 
-        int lowStockLevel = 3, 
+        string name = "Test Product",
+        string? sku = null,
+        decimal price = 99.75m,
+        int stockQuantity = 10,
+        int lowStockLevel = 3,
         string category = "Test")
     {
         var payload = new
@@ -724,10 +724,10 @@ public class SettlementsApiTests
     }
 
     public async Task<(HttpResponseMessage Response, ExpenseResponse Expense)> CreateTestExpenseAsync(
-        PaymentMethod paymentMethod = PaymentMethod.Payable, 
-        string? paymentNote = null, 
-        string description = "Test expense description", 
-        decimal amount = 99.99m, 
+        PaymentMethod paymentMethod = PaymentMethod.Payable,
+        string? paymentNote = null,
+        string description = "Test expense description",
+        decimal amount = 99.99m,
         string category = "Test Expense Category",
         DateTime? date = null)
     {
@@ -742,7 +742,7 @@ public class SettlementsApiTests
         };
 
         var response = await _client.PostAsJsonAsync("api/Expenses", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -757,19 +757,20 @@ public class SettlementsApiTests
         return (response, expense);
     }
 
-    private async Task <(HttpResponseMessage Response, SaleResponse Sale)> CreateTestSaleAsync(
-        DateTime? saleDate = null, 
-        string? paymentNote = null, 
+    private async Task<(HttpResponseMessage Response, SaleResponse Sale)> CreateTestSaleAsync(
+        DateTime? saleDate = null,
+        string? paymentNote = null,
         PaymentMethod paymentMethod = PaymentMethod.Receivable)
     {
-        var payload = new { 
-        SaleDate = saleDate ?? new DateTime(2026, 01, 01), 
-        PaymentMethod = paymentMethod, 
-        PaymentNote = paymentNote 
+        var payload = new
+        {
+            SaleDate = saleDate ?? new DateTime(2026, 01, 01),
+            PaymentMethod = paymentMethod,
+            PaymentNote = paymentNote
         };
-        
+
         var response = await _client.PostAsJsonAsync("/api/Sales", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -785,31 +786,31 @@ public class SettlementsApiTests
     }
 
     private async Task<(ProductResponse Product, SaleResponse Sale, SaleItemResponse SaleItem)> CreateTestSaleWithItemAsync(
-        string name = "Test Product", 
-        string? sku = null, 
-        decimal price = 99.75m, 
-        int stockQuantity = 10, 
-        int lowStockLevel = 3, 
+        string name = "Test Product",
+        string? sku = null,
+        decimal price = 99.75m,
+        int stockQuantity = 10,
+        int lowStockLevel = 3,
         string category = "Test",
 
-        DateTime? saleDate = null, 
-        string? paymentNote = null, 
+        DateTime? saleDate = null,
+        string? paymentNote = null,
         PaymentMethod paymentMethod = PaymentMethod.Receivable,
-        
+
         int saleItemQuantity = 1)
     {
         var (_, product) = await CreateTestProductAsync(name, sku, price, stockQuantity, lowStockLevel, category);
         var (_, sale) = await CreateTestSaleAsync(saleDate, paymentNote, paymentMethod);
 
-        var payload = new 
-        { 
-            ProductId = product!.Id, 
-            Quantity = saleItemQuantity, 
-            UnitPriceAtSale = product.Price 
+        var payload = new
+        {
+            ProductId = product!.Id,
+            Quantity = saleItemQuantity,
+            UnitPriceAtSale = product.Price
         };
 
         var response = await _client.PostAsJsonAsync($"/api/SaleItems/{sale!.Id}/items", payload);
-        if(response.StatusCode != HttpStatusCode.OK)
+        if (response.StatusCode != HttpStatusCode.OK)
         {
             throw new InvalidOperationException($"Expected 200 Ok() status, but received {response.StatusCode}");
         }
@@ -829,9 +830,9 @@ public class SettlementsApiTests
         {
             throw new InvalidOperationException($"Failure in finding added sale item");
         }
-        
+
         var responseCloseSale = await _client.PostAsync($"/api/Sales/{updatedSale.Id}/close", null);
-        if(responseCloseSale.StatusCode != HttpStatusCode.OK)
+        if (responseCloseSale.StatusCode != HttpStatusCode.OK)
         {
             throw new Exception($"Expected 200 Ok() status, but received {responseCloseSale.StatusCode}");
         }
@@ -852,12 +853,12 @@ public class SettlementsApiTests
     public async Task DeleteTestExpenseSaleProductSettlement()
     {
         //Test Settlement Cleanup
-        if(_createdSettlementIds.Count > 0)
+        if (_createdSettlementIds.Count > 0)
         {
             using var scope = _factory.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
 
-            foreach(int i in _createdSettlementIds)
+            foreach (int i in _createdSettlementIds)
             {
                 var settlement = await context.Settlements.FindAsync(i);
                 if (settlement != null)
@@ -869,30 +870,30 @@ public class SettlementsApiTests
         }
 
         //Test Expense Cleanup
-        if(_createdExpenseIds.Count > 0)
+        if (_createdExpenseIds.Count > 0)
         {
-            foreach(int i in _createdExpenseIds)
+            foreach (int i in _createdExpenseIds)
             {
                 var response = await _client.DeleteAsync($"api/Expenses/{i}");
                 if (response.StatusCode == HttpStatusCode.Conflict)
                 {
                     TestContext.Progress.WriteLine($"Skipped expense cleanup: expense {i} has existing reference (to a delivery item or delivery items) - deletion blocked by design (audit trail preserved).");
                 }
-                else if(response.StatusCode == HttpStatusCode.NotFound)
+                else if (response.StatusCode == HttpStatusCode.NotFound)
                 {
                     TestContext.Progress.WriteLine($"Expense with an Id of {i} cannot be found -- already deleted or does not exist.");
                 }
                 else if (response.StatusCode != HttpStatusCode.NoContent)
-                { 
+                {
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting an expense with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                 }
             }
         }
 
         //Test Product Cleanup
-        if(_createdProductIds.Count > 0)
+        if (_createdProductIds.Count > 0)
         {
-            foreach(int i in _createdProductIds)
+            foreach (int i in _createdProductIds)
             {
                 var response = await _client.DeleteAsync($"api/Products/{i}");
                 if (response.StatusCode == HttpStatusCode.Conflict)
@@ -904,24 +905,24 @@ public class SettlementsApiTests
                     TestContext.Progress.WriteLine($"Product with an Id of {i} cannot be found -- already deleted or does not exist.");
                 }
                 else if (response.StatusCode != HttpStatusCode.NoContent)
-                { 
+                {
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                 }
             }
         }
 
         //Test Sale Cleanup
-        if(_createdSaleIds.Count > 0)
+        if (_createdSaleIds.Count > 0)
         {
-            foreach(int i in _createdSaleIds)
+            foreach (int i in _createdSaleIds)
             {
                 var responseGetSale = await _client.GetAsync($"/api/Sales/{i}");
-                if(responseGetSale.StatusCode == HttpStatusCode.NotFound)
+                if (responseGetSale.StatusCode == HttpStatusCode.NotFound)
                 {
                     TestContext.Progress.WriteLine($"Sale with an Id of {i} cannot be found -- already deleted or does not exist.");
                     continue;
                 }
-                
+
                 try
                 {
                     var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
@@ -932,7 +933,7 @@ public class SettlementsApiTests
                     else
                     {
                         var response = await _client.PutAsync($"/api/Sales/{i}/cancel", null);
-                        if(response.StatusCode != HttpStatusCode.NoContent)
+                        if (response.StatusCode != HttpStatusCode.NoContent)
                         {
                             throw new Exception($"Expected 204 NoContent() status, but received {response.StatusCode}");
                         }
@@ -942,7 +943,7 @@ public class SettlementsApiTests
                 {
                     TestContext.Progress.WriteLine($"Warning: Failure in cancelling a sale with an Id of {i}: {ex.Message}");
                 }
-            } 
+            }
         }
         _createdSettlementIds.Clear();
         _createdExpenseIds.Clear();

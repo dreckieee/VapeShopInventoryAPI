@@ -1,9 +1,10 @@
 namespace VapeShopInventoryAPI.Api.DTOs;
+
 public record DeliveryItemResponse
 {
     public required int ProductId { get; init; }
     public required int ExpenseId { get; init; }
-    public required string ProductName {get; init;}
+    public required string ProductName { get; init; }
     public required int Quantity { get; init; }
     public required decimal UnitCost { get; init; }
     public required decimal TotalCost { get; init; }

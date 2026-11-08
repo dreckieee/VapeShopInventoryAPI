@@ -9,12 +9,12 @@ namespace VapeShopInventoryAPI.Tests;
 
 [NonParallelizable]
 public class SalesApiTests
-{   
+{
     private CustomWebApplicationFactory _factory = null!;
     private HttpClient _client = null!;
     private List<int> _createdProductIds = new();
     private List<int> _createdSaleIds = new();
-    private List<int> _createdSettlementIds = new ();
+    private List<int> _createdSettlementIds = new();
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
@@ -47,7 +47,7 @@ public class SalesApiTests
         };
         var response = await _client.PostAsJsonAsync("api/Sales", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Created), $"Expected 201 Created(), but received {response.StatusCode}");
-        
+
         var sale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(sale, Is.Not.Null);
         Assert.That(sale.SaleDate, Is.EqualTo(payload.SaleDate));
@@ -59,15 +59,16 @@ public class SalesApiTests
     [Test]
     public async Task CreateSale_WithInvalidEnumPaymentMethod_ReturnsBadRequest()
     {
-        var payload = new { 
-        SaleDate = new DateTime(2026, 01, 01), 
-        PaymentMethod = (PaymentMethod)999, 
-        PaymentNote = "Test Invalid Enum PaymentMethod in Sale Creation" 
+        var payload = new
+        {
+            SaleDate = new DateTime(2026, 01, 01),
+            PaymentMethod = (PaymentMethod)999,
+            PaymentNote = "Test Invalid Enum PaymentMethod in Sale Creation"
         };
-        
+
         var response = await _client.PostAsJsonAsync("/api/Sales", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.StatusCode} instead.");
-        
+
         var responseGetSalesAfter = await _client.GetAsync("api/Sales");
         var salesAfter = await responseGetSalesAfter.Content.ReadFromJsonAsync<List<SaleResponse>>(TestJsonOptions.Default);
         Assert.That(salesAfter, Is.Not.Null);
@@ -78,10 +79,10 @@ public class SalesApiTests
     public async Task CreateSale_CashPaymentMethod_ReturnsFullAmountSettledAndZeroOutstanding()
     {
         var (_, testSale, testSaleItem) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Cash);
-        
+
         var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
-        
+
         var sale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(sale, Is.Not.Null);
         Assert.That(sale.TotalAmount, Is.EqualTo(testSaleItem.Quantity * testSaleItem.UnitPriceAtSale));
@@ -93,10 +94,10 @@ public class SalesApiTests
     public async Task CreateSale_DigitalPaymentMethod_ReturnsFullAmountSettledAndZeroOutstanding()
     {
         var (_, testSale, testSaleItem) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.DigitalPayment);
-        
+
         var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
-        
+
         var sale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(sale, Is.Not.Null);
         Assert.That(sale.TotalAmount, Is.EqualTo(testSaleItem.Quantity * testSaleItem.UnitPriceAtSale));
@@ -108,10 +109,10 @@ public class SalesApiTests
     public async Task CreateSale_ReceivableWithNoSettlement_ReturnsFullOutstandingBalance()
     {
         var (_, testSale, testSaleItem) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Receivable);
-        
+
         var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
-        
+
         var sale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(sale, Is.Not.Null);
         Assert.That(sale.TotalAmount, Is.EqualTo(testSaleItem.Quantity * testSaleItem.UnitPriceAtSale));
@@ -123,7 +124,7 @@ public class SalesApiTests
     public async Task CreateSale_PartialSettlement_ReturnsCorrectComputedFields()
     {
         var (testProduct, testSale, testSaleItem) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Receivable);
-        
+
         var responseCloseSale = await _client.PostAsync($"/api/Sales/{testSale.Id}/close", null);
         Assert.That(responseCloseSale.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCloseSale.StatusCode}.");
 
@@ -146,7 +147,7 @@ public class SalesApiTests
 
         var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
-        
+
         var sale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(sale, Is.Not.Null);
         Assert.That(sale.TotalAmount, Is.EqualTo(testSaleItem.Quantity * testSaleItem.UnitPriceAtSale));
@@ -158,7 +159,7 @@ public class SalesApiTests
     public async Task CreateSale_FullSettlement_ReturnsCorrectComputedFields()
     {
         var (testProduct, testSale, testSaleItem) = await CreateTestSaleWithItemAsync(paymentMethod: PaymentMethod.Receivable);
-        
+
         var responseCloseSale = await _client.PostAsync($"/api/Sales/{testSale.Id}/close", null);
         Assert.That(responseCloseSale.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCloseSale.StatusCode}.");
 
@@ -181,7 +182,7 @@ public class SalesApiTests
 
         var response = await _client.GetAsync($"/api/Sales/{testSale.Id}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
-        
+
         var sale = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(sale, Is.Not.Null);
         Assert.That(sale.TotalAmount, Is.EqualTo(testSaleItem.Quantity * testSaleItem.UnitPriceAtSale));
@@ -280,18 +281,19 @@ public class SalesApiTests
     {
         var (_, testSale) = await CreateTestSaleAsync();
 
-        var payload = new { 
-        SaleDate = new DateTime(2026, 01, 01), 
-        PaymentMethod = (PaymentMethod)999, 
-        PaymentNote = "Test Invalid Enum PaymentMethod in Editing Sale" 
+        var payload = new
+        {
+            SaleDate = new DateTime(2026, 01, 01),
+            PaymentMethod = (PaymentMethod)999,
+            PaymentNote = "Test Invalid Enum PaymentMethod in Editing Sale"
         };
-        
+
         var response = await _client.PutAsJsonAsync($"/api/Sales/{testSale!.Id}", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), $"Expected 400 BadRequest() status, but received {response.StatusCode} instead.");
-        
+
         var responseGetSale = await _client.GetAsync($"api/Sales/{testSale.Id}");
         Assert.That(responseGetSale.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseGetSale.StatusCode} instead.");
-        
+
         var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(sale, Is.Not.Null);
 
@@ -309,7 +311,7 @@ public class SalesApiTests
 
     [Test]
     public async Task AddSaleItem_ValidRequest_ReturnsOk()
-    {   
+    {
         var (_, testProduct) = await CreateTestProductAsync();
         var (_, testSale) = await CreateTestSaleAsync();
 
@@ -335,10 +337,10 @@ public class SalesApiTests
 
     [Test]
     public async Task AddSaleItem_ClosedSale_ReturnsBadRequest()
-    {   
+    {
         var (testProduct1, testSale, testSaleItem) = await CreateTestSaleWithItemAsync();
         var (_, testProduct2) = await CreateTestProductAsync();
-        
+
         var responseCloseSale = await _client.PostAsync($"/api/Sales/{testSale.Id}/close", null);
         Assert.That(responseCloseSale.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {responseCloseSale.StatusCode}.");
 
@@ -391,7 +393,7 @@ public class SalesApiTests
 
     [Test]
     public async Task ReduceSaleItemQuantity_ReducesToZero_ReturnsOk()
-    {   
+    {
         var (testProduct, testSale, testSaleItem) = await CreateTestSaleWithItemAsync();
 
         var payload = new ReduceSaleItemQuantityRequest
@@ -416,12 +418,12 @@ public class SalesApiTests
 
     [Test]
     public async Task CloseSale_ValidSale_ReturnsOk()
-    {   
+    {
         var (testProduct, testSale, testSaleItem) = await CreateTestSaleWithItemAsync();
 
         var response = await _client.PostAsync($"/api/Sales/{testSale.Id}/close", null);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode}.");
-        
+
         var saleAfterClosing = await response.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
         Assert.That(saleAfterClosing, Is.Not.Null);
         Assert.That(saleAfterClosing.IsClosed, Is.True);
@@ -440,17 +442,17 @@ public class SalesApiTests
 
 
 
-    
+
     [TearDown]
     public async Task DeleteTestSaleAndProduct()
     {
         //Test Settlement Cleanup
-        if(_createdSettlementIds.Count > 0)
+        if (_createdSettlementIds.Count > 0)
         {
             using var scope = _factory.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<VapeShopInventoryDbContext>();
 
-            foreach(int i in _createdSettlementIds)
+            foreach (int i in _createdSettlementIds)
             {
                 var settlement = await context.Settlements.FindAsync(i);
                 if (settlement != null)
@@ -462,9 +464,9 @@ public class SalesApiTests
         }
 
         //Test Product Cleanup
-        if(_createdProductIds.Count > 0)
+        if (_createdProductIds.Count > 0)
         {
-            foreach(int i in _createdProductIds)
+            foreach (int i in _createdProductIds)
             {
                 var response = await _client.DeleteAsync($"api/Products/{i}");
                 if (response.StatusCode == HttpStatusCode.Conflict)
@@ -476,24 +478,24 @@ public class SalesApiTests
                     TestContext.Progress.WriteLine($"Product with an Id of {i} cannot be found -- already deleted or does not exist.");
                 }
                 else if (response.StatusCode != HttpStatusCode.NoContent)
-                { 
+                {
                     TestContext.Progress.WriteLine($"Warning: Failure in deleting a product with an Id of {i}: Expected 204 No Content() status, but received {response.StatusCode}");
                 }
             }
         }
 
         //Test Sale Cleanup
-        if(_createdSaleIds.Count > 0)
+        if (_createdSaleIds.Count > 0)
         {
-            foreach(int i in _createdSaleIds)
+            foreach (int i in _createdSaleIds)
             {
                 var responseGetSale = await _client.GetAsync($"/api/Sales/{i}");
-                if(responseGetSale.StatusCode == HttpStatusCode.NotFound)
+                if (responseGetSale.StatusCode == HttpStatusCode.NotFound)
                 {
                     TestContext.Progress.WriteLine($"Sale with an Id of {i} cannot be found -- already deleted or does not exist.");
                     continue;
                 }
-                
+
                 try
                 {
                     var sale = await responseGetSale.Content.ReadFromJsonAsync<SaleResponse>(TestJsonOptions.Default);
@@ -504,7 +506,7 @@ public class SalesApiTests
                     else
                     {
                         var response = await _client.PutAsync($"/api/Sales/{i}/cancel", null);
-                        if(response.StatusCode != HttpStatusCode.NoContent)
+                        if (response.StatusCode != HttpStatusCode.NoContent)
                         {
                             throw new Exception($"Expected 204 NoContent() status, but received {response.StatusCode}");
                         }
@@ -514,7 +516,7 @@ public class SalesApiTests
                 {
                     TestContext.Progress.WriteLine($"Warning: Failure in cancelling a sale with an Id of {i}: {ex.Message}");
                 }
-            } 
+            }
         }
         _createdSettlementIds.Clear();
         _createdProductIds.Clear();
@@ -522,11 +524,11 @@ public class SalesApiTests
     }
 
     public async Task<(HttpResponseMessage Response, ProductResponse Product)> CreateTestProductAsync(
-        string name = "Test Product", 
-        string? sku = null, 
-        decimal price = 99.75m, 
-        int stockQuantity = 10, 
-        int lowStockLevel = 3, 
+        string name = "Test Product",
+        string? sku = null,
+        decimal price = 99.75m,
+        int stockQuantity = 10,
+        int lowStockLevel = 3,
         string category = "Test")
     {
         var payload = new
@@ -555,19 +557,20 @@ public class SalesApiTests
         return (response, product);
     }
 
-    private async Task <(HttpResponseMessage Response, SaleResponse Sale)> CreateTestSaleAsync(
-        DateTime? saleDate = null, 
-        string? paymentNote = null, 
+    private async Task<(HttpResponseMessage Response, SaleResponse Sale)> CreateTestSaleAsync(
+        DateTime? saleDate = null,
+        string? paymentNote = null,
         PaymentMethod paymentMethod = PaymentMethod.Cash)
     {
-        var payload = new { 
-        SaleDate = saleDate ?? new DateTime(2026, 01, 01), 
-        PaymentMethod = paymentMethod, 
-        PaymentNote = paymentNote 
+        var payload = new
+        {
+            SaleDate = saleDate ?? new DateTime(2026, 01, 01),
+            PaymentMethod = paymentMethod,
+            PaymentNote = paymentNote
         };
-        
+
         var response = await _client.PostAsJsonAsync("/api/Sales", payload);
-        if(response.StatusCode != HttpStatusCode.Created)
+        if (response.StatusCode != HttpStatusCode.Created)
         {
             throw new InvalidOperationException($"Expected 201 Created() status, but received {response.StatusCode}");
         }
@@ -583,31 +586,31 @@ public class SalesApiTests
     }
 
     private async Task<(ProductResponse Product, SaleResponse Sale, SaleItemResponse SaleItem)> CreateTestSaleWithItemAsync(
-        string name = "Test Product", 
-        string? sku = null, 
-        decimal price = 99.75m, 
-        int stockQuantity = 10, 
-        int lowStockLevel = 3, 
+        string name = "Test Product",
+        string? sku = null,
+        decimal price = 99.75m,
+        int stockQuantity = 10,
+        int lowStockLevel = 3,
         string category = "Test",
 
-        DateTime? saleDate = null, 
-        string? paymentNote = null, 
+        DateTime? saleDate = null,
+        string? paymentNote = null,
         PaymentMethod paymentMethod = PaymentMethod.Cash,
-        
+
         int saleItemQuantity = 1)
     {
         var (_, product) = await CreateTestProductAsync(name, sku, price, stockQuantity, lowStockLevel, category);
         var (_, sale) = await CreateTestSaleAsync(saleDate, paymentNote, paymentMethod);
 
-        var payload = new 
-        { 
-            ProductId = product!.Id, 
-            Quantity = saleItemQuantity, 
-            UnitPriceAtSale = product.Price 
+        var payload = new
+        {
+            ProductId = product!.Id,
+            Quantity = saleItemQuantity,
+            UnitPriceAtSale = product.Price
         };
 
         var response = await _client.PostAsJsonAsync($"/api/SaleItems/{sale!.Id}/items", payload);
-        if(response.StatusCode != HttpStatusCode.OK)
+        if (response.StatusCode != HttpStatusCode.OK)
         {
             throw new InvalidOperationException($"Expected 200 Ok() status, but received {response.StatusCode}");
         }
@@ -627,7 +630,7 @@ public class SalesApiTests
         {
             throw new InvalidOperationException($"Failure in finding added sale item");
         }
-        
+
         return (product, updatedSale, saleItem);
     }
 }

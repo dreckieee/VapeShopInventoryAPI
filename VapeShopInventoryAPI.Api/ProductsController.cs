@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
 namespace VapeShopInventoryAPI.Api;
+
 using VapeShopInventoryAPI.Api.DTOs;
 
 [ApiController]
@@ -31,7 +32,7 @@ public class ProductsController : ControllerBase
 
         var products = await query.ToListAsync();
         var productResponses = products.Select(product => ProductResponse.FromProduct(product)).ToList();
-        
+
         return Ok(productResponses);
     }
     [HttpGet("{id}")]
@@ -51,7 +52,7 @@ public class ProductsController : ControllerBase
     {
         Product product = null!;
         try
-        {    
+        {
             product = new Product(request.Name, request.Sku, request.Price, request.StockQuantity, request.LowStockLevel, request.Category);
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
@@ -72,20 +73,20 @@ public class ProductsController : ControllerBase
                 if (sqliteEx.Message.Contains($"{tableName}.{nameof(product.Sku)}"))
                 {
                     _logger.LogWarning(ex, "Duplicate SKU attempted: {Sku}", product.Sku);
-                    return Conflict(new {message = "A product with this SKU already exists."});
+                    return Conflict(new { message = "A product with this SKU already exists." });
                 }
             }
 
             _logger.LogError(ex, "Unexpected Error creating product: {Name}", product.Name);
-            return Conflict(new {message = "Unable to create product due to a data conflict."});
+            return Conflict(new { message = "Unable to create product due to a data conflict." });
         }
 
         var productResponse = ProductResponse.FromProduct(product);
-            
+
         return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, productResponse);
     }
 
-        
+
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductRequest request)
     {
@@ -108,12 +109,12 @@ public class ProductsController : ControllerBase
                 if (sqliteEx.Message.Contains($"{tableName}.{nameof(request.Sku)}"))
                 {
                     _logger.LogWarning(ex, "Duplicate SKU attempted: {Sku}", request.Sku);
-                    return Conflict(new {message = "A product with this SKU already exists."});
+                    return Conflict(new { message = "A product with this SKU already exists." });
                 }
             }
-            
+
             _logger.LogError(ex, "Unexpected Error updating product: {Name}", request.Name);
-            return Conflict(new {message = "Unable to update product due to a data conflict."});
+            return Conflict(new { message = "Unable to update product due to a data conflict." });
         }
     }
 
@@ -131,22 +132,22 @@ public class ProductsController : ControllerBase
             var hasSaleReferences = await _context.SaleItems.AnyAsync(si => si.ProductId == product.Id);
             if (hasSaleReferences)
             {
-                return Conflict(new {message = "Cannot delete this product due to existing sale records."});
+                return Conflict(new { message = "Cannot delete this product due to existing sale records." });
             }
             var hasDeliveryReferences = await _context.DeliveryItems.AnyAsync(di => di.ProductId == product.Id);
             if (hasDeliveryReferences)
             {
-                return Conflict(new {message = "Cannot delete this product due to existing delivery item records."});
+                return Conflict(new { message = "Cannot delete this product due to existing delivery item records." });
             }
 
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
             return NoContent();
         }
-        catch(DbUpdateException)
+        catch (DbUpdateException)
         {
             return Conflict(new { message = "Unable to delete product due to a database constraint." });
-        }  
+        }
     }
 
 }

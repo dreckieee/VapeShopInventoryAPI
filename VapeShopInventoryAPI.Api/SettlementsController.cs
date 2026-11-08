@@ -19,18 +19,18 @@ public class SettlementsController : ControllerBase
     public async Task<ActionResult<IEnumerable<SettlementResponse>>> GetSettlements([FromQuery] int? year, [FromQuery] int? month)
     {
         var query = _context.Settlements.AsQueryable();
-        if(year != null)
+        if (year != null)
         {
             query = query.Where(settlement => settlement.Date.Year == year);
         }
-        if(month != null)
+        if (month != null)
         {
             query = query.Where(settlement => settlement.Date.Month == month);
         }
 
         var settlements = await query.ToListAsync();
         var response = new List<SettlementResponse>();
-        foreach(Settlement settlement in settlements)
+        foreach (Settlement settlement in settlements)
         {
             response.Add(SettlementResponse.FromSettlement(settlement));
         }
@@ -55,7 +55,7 @@ public class SettlementsController : ControllerBase
     {
         try
         {
-            if(request.SaleId != null)
+            if (request.SaleId != null)
             {
                 var sale = await _context.Sales.Include(s => s.SaleItems).FirstOrDefaultAsync(s => s.Id == request.SaleId);
                 if (sale == null)
@@ -66,11 +66,11 @@ public class SettlementsController : ControllerBase
                 {
                     return BadRequest(new { message = $"Sale with an id of {request.SaleId} is still open. Settlements are only for closed sales" });
                 }
-                if(sale.PaymentMethod != PaymentMethod.Receivable)
+                if (sale.PaymentMethod != PaymentMethod.Receivable)
                 {
                     return BadRequest(new { message = "Found Sale's payment method is not receivable" });
                 }
-                if(sale.SaleDate > request.Date)
+                if (sale.SaleDate > request.Date)
                 {
                     return BadRequest(new { message = "Settlement date for the found Sale cannot be earlier than the Sale's date" });
                 }
@@ -80,18 +80,18 @@ public class SettlementsController : ControllerBase
                     return BadRequest(new { message = "Settlement amount is greater than the sale outstanding balance" });
                 }
             }
-            if(request.ExpenseId != null)
+            if (request.ExpenseId != null)
             {
                 var expense = await _context.Expenses.FindAsync(request.ExpenseId);
                 if (expense == null)
                 {
                     return BadRequest(new { message = $"Cannot find any expense with an id of {request.ExpenseId}" });
                 }
-                if(expense.PaymentMethod != PaymentMethod.Payable)
+                if (expense.PaymentMethod != PaymentMethod.Payable)
                 {
                     return BadRequest(new { message = "Found Expense's payment method is not payable" });
                 }
-                if(expense.Date > request.Date)
+                if (expense.Date > request.Date)
                 {
                     return BadRequest(new { message = "Settlement date for the found Expense cannot be earlier than the Expense's date" });
                 }
@@ -101,9 +101,9 @@ public class SettlementsController : ControllerBase
                     return BadRequest(new { message = "Settlement amount is greater than the expense outstanding balance" });
                 }
             }
-            
+
             Settlement settlement = new Settlement(request.SaleId, request.ExpenseId, request.Amount, request.PaymentMethod, request.PaymentNote, request.Date);
-            
+
             _context.Settlements.Add(settlement);
             await _context.SaveChangesAsync();
 

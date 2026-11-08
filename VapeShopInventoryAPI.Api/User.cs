@@ -12,7 +12,7 @@ public class User
     public string PasswordHash { get; private set; }
     public UserRole Role { get; private set; }
 
-    public User (string username, string passwordHash, UserRole role)
+    public User(string username, string passwordHash, UserRole role)
     {
         GuardUser(username, passwordHash, role);
         Username = NormalizeUsername(username);
@@ -30,11 +30,11 @@ public class User
             throw new ArgumentException("Username cannot be empty", nameof(username));
         }
         username = NormalizeUsername(username);
-        if (username.Length > MaxUsernameLength )
+        if (username.Length > MaxUsernameLength)
         {
             throw new ArgumentException($"Username cannot be longer than {MaxUsernameLength} characters.", nameof(username));
         }
-        if (username.Length < MinUsernameLength )
+        if (username.Length < MinUsernameLength)
         {
             throw new ArgumentException($"Username cannot be shorter than {MinUsernameLength} characters.", nameof(username));
         }

@@ -1,16 +1,17 @@
 namespace VapeShopInventoryAPI.Api;
+
 public class Product
 {
-    public int Id {get; private set;}
-    public string Name {get; private set;}
-    public string Sku {get; private set;}
-    public decimal Price {get; private set;}
-    public int StockQuantity {get; private set;}
-    public string Category {get; private set;}
-    public DateTime CreatedAt {get; private set;}
+    public int Id { get; private set; }
+    public string Name { get; private set; }
+    public string Sku { get; private set; }
+    public decimal Price { get; private set; }
+    public int StockQuantity { get; private set; }
+    public string Category { get; private set; }
+    public DateTime CreatedAt { get; private set; }
     public bool IsLowStock => StockQuantity <= LowStockLevel;
-    public int LowStockLevel {get; private set;}
-    public Product (string name, string sku, decimal price, int stockQuantity,int lowStockLevel, string category)
+    public int LowStockLevel { get; private set; }
+    public Product(string name, string sku, decimal price, int stockQuantity, int lowStockLevel, string category)
     {
         GuardProduct(name, sku, price, stockQuantity, lowStockLevel, category);
         CreatedAt = DateTime.Now;
@@ -20,7 +21,7 @@ public class Product
         StockQuantity = stockQuantity;
         LowStockLevel = lowStockLevel;
         Category = category;
-        
+
     }
 
     public void Edit(string newProductName, string newProductSku, decimal newProductPrice, int newProductStockQuantity, int newProductLowStockLevel, string newProductCategory)
@@ -32,7 +33,7 @@ public class Product
         StockQuantity = newProductStockQuantity;
         LowStockLevel = newProductLowStockLevel;
         Category = newProductCategory;
-        
+
     }
 
     public void ReduceStock(int amount)
@@ -96,6 +97,6 @@ public class Product
         {
             throw new ArgumentException("Category cannot be empty", nameof(productCategory));
         }
-        
+
     }
 }
