@@ -1,12 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
-namespace VapeShopInventoryAPI.Api;
-
+using Microsoft.EntityFrameworkCore;
 using VapeShopInventoryAPI.Api.DTOs;
+
+namespace VapeShopInventoryAPI.Api;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = AuthRoles.OwnerOrCashier)]
 public class ProductsController : ControllerBase
 {
     private readonly VapeShopInventoryDbContext _context;
@@ -119,6 +121,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AuthRoles.Owner)]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         try
