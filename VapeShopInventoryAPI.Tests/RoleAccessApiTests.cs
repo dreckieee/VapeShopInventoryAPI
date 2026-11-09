@@ -98,4 +98,11 @@ public class RoleAccessApiTests
         var response = await _cashierClient.GetAsync("api/CashBalance");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 status, but received {response.StatusCode} instead.");
     }
+
+    [Test]
+    public async Task GetCashBalanceHistory_AnonymousClient_ReturnsUnauthorized()
+    {
+        var response = await _client.GetAsync("api/CashBalance/history?days=1");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), $"Expected 401 status, but received {response.StatusCode} instead.");
+    }
 }
