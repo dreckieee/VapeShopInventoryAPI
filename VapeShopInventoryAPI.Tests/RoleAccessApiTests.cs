@@ -1,4 +1,7 @@
 using System.Net;
+using System.Net.Http.Json;
+using VapeShopInventoryAPI.Api;
+using VapeShopInventoryAPI.Api.DTOs;
 
 namespace VapeShopInventoryAPI.Tests;
 
@@ -50,5 +53,20 @@ public class RoleAccessApiTests
     {
         var response = await _cashierClient.GetAsync($"api/CapitalTransactions/{int.MaxValue}");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden), $"Expected 403 status, but received {response.StatusCode} instead.");
+    }
+
+    [Test]
+    public async Task CreateCapitalTransaction_AnonymousClient_ReturnsUnauthorized()
+    {
+        var payload = new CreateCapitalTransactionRequest
+        {
+            Type = CapitalTransactionType.Deposit,
+            Amount = 99.99m,
+            PaymentMethod = PaymentMethod.Cash,
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), $"Expected 401 status, but received {response.StatusCode} instead.");
     }
 }
