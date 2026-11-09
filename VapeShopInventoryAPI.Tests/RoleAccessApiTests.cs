@@ -84,4 +84,11 @@ public class RoleAccessApiTests
         var response = await _cashierClient.PostAsJsonAsync("api/CapitalTransactions", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden), $"Expected 403 status, but received {response.StatusCode} instead.");
     }
+
+    [Test]
+    public async Task GetCashBalance_AnonymousClient_ReturnsUnauthorized()
+    {
+        var response = await _client.GetAsync("api/CashBalance");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), $"Expected 401 status, but received {response.StatusCode} instead.");
+    }
 }
