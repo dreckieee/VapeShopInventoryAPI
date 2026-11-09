@@ -69,4 +69,19 @@ public class RoleAccessApiTests
         var response = await _client.PostAsJsonAsync("api/CapitalTransactions", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), $"Expected 401 status, but received {response.StatusCode} instead.");
     }
+
+    [Test]
+    public async Task CreateCapitalTransaction_CashierClient_ReturnsForbidden()
+    {
+        var payload = new CreateCapitalTransactionRequest
+        {
+            Type = CapitalTransactionType.Deposit,
+            Amount = 99.99m,
+            PaymentMethod = PaymentMethod.Cash,
+            Date = new DateTime(2026, 01, 01)
+        };
+
+        var response = await _cashierClient.PostAsJsonAsync("api/CapitalTransactions", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden), $"Expected 403 status, but received {response.StatusCode} instead.");
+    }
 }
