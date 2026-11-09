@@ -126,4 +126,11 @@ public class RoleAccessApiTests
         var response = await _cashierClient.GetAsync("api/Products");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 status, but received {response.StatusCode} instead.");
     }
+
+    [Test]
+    public async Task DeleteProduct_CashierClient_ReturnsForbidden()
+    {
+        var response = await _cashierClient.DeleteAsync($"api/Products/{int.MaxValue}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden), $"Expected 403 status, but received {response.StatusCode} instead.");
+    }
 }
