@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VapeShopInventoryAPI.Api.DTOs;
+
 namespace VapeShopInventoryAPI.Api;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = AuthRoles.OwnerOrCashier)]
 public class SettlementsController : ControllerBase
 {
     private readonly VapeShopInventoryDbContext _context;
