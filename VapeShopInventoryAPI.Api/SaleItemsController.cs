@@ -1,10 +1,13 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VapeShopInventoryAPI.Api.DTOs;
+
 namespace VapeShopInventoryAPI.Api;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = AuthRoles.OwnerOrCashier)]
 public class SaleItemsController : ControllerBase
 {
     private readonly VapeShopInventoryDbContext _context;
@@ -14,7 +17,6 @@ public class SaleItemsController : ControllerBase
         _context = context;
         _logger = logger;
     }
-
 
     [HttpPost("{saleId}/items")]
     public async Task<ActionResult<SaleResponse>> AddSaleItem(int saleId, [FromBody] AddSaleItemRequest request)
