@@ -1,16 +1,19 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using VapeShopInventoryAPI.Api.DTOs;
+
 namespace VapeShopInventoryAPI.Api;
 
 [ApiController]
 [Route("api/[controller]")]
-
+[Authorize(Roles = AuthRoles.OwnerOrCashier)]
 public class ExpensesController : ControllerBase
 {
     private readonly VapeShopInventoryDbContext _context;
     private readonly ILogger<ExpensesController> _logger;
+
     public ExpensesController(VapeShopInventoryDbContext context, ILogger<ExpensesController> logger)
     {
         _context = context;
@@ -57,7 +60,6 @@ public class ExpensesController : ControllerBase
         return Ok(response);
     }
 
-
     [HttpPost]
     public async Task<ActionResult<ExpenseResponse>> CreateExpense([FromBody] CreateExpenseRequest request)
     {
@@ -77,7 +79,6 @@ public class ExpensesController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
-
 
     [HttpPut("{id}")]
     public async Task<ActionResult<ExpenseResponse>> UpdateExpense(int id, [FromBody] UpdateExpenseRequest request)
