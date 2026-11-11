@@ -1,13 +1,13 @@
-
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-namespace VapeShopInventoryAPI.Api;
-
 using VapeShopInventoryAPI.Api.DTOs;
+
+namespace VapeShopInventoryAPI.Api;
 
 [ApiController]
 [Route("api/[controller]")]
-
+[Authorize(Roles = AuthRoles.OwnerOrCashier)]
 public class RestockController : ControllerBase
 {
     private readonly VapeShopInventoryDbContext _context;
@@ -78,6 +78,5 @@ public class RestockController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
-
     }
 }
