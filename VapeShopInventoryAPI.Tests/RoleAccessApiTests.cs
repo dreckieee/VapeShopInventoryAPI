@@ -203,4 +203,22 @@ public class RoleAccessApiTests
         var response = await _cashierClient.GetAsync("api/Expenses");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 status, but received {response.StatusCode} instead.");
     }
+
+    [Test]
+    public async Task Restock_AnonymousClient_ReturnsUnauthorized()
+    {
+        var payload = new RestockRequest
+        {
+            Date = new DateTime(2026, 01, 01),
+            Description = "test description",
+            Items = new List<RestockItemRequest>
+            {
+                new RestockItemRequest { ProductId = int.MaxValue, Quantity = 1, UnitCost = 10m }
+            },
+            PaymentMethod = PaymentMethod.Cash
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Restock", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), $"Expected 401 status, but received {response.StatusCode} instead.");
+    }
 }
