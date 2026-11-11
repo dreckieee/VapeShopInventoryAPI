@@ -41,4 +41,27 @@ public class CatalogController : ControllerBase
 
         return Ok(publicProducts);
     }
+
+    [AllowAnonymous]
+    [HttpGet("{id}")]
+    public async Task<ActionResult<PublicProductResponse>> GetCatalogProduct(int id)
+    {
+        var publicProduct = await _context.Products
+            .Where(product => product.Id == id)
+            .Select(product => new PublicProductResponse
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Price = product.Price,
+                IsInStock = product.StockQuantity > 0,
+                Category = product.Category
+            })
+            .FirstOrDefaultAsync();
+        if (publicProduct == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(publicProduct);
+    }
 }
