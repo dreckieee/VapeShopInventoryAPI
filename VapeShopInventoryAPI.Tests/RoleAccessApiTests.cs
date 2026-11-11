@@ -239,4 +239,11 @@ public class RoleAccessApiTests
         var response = await _cashierClient.PostAsJsonAsync("api/Restock", payload);
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), $"Expected 404 status, but received {response.StatusCode} instead.");
     }
+
+    [Test]
+    public async Task GetIncome_AnonymousClient_ReturnsUnauthorized()
+    {
+        var response = await _client.GetAsync("api/Income");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), $"Expected 401 status, but received {response.StatusCode} instead.");
+    }
 }
