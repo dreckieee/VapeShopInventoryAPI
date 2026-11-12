@@ -60,6 +60,38 @@ public class CatalogApiTests
         });
     }
 
+    [Test]
+    public async Task GetCatalog_ProductsWithAndWithoutStock_ReturnsCorrectIsInStockFlags()
+    {
+        string inStockName = "Test Catalog List In Stock";
+        int inStockQuantity = 1;
+
+        var inStockProduct = await CreateTestProductAsync(name: inStockName, stockQuantity: inStockQuantity);
+
+        string outOfStockName = "Test Catalog List Out Of Stock";
+        int outOfStockQuantity = 0;
+
+        var outOfStockProduct = await CreateTestProductAsync(name: outOfStockName, stockQuantity: outOfStockQuantity);
+
+        var response = await _client.GetAsync("api/Catalog");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var catalog = await response.Content.ReadFromJsonAsync<List<PublicProductResponse>>(TestJsonOptions.Default);
+        Assert.That(catalog, Is.Not.Null);
+
+        var inStockRow = catalog.Find(p => p.Id == inStockProduct.Id);
+        Assert.That(inStockRow, Is.Not.Null);
+
+        var outOfStockRow = catalog.Find(p => p.Id == outOfStockProduct.Id);
+        Assert.That(outOfStockRow, Is.Not.Null);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(inStockRow.IsInStock, Is.True);
+            Assert.That(outOfStockRow.IsInStock, Is.False);
+        });
+    }
+
     [TearDown]
     public async Task DeleteTestProduct()
     {
