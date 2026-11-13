@@ -1,5 +1,7 @@
+using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using VapeShopInventoryAPI.Api.DTOs;
 
 namespace VapeShopInventoryAPI.Tests;
@@ -90,6 +92,31 @@ public class CatalogApiTests
             Assert.That(inStockRow.IsInStock, Is.True);
             Assert.That(outOfStockRow.IsInStock, Is.False);
         });
+    }
+
+    [Test]
+    public async Task GetCatalogProduct_ExistingId_ReturnsOnlyPublicFields()
+    {
+        var seededProduct = await CreateTestProductAsync();
+
+        var response = await _client.GetAsync($"api/Catalog/{seededProduct.Id}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        using var parsedBody = JsonDocument.Parse(responseBody);
+        List<string> names = parsedBody.RootElement
+            .EnumerateObject()
+            .Select(p => p.Name)
+            .ToList();
+
+        Assert.That(names, Is.EquivalentTo(new[]
+        {
+            "id",
+            "name",
+            "price",
+            "isInStock",
+            "category"
+        }));
     }
 
     [TearDown]
