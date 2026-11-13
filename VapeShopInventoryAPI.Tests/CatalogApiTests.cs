@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -117,6 +116,32 @@ public class CatalogApiTests
             "isInStock",
             "category"
         }));
+    }
+
+    [Test]
+    public async Task GetCatalog_NameFilterDifferentCase_ReturnsOnlyMatchingProducts()
+    {
+        string product1name = Guid.NewGuid().ToString();
+        string escapedProduct1name = Uri.EscapeDataString(product1name.ToUpper());
+        var product1 = await CreateTestProductAsync(name: product1name);
+
+        string product2name = "Test Get Catalog Product";
+        var product2 = await CreateTestProductAsync(name: product2name);
+
+        var response = await _client.GetAsync($"api/Catalog?name={escapedProduct1name}");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 Ok() status, but received {response.StatusCode} instead.");
+
+        var products = await response.Content.ReadFromJsonAsync<List<PublicProductResponse>>(TestJsonOptions.Default);
+        Assert.That(products, Is.Not.Null);
+
+        var found = products.Find(p => p.Id == product1.Id);
+        var notFound = products.Find(p => p.Id == product2.Id);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(found, Is.Not.Null);
+            Assert.That(notFound, Is.Null);
+        });
     }
 
     [TearDown]
