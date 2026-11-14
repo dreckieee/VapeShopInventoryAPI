@@ -27,6 +27,7 @@ public class AuthController : ControllerBase
         _logger = logger;
     }
 
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginRequest request)
     {
