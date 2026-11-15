@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using VapeShopInventoryAPI.Api;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Identity;
 
@@ -43,6 +44,13 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
     };
 });
 
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
 var app = builder.Build();
 
 app.Services.GetRequiredService<JwtSettings>(); // resolve once so a bad Jwt setting stops startup
@@ -54,11 +62,11 @@ using (var scope = app.Services.CreateScope())
     await UserSeeder.SeedAsync(context, app.Configuration, hasher);
 }
 
-app.UseAuthentication();
-app.UseAuthorization();
-
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 
