@@ -78,4 +78,25 @@ public class AuthApiTests
         var response = await _client.GetAsync("api/Auth/me");
         Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), $"Expected 401 status, but received {response.StatusCode} instead.");
     }
+
+    [Test]
+    public async Task Login_ValidOwnerCredentials_ReturnsOkWithToken()
+    {
+        var payload = new LoginRequest
+        {
+            Username = CustomWebApplicationFactory.OwnerUsername,
+            Password = CustomWebApplicationFactory.OwnerPassword
+        };
+
+        var response = await _client.PostAsJsonAsync("api/Auth/login", payload);
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.OK), $"Expected 200 status, but received {response.StatusCode} instead.");
+
+        var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>(TestJsonOptions.Default);
+        Assert.That(loginResponse, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(loginResponse.Token, Is.Not.Empty);
+            Assert.That(loginResponse.ExpiresAt, Is.GreaterThan(DateTime.UtcNow));
+        });
+    }
 }
