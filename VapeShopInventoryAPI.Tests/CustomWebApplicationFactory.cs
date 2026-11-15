@@ -12,8 +12,8 @@ namespace VapeShopInventoryAPI.Tests;
 
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private const string OwnerUsername = "test-owner-username";
-    private const string OwnerPassword = "test-owner-password";
+    public const string OwnerUsername = "test-owner-username";
+    public const string OwnerPassword = "test-owner-password";
     private const string CashierUsername = "test-cashier-username";
     private const string CashierPassword = "test-cashier-password";
 
