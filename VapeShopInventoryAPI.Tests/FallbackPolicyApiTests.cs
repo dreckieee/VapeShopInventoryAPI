@@ -19,4 +19,16 @@ public class FallbackPolicyApiTests
     {
         _factory.Dispose();
     }
+
+    [Test]
+    public async Task AnyEndpointWithoutAuthAttribute_AnonymousClient_ReturnsUnauthorized()
+    {
+        using var factory = _factory.WithWebHostBuilder(builder =>
+            builder.ConfigureServices(services =>
+                services.AddControllers().AddApplicationPart(typeof(UnmarkedTestController).Assembly)));
+
+        using var client = factory.CreateClient();
+        var response = await client.GetAsync("/test-only/unmarked");
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized), $"Expected 401 status, but received {response.StatusCode} instead.");
+    }
 }
